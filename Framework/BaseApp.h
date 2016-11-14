@@ -2,6 +2,12 @@
 
 #pragma once
 
+#include "stdafx.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <assert.h>
+#include <stddef.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
@@ -69,18 +75,18 @@ namespace jet{
 			virtual void onCreate() = 0;
 			virtual void onResize(GLuint width, GLuint height) = 0;
 			virtual void onUpdate(float delta = 0.0);
-			virtual void onRender();
-			virtual void onDispose();
+			virtual void onRender() = 0;
+			virtual void onDispose() = 0;
 
 			void setSwapInterval(int interval) { if (m_pWindow) glfwSwapInterval(interval); }
 			bool isRunning() { return m_bRunning; }
 
-			static int Run(BaseApp& app, const char* pTitle, GLuint width = 1280, GLuint height = 720);
-			static int Run(BaseApp& app, const char* pTitle, const GLContextConfig& desc);
+			static int Run(BaseApp* app, const char* pTitle, GLuint width = 1280, GLuint height = 720);
+			static int Run(BaseApp* app, const char* pTitle, const GLContextConfig& desc);
 
 			const GLContextConfig& getConfig() const  { return m_ConfigDesc; }
 
-			friend void SetupCallbacks(BaseApp&);
+			friend void SetupCallbacks(BaseApp*);
 
 			/*
 		private:

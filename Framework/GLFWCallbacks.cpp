@@ -8,7 +8,7 @@ namespace jet{
 		static BaseApp* g_pApp = nullptr;
 		static void onclose(GLFWwindow* window)
 		{
-			// TODO
+			
 		}
 
 		static void onresize(GLFWwindow* window, int width, int height)
@@ -16,10 +16,10 @@ namespace jet{
 
 		}
 
-		void SetupCallbacks(BaseApp& app)
+		void SetupCallbacks(BaseApp* app)
 		{
-			g_pApp = &app;
-			glfwSetWindowCloseCallback(app.m_pWindow, onclose);
+			g_pApp = app;
+			glfwSetWindowCloseCallback(app->m_pWindow, onclose);
 
 
 		}

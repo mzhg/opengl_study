@@ -1,14 +1,13 @@
 
-#include "stdafx.h"
 #include "BaseApp.h"
 #include <stdio.h>
-#include <Windows.h>
-#include <vector>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
 namespace jet{
 	namespace util
 	{
-
+		/*
 		class Monitor
 		{
 		public:
@@ -43,10 +42,10 @@ namespace jet{
 
 		public:
 
-			/**
-			* Should call glfwInit() first before call this method.
-			* @return
-			*/
+			//
+			// Should call glfwInit() first before call this method.
+			// @return
+			
 			static const Monitor& getPrimaryMonitor()
 			{
 
@@ -67,19 +66,20 @@ namespace jet{
 			}
 
 		};
-
-		extern void SetupCallbacks(BaseApp& app);
-		int BaseApp::Run(BaseApp& app, const char* pTitle, const GLContextConfig& desc)
+	*/
+//		extern void SetupCallbacks(BaseApp* app);
+		int BaseApp::Run(BaseApp* app, const char* pTitle, const GLContextConfig& desc)
 		{
+//			const int EXIT_FAILURE = -1;
 			GLFWwindow* window;
 			GLFWmonitor* monitor = NULL;
-			GLContextConfig& config = app.m_ConfigDesc;
+			GLContextConfig& config = app->m_ConfigDesc;
 
-			bool& running = app.m_bRunning;
-			bool& glfwInited = app.m_bGLfwInited;
-			bool& needCreateWindow = app.m_bNeedCreateWindow;
-			bool& windowCreated = app.m_bWindowCreated;
-			bool fullScreenMode = app.m_bFullScreenMode;
+			bool& running = app->m_bRunning;
+			bool& glfwInited = app->m_bGLfwInited;
+			bool& needCreateWindow = app->m_bNeedCreateWindow;
+			bool& windowCreated = app->m_bWindowCreated;
+			bool fullScreenMode = app->m_bFullScreenMode;
 
 			running = true;
 			bool lwjglInited = false;
@@ -105,7 +105,7 @@ namespace jet{
 					}
 
 					glfwDefaultWindowHints();
-					glfwWindowHint(GLFW_RESIZABLE, app.m_bResizeable ? 1 : 0);
+					glfwWindowHint(GLFW_RESIZABLE, app->m_bResizeable ? 1 : 0);
 
 					glfwWindowHint(GLFW_RED_BITS, config.RedBits);
 					glfwWindowHint(GLFW_GREEN_BITS, config.GreenBits);
@@ -127,7 +127,7 @@ namespace jet{
 
 					if (fullScreenMode){
 						if (monitor == nullptr)
-							monitor = Monitor::getPrimaryMonitor().get();
+							monitor = glfwGetPrimaryMonitor();
 					}
 
 					// Create the window
@@ -138,12 +138,12 @@ namespace jet{
 						return EXIT_FAILURE;
 					}
 
-					app.m_pWindow = window;
+					app->m_pWindow = window;
 					windowCreated = true;
 
 					if (!fullScreenMode){
 //						VideoMode video = Monitor.getPrimaryMonitor().getVideoMode();
-						GLFWmonitor* monitor = Monitor::getPrimaryMonitor().get();
+						GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 						const GLFWvidmode* video = glfwGetVideoMode(monitor);
 
 						// Center our window
@@ -177,13 +177,13 @@ namespace jet{
 //					GL.createCapabilities();  
 					glewInit();
 
-					app.onCreate();
+					app->onCreate();
 				}
 
 				if (needResize){
 					needResize = false;
 					if (running)
-						app.onResize(config.Width, config.Height);
+						app->onResize(config.Width, config.Height);
 				}
 
 				/*
@@ -191,7 +191,7 @@ namespace jet{
 				renderFrame();
 				*/
 
-				app.onRender();
+				app->onRender();
 
 				// Poll for window events. The key callback above will only be
 				// invoked during this call.
@@ -204,7 +204,7 @@ namespace jet{
 			}
 
 			for (int i = 0; i < 1/*glListeners.size()*/; i++){
-				app.onDispose();
+				app->onDispose();
 			}
 
 			// Release window and window callbacks
@@ -215,7 +215,7 @@ namespace jet{
 			return 0;
 		}
 
-		int BaseApp::Run(BaseApp& app, const char* pTitle, GLuint width, GLuint height)
+		int BaseApp::Run(BaseApp* app, const char* pTitle, GLuint width, GLuint height)
 		{
 			GLContextConfig desc;
 			desc.Width = width;
@@ -230,5 +230,7 @@ namespace jet{
 			this->onResize(static_cast<GLuint>(width), static_cast<GLuint>(height));
 		}
 		*/
+
+		void BaseApp::onUpdate(float) {}
 	}
 };
