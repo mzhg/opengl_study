@@ -193,9 +193,11 @@ namespace jet{
 
 				app->onRender();
 
+				glfwSwapBuffers(window);
 				// Poll for window events. The key callback above will only be
 				// invoked during this call.
 				glfwPollEvents();
+				
 
 				if (glfwWindowShouldClose(window)){
 					running = false;
