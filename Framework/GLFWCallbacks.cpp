@@ -8,7 +8,7 @@ namespace jet{
 		static BaseApp* g_pApp = nullptr;
 		static void onclose(GLFWwindow* window)
 		{
-			
+			printf("The app exits!\n");
 		}
 
 		static void onresize(GLFWwindow* window, int width, int height)

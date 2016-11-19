@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Math">
+      <UniqueIdentifier>{72ec5043-7121-4d16-9ffd-4539ad4fc513}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Models">
+      <UniqueIdentifier>{d1750eb5-feda-477f-be7c-f8d56b8263df}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer">
+      <UniqueIdentifier>{2de16ffc-5449-4ad8-a8e4-5f600dff2612}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\Buffer">
+      <UniqueIdentifier>{0bcee227-2353-4443-a79c-7b728f443a96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\Texture">
+      <UniqueIdentifier>{c49bf209-1ffc-4fd8-8fdf-2263de0fd948}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+</Project>

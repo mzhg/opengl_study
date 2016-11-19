@@ -110,7 +110,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>openGL32.lib;glew32.lib;glfw3.lib;framework.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>openGL32.lib;glew32s.lib;glfw3.lib;framework.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

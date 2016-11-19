@@ -121,8 +121,14 @@ namespace jet{
 					glfwWindowHint(GLFW_STEREO, config.Stereo ? 1 : 0);
 					glfwWindowHint(GLFW_SRGB_CAPABLE, config.sRGBCapable ? 1 : 0);
 
-					glfwWindowHint(GLFW_CLIENT_API, config.ClientAPI);
+					glfwWindowHint(GLFW_CLIENT_API, config.IsOpenGLESContext ? GLFW_OPENGL_ES_API : GLFW_OPENGL_API);
 					glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, config.DebugContext ? 1 : 0);
+
+					if (config.IsOpenGLESContext)
+					{
+						glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, config.MajorVersion);
+						glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, config.MinorVersion);
+					}
 //					glfwWindowHint(GLFW_OPENGL_PROFILE, config.glProfile);
 
 					if (fullScreenMode){

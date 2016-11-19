@@ -2,6 +2,8 @@
 
 #pragma once
 
+#define GLEW_STATIC
+// #define GLFW_INCLUDE_ES2
 #include "stdafx.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -31,9 +33,12 @@ namespace jet{
 
 			GLuint MultiSamplers;
 
+			GLint MajorVersion;
+			GLint MinorVersion;
+
 			GLuint AuxBuffers;
 			bool sRGBCapable;
-			GLuint ClientAPI;
+			bool IsOpenGLESContext;
 			bool   DebugContext;
 			bool  Stereo;
 //			GLint  GLProfile;
@@ -44,9 +49,13 @@ namespace jet{
 			{
 				AuxBuffers = 0;
 				sRGBCapable = false;
-				ClientAPI = GLFW_OPENGL_API;
+				IsOpenGLESContext = false;
 				DebugContext = true;
 				Stereo = false;
+
+				// This only works for opengl es context.
+				MajorVersion = 2;
+				MinorVersion = 0;
 //				GLProfile
 			}
 		}GLContextConfig;
@@ -62,6 +71,16 @@ namespace jet{
 			GLuint Width;
 			GLuint Height;
 		}VideoMode;
+
+		class KeyboardCallback
+		{
+
+		};
+
+		class MouseCallback
+		{
+
+		};
 
 		class BaseApp
 		{
@@ -85,6 +104,7 @@ namespace jet{
 			static int Run(BaseApp* app, const char* pTitle, const GLContextConfig& desc);
 
 			const GLContextConfig& getConfig() const  { return m_ConfigDesc; }
+			GLContextConfig& getConfig()  { return m_ConfigDesc; }
 
 			friend void SetupCallbacks(BaseApp*);
 
@@ -98,6 +118,9 @@ namespace jet{
 			GLFWwindow* m_pWindow;
 			GLFWmonitor* m_pMonitor;
 			GLContextConfig m_ConfigDesc;
+
+			MouseCallback* m_pMouseCallback;
+			KeyboardCallback* m_pKeyboardCallback;
 
 			bool m_bRunning;
 			bool m_bFullScreenMode;

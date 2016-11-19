@@ -1,10 +1,17 @@
 
 #include "heightmap.h"
-#pragma comment(lib,"ws2_32.lib")
 
 void HeightmapDemo::onCreate()
 {
+	
+	const GLubyte* render = glGetString(GL_RENDERER);
+	const GLubyte* version = glGetString(GL_VERSION);
+	const GLubyte* glslVersion = glGetString(GL_SHADING_LANGUAGE_VERSION);
 
+	printf("Render: %s\n", render);
+	printf("Version: %s\n", version);
+	printf("GLSLVersion: %s\n", glslVersion);
+	
 }
 
 void HeightmapDemo::onResize(GLuint width, GLuint height)
@@ -17,9 +24,10 @@ void HeightmapDemo::onResize(GLuint width, GLuint height)
 
 void HeightmapDemo::onRender()
 {
-	glClearColor(0, 0, 0, 0);
+	glClearColor(1, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	/*
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
@@ -38,13 +46,17 @@ void HeightmapDemo::onRender()
 	}
 
 	glEnd();
+	*/
 }
 
-void HeightmapDemo::onDispose(){}
+void HeightmapDemo::onDispose(){
+	printf("onDispose called!!!\n");
+}
 
 int main(int argc, char** argv)
 {
 	HeightmapDemo demo;
+	demo.getConfig().IsOpenGLESContext = true;
 	jet::util::BaseApp::Run(&demo, "Triangles");
 	return 0;
 }
