@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Framework", "Framework\Fram
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ant_vr_sdk", "ant_vr_sdk\ant_vr_sdk.vcxproj", "{7F059785-FCBF-4A90-876F-56C4133E1F6C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConsoleApp", "ConsoleApp\ConsoleApp.vcxproj", "{C0F78193-EA22-4BEC-8CE1-602447E69134}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -47,12 +49,23 @@ Global
 		{7F059785-FCBF-4A90-876F-56C4133E1F6C}.Debug|Mixed Platforms.Build.0 = Debug|Win32
 		{7F059785-FCBF-4A90-876F-56C4133E1F6C}.Debug|Win32.ActiveCfg = Debug|Win32
 		{7F059785-FCBF-4A90-876F-56C4133E1F6C}.Debug|Win32.Build.0 = Debug|Win32
-		{7F059785-FCBF-4A90-876F-56C4133E1F6C}.Debug|x64.ActiveCfg = Debug|Win32
+		{7F059785-FCBF-4A90-876F-56C4133E1F6C}.Debug|x64.ActiveCfg = Debug|x64
 		{7F059785-FCBF-4A90-876F-56C4133E1F6C}.Release|Mixed Platforms.ActiveCfg = Release|Win32
 		{7F059785-FCBF-4A90-876F-56C4133E1F6C}.Release|Mixed Platforms.Build.0 = Release|Win32
 		{7F059785-FCBF-4A90-876F-56C4133E1F6C}.Release|Win32.ActiveCfg = Release|Win32
 		{7F059785-FCBF-4A90-876F-56C4133E1F6C}.Release|Win32.Build.0 = Release|Win32
 		{7F059785-FCBF-4A90-876F-56C4133E1F6C}.Release|x64.ActiveCfg = Release|Win32
+		{C0F78193-EA22-4BEC-8CE1-602447E69134}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{C0F78193-EA22-4BEC-8CE1-602447E69134}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{C0F78193-EA22-4BEC-8CE1-602447E69134}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C0F78193-EA22-4BEC-8CE1-602447E69134}.Debug|Win32.Build.0 = Debug|Win32
+		{C0F78193-EA22-4BEC-8CE1-602447E69134}.Debug|x64.ActiveCfg = Debug|x64
+		{C0F78193-EA22-4BEC-8CE1-602447E69134}.Debug|x64.Build.0 = Debug|x64
+		{C0F78193-EA22-4BEC-8CE1-602447E69134}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{C0F78193-EA22-4BEC-8CE1-602447E69134}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{C0F78193-EA22-4BEC-8CE1-602447E69134}.Release|Win32.ActiveCfg = Release|Win32
+		{C0F78193-EA22-4BEC-8CE1-602447E69134}.Release|Win32.Build.0 = Release|Win32
+		{C0F78193-EA22-4BEC-8CE1-602447E69134}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

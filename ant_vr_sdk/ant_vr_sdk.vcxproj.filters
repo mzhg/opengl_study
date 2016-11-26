@@ -20,6 +20,9 @@
     <Filter Include="Renderer\Texture">
       <UniqueIdentifier>{c49bf209-1ffc-4fd8-8fdf-2263de0fd948}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Main">
+      <UniqueIdentifier>{b8c9b859-8524-4a14-8ab3-564451903e10}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
