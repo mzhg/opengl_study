@@ -13,6 +13,8 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "GLFWEvent.h"
+
 namespace jet{
 	namespace util{
 
@@ -72,24 +74,18 @@ namespace jet{
 			GLuint Height;
 		}VideoMode;
 
-		class KeyboardCallback
-		{
-
-		};
-
-		class MouseCallback
-		{
-
-		};
-
-		class BaseApp
+		class BaseApp : public MouseCallback, public KeyboardCallback
 		{
 			
 		public:
 			BaseApp() : m_bRunning(false), m_bFullScreenMode(false), m_bResizeable(false),
 				m_bGLfwInited(false), m_bWindowCreated(false), m_bNeedCreateWindow(false),
-				m_pWindow(nullptr), m_pMonitor(nullptr), m_ConfigDesc()
-			{}
+				m_pWindow(nullptr), m_pMonitor(nullptr), m_ConfigDesc(), m_pGLFWCallback(nullptr)
+			{
+				m_pGLFWCallback = new InputAdapter(this, this);
+			}
+
+			~BaseApp();
 
 			virtual void onCreate() = 0;
 			virtual void onResize(GLuint width, GLuint height) = 0;
@@ -108,6 +104,16 @@ namespace jet{
 
 			friend void SetupCallbacks(BaseApp*);
 
+			virtual void OnkeyPressed(int keycode, char keychar) {};
+			virtual void OnkeyReleased(int keycode, char keychar) {};
+			virtual void OnkeyTyped(int keycode, char keychar) {};
+
+			virtual void OnMousePressed(int x, int y, Button button) {};
+			virtual void OnMouseReleased(int x, int y, Button button) {};
+			virtual void OnMouseMoved(int x, int y, int dx, int dy) {};
+			virtual void OnMouseDraged(int x, int y, int dx, int dy, Button button){};
+			virtual void OnScrolled(int wheel) {};
+
 			/*
 		private:
 
@@ -119,8 +125,7 @@ namespace jet{
 			GLFWmonitor* m_pMonitor;
 			GLContextConfig m_ConfigDesc;
 
-			MouseCallback* m_pMouseCallback;
-			KeyboardCallback* m_pKeyboardCallback;
+			GLFWCallback* m_pGLFWCallback;
 
 			bool m_bRunning;
 			bool m_bFullScreenMode;

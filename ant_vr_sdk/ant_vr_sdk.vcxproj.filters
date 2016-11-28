@@ -23,6 +23,9 @@
     <Filter Include="Main">
       <UniqueIdentifier>{b8c9b859-8524-4a14-8ab3-564451903e10}</UniqueIdentifier>
     </Filter>
+    <Filter Include="PostProcessing">
+      <UniqueIdentifier>{9fe49796-8489-4ddf-ac7d-492d72acec41}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />

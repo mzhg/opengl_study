@@ -239,6 +239,11 @@ namespace jet{
 		}
 		*/
 
+		BaseApp::~BaseApp()
+		{
+			delete m_pGLFWCallback;
+		}
+
 		void BaseApp::onUpdate(float) {}
 	}
 };
