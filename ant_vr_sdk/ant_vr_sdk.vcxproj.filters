@@ -8,9 +8,6 @@
     <Filter Include="Math">
       <UniqueIdentifier>{72ec5043-7121-4d16-9ffd-4539ad4fc513}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Models">
-      <UniqueIdentifier>{d1750eb5-feda-477f-be7c-f8d56b8263df}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Renderer">
       <UniqueIdentifier>{2de16ffc-5449-4ad8-a8e4-5f600dff2612}</UniqueIdentifier>
     </Filter>
@@ -26,8 +23,54 @@
     <Filter Include="PostProcessing">
       <UniqueIdentifier>{9fe49796-8489-4ddf-ac7d-492d72acec41}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{84a1ea86-b8f1-4548-969e-b155f3530892}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Files">
+      <UniqueIdentifier>{ea63b624-a3c1-48a6-9f9b-db42789e69f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\Util">
+      <UniqueIdentifier>{3fb0c1be-59df-49b7-a86c-f1460bdb948d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Util">
+      <UniqueIdentifier>{e1ba0c03-d6c0-4490-9a0e-0a1a14af107a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math\Models">
+      <UniqueIdentifier>{d1750eb5-feda-477f-be7c-f8d56b8263df}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="GLSLProgram.cpp">
+      <Filter>Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="NvAssetLoaderWin.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AssetLoaderAndroid.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GLUtil.cpp">
+      <Filter>Renderer\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Numeric.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GLSLProgram.h">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="AssetLoader.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GLUtil.h">
+      <Filter>Renderer\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Numeric.h">
+      <Filter>Util</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

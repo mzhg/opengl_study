@@ -138,6 +138,19 @@
       <Project>{b53a90fb-50c3-4a04-96d9-e020f957ed99}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="GLSLProgram.cpp" />
+    <ClCompile Include="AssetLoaderAndroid.cpp" />
+    <ClCompile Include="GLUtil.cpp" />
+    <ClCompile Include="Numeric.cpp" />
+    <ClCompile Include="NvAssetLoaderWin.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AssetLoader.h" />
+    <ClInclude Include="GLSLProgram.h" />
+    <ClInclude Include="GLUtil.h" />
+    <ClInclude Include="Numeric.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
