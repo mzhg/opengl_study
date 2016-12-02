@@ -89,7 +89,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;ENABLE_PROGRAM_PIPELINE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -144,12 +144,30 @@
     <ClCompile Include="GLUtil.cpp" />
     <ClCompile Include="Numeric.cpp" />
     <ClCompile Include="NvAssetLoaderWin.cpp" />
+    <ClCompile Include="PostProcessGaussBlur.cpp" />
+    <ClCompile Include="PostProcessing.cpp" />
+    <ClCompile Include="PostProcessingFramework.cpp" />
+    <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="TextureUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssetLoader.h" />
+    <ClInclude Include="Disposeable.h" />
+    <ClInclude Include="GaussianBlur.h" />
     <ClInclude Include="GLSLProgram.h" />
     <ClInclude Include="GLUtil.h" />
     <ClInclude Include="Numeric.h" />
+    <ClInclude Include="PostProcessGaussBlur.h" />
+    <ClInclude Include="PostProcessing.h" />
+    <ClInclude Include="PostProcessingFramework.h" />
+    <ClInclude Include="Texture.h" />
+    <ClInclude Include="TextureUtil.h" />
+    <ClInclude Include="Util.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="DefaultScreenSpacePS.frag" />
+    <None Include="DefaultScreenSpaceVS.vert" />
+    <None Include="GuassBlurPS_Template.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,8 +1,11 @@
 
 #pragma once
 #include "BaseApp.h"
+#include "PostProcessing.h"
 
-class HeightmapDemo : public jet::util::BaseApp
+using namespace jet::util;
+
+class HeightmapDemo : public BaseApp
 {
 public:
 
@@ -15,4 +18,6 @@ public:
 private:
 	int mWidth;
 	int mHeight;
+
+	PostProcessing* m_PostProcessing;
 };

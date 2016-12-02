@@ -73,8 +73,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>../extern/glew-2.0.0/include;../extern/glfw-3.2.1/include;../extern/glm;../Framework;$(IncludePath)</IncludePath>
-    <LibraryPath>../extern/glfw-3.2.1/lib;../extern/glew-2.0.0/lib/x64;../debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>../extern/glew-2.0.0/include;../extern/glfw-3.2.1/include;../extern/glm;../Framework;../ant_vr_sdk;$(IncludePath)</IncludePath>
+    <LibraryPath>../extern/glfw-3.2.1/lib;../extern/glew-2.0.0/lib/x64;../x64/debug;$(LibraryPath)</LibraryPath>
     <LibraryWPath>../extern/extern/glew-2.0.0/bin/x64;$(LibraryWPath)</LibraryWPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -110,7 +110,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>openGL32.lib;glew32s.lib;glfw3.lib;framework.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>openGL32.lib;glew32s.lib;glfw3.lib;framework.lib;ant_vr_sdk.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -148,6 +148,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ant_vr_sdk\ant_vr_sdk.vcxproj">
+      <Project>{7f059785-fcbf-4a90-876f-56c4133e1f6c}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Framework\Framework.vcxproj">
       <Project>{b53a90fb-50c3-4a04-96d9-e020f957ed99}</Project>
     </ProjectReference>

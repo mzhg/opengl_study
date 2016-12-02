@@ -38,6 +38,9 @@
     <Filter Include="Math\Models">
       <UniqueIdentifier>{d1750eb5-feda-477f-be7c-f8d56b8263df}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ShaderResources">
+      <UniqueIdentifier>{5dc9d967-2a00-4689-86c5-d08740e9b61f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -58,6 +61,21 @@
     <ClCompile Include="Numeric.cpp">
       <Filter>Util</Filter>
     </ClCompile>
+    <ClCompile Include="PostProcessing.cpp">
+      <Filter>PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Renderer\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureUtil.cpp">
+      <Filter>Renderer\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessingFramework.cpp">
+      <Filter>PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessGaussBlur.cpp">
+      <Filter>PostProcessing</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GLSLProgram.h">
@@ -72,5 +90,40 @@
     <ClInclude Include="Numeric.h">
       <Filter>Util</Filter>
     </ClInclude>
+    <ClInclude Include="PostProcessing.h">
+      <Filter>PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Renderer\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="Disposeable.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureUtil.h">
+      <Filter>Renderer\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="Util.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcessingFramework.h">
+      <Filter>PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcessGaussBlur.h">
+      <Filter>PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="GaussianBlur.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="DefaultScreenSpaceVS.vert">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="GuassBlurPS_Template.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="DefaultScreenSpacePS.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
   </ItemGroup>
 </Project>
