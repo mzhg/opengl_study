@@ -131,7 +131,7 @@ namespace jet
 			}
 		}
 
-		void PPRenderContext::setRenderTargets(int count, const RenderTarget** pColorTargets, const RenderTarget* pDepthStencilTarget)
+		void PPRenderContext::setRenderTargets(uint32_t count, const RenderTarget** pColorTargets, const RenderTarget* pDepthStencilTarget)
 		{
 			assert(m_InBeginBlock);
 
@@ -183,7 +183,7 @@ namespace jet
 				viewportWidth = m_BindingColorTextureDesc[0].Width;
 				viewportHeight = m_BindingColorTextureDesc[0].Height;
 
-				for (int i = 1; i < m_BindingColorTextureCount; i++)
+				for (GLuint i = 1; i < m_BindingColorTextureCount; i++)
 				{
 					Texture2DDesc& destDesc = m_BindingColorTextureDesc[i];
 					if (destDesc.Width != viewportWidth || destDesc.Height != viewportHeight)
@@ -225,7 +225,7 @@ namespace jet
 			}
 		}
 
-		void PPRenderContext::clearColorTarget(int location, const GLfloat clearColors[4])
+		void PPRenderContext::clearColorTarget(uint32_t location, const GLfloat clearColors[4])
 		{
 			assert(m_InBeginBlock);
 			if (location < m_BindingColorTextureCount)

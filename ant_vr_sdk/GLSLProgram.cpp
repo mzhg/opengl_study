@@ -151,8 +151,14 @@ namespace jet
 		bool GLSLProgram::setSourceFromFiles(const char* vertFilename, const char* fragFilename, bool strict)
 		{
 			int32_t len;
+
+			AssetLoaderAddSearchPath("../ant_vr_sdk");
 			char* vertSrc = AssetLoaderRead(vertFilename, len);
 			char* fragSrc = AssetLoaderRead(fragFilename, len);
+
+			debugString(vertSrc);
+			debugString(fragSrc);
+
 			if (!vertSrc || !fragSrc) {
 				AssetLoaderFree(vertSrc);
 				AssetLoaderFree(fragSrc);
@@ -169,29 +175,53 @@ namespace jet
 
 		bool GLSLProgram::setSourceFromStrings(const char* vertSrc, const char* fragSrc, bool strict)
 		{
-			if (m_Program) {
-				glDeleteProgram(m_Program);
-				m_Program = 0;
-			}
-
-			m_Program = compileProgram(vertSrc, fragSrc);
-
-			return m_Program != 0;
+			const char* vertSrcArray[] = { vertSrc };
+			const char* fragSrcArray[] = { fragSrc };
+			return setSourceFromStrings(vertSrcArray, 1, fragSrcArray, 1, strict);
 		}
 
 		bool GLSLProgram::setSourceFromStrings(const char** vertSrcArray, int32_t vertSrcCount,
 			const char** fragSrcArray, int32_t fragSrcCount, bool strict)
 		{
-			if (m_Program) {
-				glDeleteProgram(m_Program);
-				m_Program = 0;
+			int glVersion = GetOpenGLVersion().toInt();
+			std::string vertSource;
+			std::string fragSource;
+			ShaderSourceItem shader_items[2];
+			if (vertSrcCount <= 1 && fragSrcCount <= 1)
+			{
+				shader_items[0] = ShaderSourceItem(vertSrcCount ? vertSrcArray[0] : NULL, GL_VERTEX_SHADER, 0, 0, glVersion);
+				shader_items[1] = ShaderSourceItem(fragSrcCount ? fragSrcArray[0] : NULL, GL_FRAGMENT_SHADER, 0, 0, glVersion);
+			}
+			else
+			{
+				if (vertSrcCount)
+				{
+					for (int i = 0; i < vertSrcCount; i++)
+					{
+						vertSource += vertSrcArray[i];
+						vertSource += "\n";
+					}
+
+					shader_items[0] = ShaderSourceItem(vertSource.c_str(), GL_VERTEX_SHADER, 0, 0, glVersion);
+				}
+
+				if (fragSrcCount)
+				{
+					for (int i = 0; i < fragSrcCount; i++)
+					{
+						fragSource += fragSrcArray[i];
+						fragSource += "\n";
+					}
+
+					shader_items[1] = ShaderSourceItem(fragSource.c_str(), GL_FRAGMENT_SHADER, 0, 0, glVersion);
+				}
 			}
 
-//			m_strict = strict;
+			debugString(shader_items[0].src);
+			debugString(shader_items[1].src);
 
-			m_Program = compileProgram(vertSrcArray, vertSrcCount, fragSrcArray, fragSrcCount);
-
-			return m_Program != 0;
+			bool result = setSourceFromStrings(shader_items, 2, strict);
+			return result;
 		}
 
 		bool GLSLProgram::setSourceFromStrings(const ShaderSourceItem* src, int32_t count, bool strict)
@@ -418,8 +448,9 @@ namespace jet
 				GLuint shader = glCreateShader(src[i].type);
 
 				std::string shaderSource = constructSource(src[i]);
+				const char* pShaderSource[] = { shaderSource.c_str() };
 
-				glShaderSource(shader, 1, (const GLchar* const*)shaderSource.c_str(), 0);
+				glShaderSource(shader, 1, pShaderSource, 0);
 				glCompileShader(shader);
 				if (!checkCompileError(shader, src[i].type))
 					return 0;
@@ -560,25 +591,32 @@ namespace jet
 				110, 120, 130, 140, 150, 300, 330, 400, 410, 420, 430, 440, 450
 			};
 
-			std::string source = item.src;
+			static const int GLES_VERSIONS[] = {
+				100, 300, 310, 320
+			};
+
+			GLVersion version = GetOpenGLVersion();
+
+			int length = 0;
+//			std::string source = item.src;
 			if (item.length == 0 && item.compileVersion == 0)
 			{
-				return source;
+				return item.src;
 			}
 
+			std::string source = item.src;
 			std::stringstream macro_string_builder;
 			if (item.compileVersion)
 			{
 				int idx = -1;
-				for (int version : GL_VERSIONS)
+				if (version.es)
 				{
-					if (version == item.compileVersion)
-					{
-						idx = 1;
-						break;
-					}
+					idx = Numeric::indexOf(_countof(GLES_VERSIONS), GLES_VERSIONS, item.compileVersion);
 				}
-
+				else
+				{
+					idx = Numeric::indexOf(_countof(GL_VERSIONS), GL_VERSIONS, item.compileVersion);
+				}
 				assert(idx >= 0);
 				
 				macro_string_builder << "#version " << item.compileVersion;
@@ -603,11 +641,12 @@ namespace jet
 				}
 			}
 
-			std::string macro_string = macro_string_builder.str();
+			std::string macro_string = std::string(macro_string_builder.str());
 
+			std::string::npos;
 			auto versionIndex = source.find("#version");
 			auto versionLineEnd = std::string::npos;
-			if (versionIndex != std::string::npos)
+			if (versionIndex <source.length() && versionIndex != std::string::npos)
 			{
 				versionLineEnd = source.find_first_of('\n', versionIndex + 8);
 				assert(versionLineEnd != std::string::npos);
@@ -617,25 +656,33 @@ namespace jet
 			if (item.compileVersion)
 			{
 				// replace the old version.
-				if (versionIndex != std::string::npos)
+				if (versionIndex <source.length() &&  versionIndex != std::string::npos)
 				{
 					source.replace(versionIndex, versionLineEnd, macro_string);
 				}
 				// insert the macroString to the head of old source.
 				else
 				{
+//					source.reserve(source.length() + macro_string.length() + 1);
 					source.insert(0, macro_string);
+//					return macro_string + source;
 				}
 			}
 			else
 			{
 				if (versionLineEnd == std::string::npos)
 				{
-					versionLineEnd = -1;
+					source.reserve(source.length() + macro_string.length() + 1);
+					source.insert(0, macro_string);
 				}
-
-				source.insert(versionLineEnd + 1, macro_string);
+				else
+				{
+					source.reserve(source.length() + macro_string.length() + 1);
+					source.insert(versionLineEnd + 1, macro_string);
+				}
 			}
+
+			printf("Reconstruct Shader Source: \n%s\n", source.c_str());
 
 			return source;
 		}

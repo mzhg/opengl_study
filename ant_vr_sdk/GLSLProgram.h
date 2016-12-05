@@ -113,7 +113,7 @@ namespace jet
 			const AttribBinding* attribs;
 
 
-			ShaderSourceItem(){}
+			ShaderSourceItem() : src(NULL), type(GL_NONE), length(0), macros(NULL), compileVersion(0), attribLength(0), attribs(NULL){}
 			ShaderSourceItem(const char* _src, GLenum _type, uint32_t _length = 0, const Macro* _macros = nullptr, int32_t _compileVersion = 0) :
 				src(_src), type(_type), length(_length), macros(_macros), compileVersion(_compileVersion)
 			{}

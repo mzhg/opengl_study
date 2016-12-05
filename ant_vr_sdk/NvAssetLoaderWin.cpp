@@ -94,7 +94,7 @@ char *AssetLoaderRead(const char *filePath, int32_t &length)
 
     char *data = new char [length + 1];
     fread(data, 1, length, fp);
-    data[length] = '\0';
+    data[length] = 0;
 
     AssetLoaderCloseFile(fp);
 

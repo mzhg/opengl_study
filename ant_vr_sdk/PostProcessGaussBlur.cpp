@@ -11,7 +11,7 @@ namespace jet
 			GLVersion version = GetOpenGLVersion();
 			std::string shaderCode;
 			shaderCode += "#version ";
-			shaderCode += version.toGLSLString();
+			shaderCode += version.toString();
 			shaderCode += "\n";
 
 			shaderCode += "precision highp float;\n";

@@ -297,9 +297,9 @@ namespace jet
 #if ENABLE_PROGRAM_PIPELINE
 			void setActiveShader(GLenum target) { m_Program->setActiveShader(target); }
 #endif
-			void setRenderTargets(int count, const RenderTarget** pColorTargets, const RenderTarget* pDepthStencilTarget);
+			void setRenderTargets(uint32_t count, const RenderTarget** pColorTargets, const RenderTarget* pDepthStencilTarget);
 
-			void clearColorTarget(int location, const GLfloat clearColors[4]);
+			void clearColorTarget(uint32_t location, const GLfloat clearColors[4]);
 
 			void setParameters(class PostProcessingParameters* pParameters) { m_Parameters = pParameters; }
 

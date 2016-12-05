@@ -24,4 +24,17 @@
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="testimg_1280x720.png">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\DrawScenePS.frag">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="assets\DrawSceneVS.vert">
+      <Filter>资源文件</Filter>
+    </None>
+  </ItemGroup>
 </Project>

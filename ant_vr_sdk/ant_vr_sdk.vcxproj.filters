@@ -116,13 +116,13 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="DefaultScreenSpaceVS.vert">
+    <None Include="assets\DefaultScreenSpacePS.frag">
       <Filter>ShaderResources</Filter>
     </None>
-    <None Include="GuassBlurPS_Template.frag">
+    <None Include="assets\DefaultScreenSpaceVS.vert">
       <Filter>ShaderResources</Filter>
     </None>
-    <None Include="DefaultScreenSpacePS.frag">
+    <None Include="assets\GuassBlurPS_Template.frag">
       <Filter>ShaderResources</Filter>
     </None>
   </ItemGroup>

@@ -42,6 +42,7 @@ namespace jet
 			{ 300, 310, 320 },  // 3.x
 		};
 
+		/*
 		int GLVersion::toGLSLInt()
 		{
 			return es ? GLSLES_VERSIONS[mojar - 2][minor]: GLSL_VERSIONS[mojar - 1][minor];
@@ -51,15 +52,62 @@ namespace jet
 		{
 			return Numeric::toString(toGLSLInt());
 		}
-
-		std::string GLVersion::toString()
+		*/
+		std::string GLVersion::toString() const
 		{
 			return Numeric::toString(toInt());
 		}
 
-		int GLVersion::toInt()
+		int GLVersion::toInt() const
 		{
 			return es ? GLES_VERSIONS[mojar - 1][minor] : GL_VERSIONS[mojar - 1][minor];
+		}
+
+		static void ParseGLVersionString(GLVersion* pOut, const char* versionString)
+		{
+			size_t length = strlen(versionString);
+			char *pUpperVersionString = (char *)malloc(length + 1);
+			ToUppercase(pUpperVersionString, versionString);
+			pUpperVersionString[length] = '\0';
+
+			char *p = (char *)pUpperVersionString;
+			char *end  = p + length;
+
+			const char* opengl_tag = "OPENGL";
+			size_t opengl_tag_length = strlen(opengl_tag);
+
+			const char* es_tag = "ES";
+			pOut->es = false;
+
+			while (p < end) 
+			{
+				size_t n = strcspn(p, " ");
+				if ((opengl_tag_length == n) && strncmp(opengl_tag, p, n) == 0)
+				{
+					p += (n + 1);
+					n = strcspn(p, " ");
+
+					if (n == 2 && strncmp(es_tag, p, 2) == 0)
+					{
+						p += 3;
+						pOut->es = true;
+					}
+				}
+				else if (isdigit(*p))
+				{
+					size_t next_slot = strcspn(p, " ");
+					int idx = 0;
+					while (idx < 2 && (n = strcspn(p, ". ")) < next_slot)
+					{
+						((int*)pOut)[idx++] = atoi(p);
+						p += (n + 1);
+					}
+
+					break;
+				}
+			}
+
+			free(pUpperVersionString);
 		}
 
 		const GLVersion GetOpenGLVersion()
@@ -68,15 +116,7 @@ namespace jet
 
 			if (g_GLVersion.mojar == 0)
 			{
-				const GLubyte* version = glGetString(GL_VERSION);
-				std::string strings = (const char*)version;
-				auto end = strings.find_first_of(' ');
-				std::string _version = strings.substr(0, end);
-				auto dot = _version.find_first_of('.');
-				auto next = _version.find_first_of('.', dot + 1);
-
-				g_GLVersion.mojar = Numeric::parseInt(_version.substr(0, dot).c_str());
-				g_GLVersion.minor = Numeric::parseInt(_version.substr(dot + 1, next).c_str());
+				ParseGLVersionString(&g_GLVersion, (const char*)glGetString(GL_VERSION));
 			}
 
 			return g_GLVersion;
@@ -92,14 +132,16 @@ namespace jet
 			*/
 			char *p = (char *)extString;
 			char *end;
-			int extNameLen;
+			size_t extNameLen;
 
 			extNameLen = strlen(extName);
 			end = p + strlen(p);
 
-			while (p < end) {
-				int n = strcspn(p, " ");
-				if ((extNameLen == n) && (strncmp(extName, p, n) == 0)) {
+			while (p < end) 
+			{
+				size_t n = strcspn(p, " ");
+				if ((extNameLen == n) && (strncmp(extName, p, n) == 0)) 
+				{
 					return GL_TRUE;
 				}
 				p += (n + 1);

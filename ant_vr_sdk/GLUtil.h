@@ -15,10 +15,12 @@ namespace jet
 
 			GLVersion() :mojar(0), minor(0), es(false){}
 
-			std::string toString();
-			int toInt();
+			std::string toString() const ;
+			int toInt() const;
+			/*
 			int toGLSLInt();
 			std::string toGLSLString();
+			*/
 		}GLVersion;
 
 		/// Get the current version of the opengl. 

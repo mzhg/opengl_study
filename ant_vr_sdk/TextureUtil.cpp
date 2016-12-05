@@ -2,6 +2,9 @@
 #include "Numeric.h"
 #include "GLUtil.h"
 
+#define STB_IMAGE_IMPLEMENTATION 1
+#include <stb_image.h>
+
 namespace jet
 {
 	namespace util
@@ -129,7 +132,7 @@ namespace jet
 					int depth = pDesc->ArraySize;
 
 					const GLubyte* pFirst = pInitData->pData;
-					for (int i = 0; i < mipLevels; i++)
+					for (GLuint i = 0; i < mipLevels; i++)
 					{
 						if (target == GL_TEXTURE_2D_ARRAY)
 						{
@@ -257,7 +260,7 @@ namespace jet
 						pFirst = pInitData->pData;
 					}
 							
-					for (int i = 0; i < mipLevels; i++)
+					for (GLuint i = 0; i < mipLevels; i++)
 					{
 						if (isCompressed){
 							if (target == GL_TEXTURE_2D_ARRAY)
@@ -336,6 +339,28 @@ namespace jet
 			pOut->m_Texture = textureID;
 			pOut->m_MipLevels = mipLevels;
 			pOut->m_Samples = pDesc->SampleCount;
+		}
+
+		bool TextureUtil::createTexture2DFromFile(const char* filename, Texture2D* pOut, bool flip)
+		{
+			static const int formats[] = { GL_RED, GL_RG, GL_RGB, GL_RGBA };
+			static const int internal_formats[] = { GL_R8, GL_RG8, GL_RGB8, GL_RGBA8 };
+
+			int width, height, cmp;
+			int result = stbi_info(filename, &width, &height, &cmp);
+			if (result == 0)
+			{
+				return false;
+			}
+
+			stbi_set_flip_vertically_on_load(flip);
+			stbi_uc* pData = stbi_load(filename, &width, &height, &cmp, cmp);
+
+			TextureData initData = { pData, formats[cmp - 1], GL_UNSIGNED_BYTE};
+			Texture2DDesc desc = Texture2DDesc( width, height, internal_formats[cmp - 1] );
+			createTexture2D(&desc, &initData, pOut);
+
+			STBI_FREE(pData);
 		}
 
 		GLenum TextureUtil::measureComponent(GLenum internalFormat)

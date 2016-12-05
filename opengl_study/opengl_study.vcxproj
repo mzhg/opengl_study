@@ -73,7 +73,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>../extern/glew-2.0.0/include;../extern/glfw-3.2.1/include;../extern/glm;../Framework;../ant_vr_sdk;$(IncludePath)</IncludePath>
+    <IncludePath>../extern/glew-2.0.0/include;../extern/glfw-3.2.1/include;../extern/glm;../Framework;../extern/stb;../ant_vr_sdk;$(IncludePath)</IncludePath>
     <LibraryPath>../extern/glfw-3.2.1/lib;../extern/glew-2.0.0/lib/x64;../x64/debug;$(LibraryPath)</LibraryPath>
     <LibraryWPath>../extern/extern/glew-2.0.0/bin/x64;$(LibraryWPath)</LibraryWPath>
   </PropertyGroup>
@@ -160,6 +160,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="heightmap.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="testimg_1280x720.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="assets\DrawScenePS.frag" />
+    <None Include="assets\DrawSceneVS.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

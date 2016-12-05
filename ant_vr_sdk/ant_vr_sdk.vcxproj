@@ -67,7 +67,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>../extern/glew-2.0.0/include;../extern/glfw-3.2.1/include;../extern/glm;../Framework;$(IncludePath)</IncludePath>
+    <IncludePath>../extern/glew-2.0.0/include;../extern/glfw-3.2.1/include;../extern/glm;../extern/stb;../Framework;$(IncludePath)</IncludePath>
     <LibraryPath>../extern/glew-2.0.0/lib/x64;../extern/glfw-3.2.1/lib;../debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -165,9 +165,9 @@
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="DefaultScreenSpacePS.frag" />
-    <None Include="DefaultScreenSpaceVS.vert" />
-    <None Include="GuassBlurPS_Template.frag" />
+    <None Include="assets\DefaultScreenSpacePS.frag" />
+    <None Include="assets\DefaultScreenSpaceVS.vert" />
+    <None Include="assets\GuassBlurPS_Template.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

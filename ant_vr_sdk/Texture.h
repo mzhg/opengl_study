@@ -54,6 +54,12 @@ namespace jet
 			GLuint ArraySize;
 			GLuint Format;
 			GLuint SampleCount;
+
+			Texture2DDesc() : Width(0), Height(0), MipLevels(1), ArraySize(1), Format(0), SampleCount(1){}
+			Texture2DDesc(GLint width, GLint height, GLuint format) :
+				Width(width), Height(height), Format(format), MipLevels(1), ArraySize(1), SampleCount(1){}
+			Texture2DDesc(GLint width, GLint height, GLuint format, GLuint mipLevels, GLuint arraySize, GLuint sampleCount):
+				Width(width), Height(height), Format(format), MipLevels(mipLevels), ArraySize(arraySize), SampleCount(sampleCount){}
 		}Texture2DDesc;
 
 		typedef struct TextureData
@@ -68,24 +74,7 @@ namespace jet
 
 		}TextureData;
 
-		bool operator < (const Texture2DDesc& a, const Texture2DDesc& b)
-		{
-#define COMPARE(name)  \
-	if(a.name < b.name) \
-		return true;    \
-																else if (a.name > b.name) \
-		return false;
-
-			COMPARE(Width);
-			COMPARE(Height);
-			COMPARE(MipLevels);
-			COMPARE(ArraySize);
-			COMPARE(Format);
-			COMPARE(SampleCount);
-
-#undef COMPARE
-			return false;
-		}
+		extern bool operator < (const Texture2DDesc& a, const Texture2DDesc& b);
 
 		class Texture2D : public TextureGL
 		{

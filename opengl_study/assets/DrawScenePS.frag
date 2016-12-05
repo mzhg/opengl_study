@@ -1,6 +1,7 @@
 
-#if GL_ES
 
+#if GL_ES
+precision highp float;
 #if __VERSION__  >= 300
 #define ENABLE_VERTEX_ID 1
 #define ENABLE_IN_OUT_FEATURE 1
@@ -18,17 +19,23 @@
 #endif
 
 #if  ENABLE_IN_OUT_FEATURE
-in vec4 ScreenSpaceUV;
+in vec4 vColor;
 out vec4 FragColor;
 #else
-varying vec4 ScreenSpaceUV;
+varying vec4 vColor;
 #define FragColor gl_FragColor
 #define texture  texture2D
 #endif 
 
-uniform sampler2D g_Texture;
+
+uniform vec3 uDiffuseMaterial;
+uniform vec3 uAmbientMaterial;
+
+uniform sampler2D uTex0;
 
 void main()
 {
-	FragColor = texture(g_Texture, ScreenSpaceUV.xy);
+	//float k = uDiffuseMaterial.x + uAmbientMaterial.x;
+	//vec3 col = texture(uTex0, vTexCoord).xyz;
+	FragColor = vColor;
 }
