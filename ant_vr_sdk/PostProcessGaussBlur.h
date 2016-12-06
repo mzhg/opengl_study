@@ -44,17 +44,10 @@ namespace jet
 
 			static PPGuassBlurPS* getGuassBlurPS(int kernelSize);
 
-			static void shutDown()
-			{
-				for (auto it = g_GuassBlurPS.begin(); it != g_GuassBlurPS.end(); it++)
-				{
-					delete it->second;
-				}
-				g_GuassBlurPS.clear();
-			}
+			static void shutDown();
 
 		private:
-			static std::map<int, PPGuassBlurPS*>  g_GuassBlurPS;
+//			static std::map<int, PPGuassBlurPS*>  g_GuassBlurPS;
 		};
 
 	}

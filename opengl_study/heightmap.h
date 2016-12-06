@@ -36,4 +36,5 @@ private:
 
 	GLuint	m_FBO;
 	GLuint  m_ScreenColorTexture;
+	Texture2D* m_SceneColorBuffer;
 };

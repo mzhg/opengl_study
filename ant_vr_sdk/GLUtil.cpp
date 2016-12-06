@@ -65,8 +65,16 @@ namespace jet
 
 		static void ParseGLVersionString(GLVersion* pOut, const char* versionString)
 		{
+			if (versionString == NULL)
+			{
+				assert(false);
+			}
 			size_t length = strlen(versionString);
 			char *pUpperVersionString = (char *)malloc(length + 1);
+			if (pUpperVersionString == NULL)
+			{
+				assert(false);
+			}
 			ToUppercase(pUpperVersionString, versionString);
 			pUpperVersionString[length] = '\0';
 

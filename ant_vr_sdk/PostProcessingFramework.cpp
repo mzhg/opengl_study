@@ -39,12 +39,27 @@ namespace jet
 				TextureUtil::createTexture2D(&pDesc, NULL, pOut);
 
 				out = std::unique_ptr<RenderTarget>(pOut);
+
+//				printf("Create a new RenderTexture: [width, height, format] = [%d, %d, %s]\n", pDesc.Width, pDesc.Height, TextureUtil::getFormatName(pDesc.Format));
 			}
 			else
 			{
 				out = std::move(it->second);
 				m_RenderTargetPool.erase(it);
+
+//				printf("Retrive a RenderTexture From Pool: [width, height, format] = [%d, %d, %s]\n", pDesc.Width, pDesc.Height, TextureUtil::getFormatName(pDesc.Format));
+//				printf("The Total Caches: %d\n", m_RenderTargetPool.size());
 			}
+		}
+
+		void RenderTargetPool::freeUnusedResource(std::unique_ptr<RenderTarget>& in)
+		{
+			Texture2DDesc desc = in->getDesc();
+//			m_RenderTargetPool[desc] = std::move(in);
+			m_RenderTargetPool.insert(std::pair<Texture2DDesc, std::unique_ptr<RenderTarget>>(desc, std::move(in)));
+
+//			printf("Collection a RenderTexture: [width, height, format] = [%d, %d, %s]\n", desc.Width, desc.Height, TextureUtil::getFormatName(desc.Format));
+//			printf("The Total Caches: %d\n", m_RenderTargetPool.size());
 		}
 
 		void PPRenderPass::drawQuad()
@@ -201,15 +216,17 @@ namespace jet
 					}
 				}
 			}
-#else
-			Texture2DDesc* pDesc = m_BindingColorTextureCount > 1 ? &m_BindingColorTextureDesc[0] :
-				m_HaveDepthStencilBinding ? &m_BindingDepthTextureDesc : NULL;
-			if (pDesc != NULL)
-			{
-				viewportWidth = pDesc->Width;
-				viewportHeight = pDesc->Height;
-			}
+			else
 #endif
+			{
+				Texture2DDesc* pDesc = m_BindingColorTextureCount >= 1 ? &m_BindingColorTextureDesc[0] :
+					m_HaveDepthStencilBinding ? &m_BindingDepthTextureDesc : NULL;
+				if (pDesc != NULL)
+				{
+					viewportWidth = pDesc->Width;
+					viewportHeight = pDesc->Height;
+				}
+			}
 			// setup viewport
 			if (m_BindingColorTextureCount > 0 || m_HaveDepthStencilBinding)
 			{
@@ -264,7 +281,7 @@ namespace jet
 			assert(m_InBeginBlock);
 	//		if (!m_IsRendered)
 			{
-				glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+				glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 				m_IsRendered = true;
 			}
 
@@ -309,12 +326,14 @@ namespace jet
 				glBindFramebuffer(GL_FRAMEBUFFER, m_Framebuffer);
 				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, src->getTarget(), src->getTexture(), 0);
 				glDrawBuffer(GL_COLOR_ATTACHMENT0);
+				glViewport(0, 0, dst->getWidth(), dst->getHeight());
 			}
 			else
 			{
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+				glViewport(0, 0, src->getWidth(), src->getHeight());
 			}
-			glViewport(0, 0, dst->getWidth(), dst->getHeight());
+			
 			glDisable(GL_DEPTH_TEST);
 
 			AttribBinding attribs = { "aPosition", 0 };
@@ -334,7 +353,7 @@ namespace jet
 				glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (const void*)0);
 			}
 
-			glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 			if (m_IsSupportVertexArray)
 			{

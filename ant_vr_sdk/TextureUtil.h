@@ -16,8 +16,10 @@ namespace jet
 
 			static void createTexture2D(const Texture2DDesc* pDesc, const TextureData* pInitData, Texture2D* pOut);
 			static bool createTexture2DFromFile(const char* filename, Texture2D* pOut, bool flip = true);
+			static bool createTexture2D(GLint target, GLuint textureID, Texture2D* pOut);
 			static GLenum measureComponent(GLenum internalFormat);
 			static int measureSizePerPixel(GLenum internalFormat);
+			static const char* getFormatName(GLenum internalFormat);
 		};
 	}
 }

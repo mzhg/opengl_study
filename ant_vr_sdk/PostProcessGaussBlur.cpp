@@ -26,7 +26,6 @@ namespace jet
 			AssetLoaderFree(pMainCode);
 			ShaderSourceItem sourceItem = ShaderSourceItem(shaderCode.c_str(), GL_FRAGMENT_SHADER);
 			GLSLProgram::createShaderFromStrings(sourceItem, this);
-
 #if 0
 			m_HalfSizeIndex = getUniformLocation("g_HalfPixelSize", true);
 			assert(m_HalfSizeIndex >= 0);
@@ -57,22 +56,27 @@ namespace jet
 			RenderTargetPool::getInstance()->findFreeElement(inputTexture->getDesc(), tempTexture);
 			PPGuassBlurPS* pixelShader = getGuassBlurPS(parameters.getGaussBlurKernal());
 
+			checkGLError();
 			context->begin();
 			{
 				context->setShader(pixelShader);
 				context->setUniform1i("g_Texture", 0);
-
+				checkGLError();
 				{  // first pass, draw the hori blur to the tempTexture.
 					context->setUniform2f("g_HalfPixelSize", 1.0f / inputTexture->getWidth(), 0);
-
+					checkGLError();
 					glActiveTexture(GL_TEXTURE0);
 					glBindTexture(inputTexture->getTarget(), inputTexture->getTexture());
-
+					checkGLError();
 					const RenderTarget* renderTargets[] = { tempTexture.get() };
 					context->setRenderTargets(1, renderTargets, NULL);
+					checkGLError();
 					context->drawQuad();
+					checkGLError();
 				}
 				
+				checkGLError();
+
 				{
 					context->setUniform2f("g_HalfPixelSize", 0, 1.0f / inputTexture->getHeight());
 
@@ -82,6 +86,8 @@ namespace jet
 					context->setRenderTargets(1, renderTargets, NULL);
 					context->drawQuad();
 				}
+
+				checkGLError();
 				
 			}
 			context->end();
@@ -89,6 +95,8 @@ namespace jet
 			// free the temp texture.
 			RenderTargetPool::getInstance()->freeUnusedResource(tempTexture);
 		}
+
+		static std::map<int, PPGuassBlurPS*> g_GuassBlurPS;
 
 		PPGuassBlurPS* PostProcessGaussBlur::getGuassBlurPS(int kernelSize)
 		{
@@ -103,6 +111,15 @@ namespace jet
 			{
 				return it->second;
 			}
+		}
+
+		void PostProcessGaussBlur::shutDown()
+		{
+			for (auto it = g_GuassBlurPS.begin(); it != g_GuassBlurPS.end(); it++)
+			{
+				delete it->second;
+			}
+			g_GuassBlurPS.clear();
 		}
 	}
 }

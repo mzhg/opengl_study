@@ -64,76 +64,6 @@ namespace jet
 			}
 		}
 
-		template<GLenum Target>
-		void GLSLProgram::createShaderFromStrings(const ShaderSourceItem& item, ShaderProgram<Target>* pOut, bool strict /*= false*/)
-		{
-			assert(Target == item.type);
-
-			GLuint object;
-			GLenum target = Target;
-
-			std::string shaderSource = constructSource(item);
-
-#if ENABLE_PROGRAM_PIPELINE
-			GLVersion version = GetOpenGLVersion();
-			int intVersion = version.toInt();
-
-			if (intVersion >= 410 || (version.es && intVersion >= 310))
-			{
-				object = glCreateShaderProgramv(target, 1, (const GLchar* const*)shaderSource.c_str());
-
-				GLint status;
-				glGetProgramiv(object, GL_LINK_STATUS, &status);
-
-				if (status == 0)
-				{
-					GLint infoLogLength;
-					glGetProgramiv(object, GL_INFO_LOG_LENGTH, &infoLogLength);
-					GLchar* infoLog = new GLchar[infoLogLength + 1];
-					glGetProgramInfoLog(object, infoLogLength, NULL, infoLog);
-
-					printf("Error compiling %s:\n", getShaderName(target));
-					printf("Log: %s\n", infoLog);
-					delete[] infoLog;
-
-					glDeleteProgram(object);
-					object = 0;
-				}
-				
-			}
-			else
-#endif
-			{ // The hardware doesn't support the Program pipeline, so we create shader object instead. 
-				object = glCreateShader(target);
-				glShaderSource(object, 1, (const GLchar* const*)shaderSource.c_str(), 0);
-				glCompileShader(object);
-				if (!checkCompileError(object, target))
-					return ;
-			}
-			
-			if (object != 0)
-			{
-				pOut->m_Program = object;
-			}
-			else
-			{
-				return;
-			}
-		}
-
-		template<GLenum Target>
-		void  GLSLProgram::createShaderFromFile(const char* filename, ShaderProgram<Target>* pOut, GLuint attribLength, const AttribBinding* attribs, bool strict /*= false*/)
-		{
-			int32_t len;
-			char* shaderSrc = AssetLoaderRead(filename, len);
-			ShaderSourceItem item = ShaderSourceItem(shaderSrc, Target);
-			item.attribLength = attribLength;
-			item.attribs = attribs;
-			createShaderFromStrings(item, pOut, strict);
-
-			AssetLoaderFree(shaderSrc);
-		}
-
 		GLSLProgram* GLSLProgram::createFromStrings(const char** vertSrcArray, int32_t vertSrcCount,
 			const char** fragSrcArray, int32_t fragSrcCount, bool strict)
 		{
@@ -520,7 +450,7 @@ namespace jet
 				if (/*(ms_logAllMissing || m_strict) &&*/ !isOptional) {
 					printf
 						(
-						"could not find attribute \"%s\" in program %d",
+						"could not find attribute \"%s\" in program %d\n",
 						attribute,
 						program
 						);
@@ -539,7 +469,7 @@ namespace jet
 				if (/*(ms_logAllMissing || m_strict) &&*/ !isOptional) {
 					printf
 						(
-						"could not find uniform \"%s\" in program %d",
+						"could not find uniform \"%s\" in program %d\n",
 						uniform,
 						program
 						);
@@ -687,61 +617,6 @@ namespace jet
 			return source;
 		}
 
-		template<GLenum Target>
-		void ShaderProgram<Target>::enable() { glUseProgram(m_Program); }
-		template<GLenum Target>
-		void ShaderProgram<Target>::disable(){ glUseProgram(0); }
-
-		/// Returns the index containing the named vertex attribute
-		/// \param[in] uniform the null-terminated string name of the attribute
-		/// \param[in] isOptional if true, the function logs an error if the attribute is not found
-		/// \return the non-negative index of the attribute if found.  -1 if not found
-		template<GLenum Target>
-		GLint ShaderProgram<Target>::getAttribLocation(const char* attribute, bool isOptional /*= false*/)
-		{
-			return _getAttribLocation(m_Program, attribute, isOptional);
-		}
-
-		/// Returns the index containing the named uniform
-		/// \param[in] uniform the null-terminated string name of the uniform
-		/// \param[in] isOptional if true, the function logs an error if the uniform is not found
-		/// \return the non-negative index of the uniform if found.  -1 if not found
-		template<GLenum Target>
-		GLint ShaderProgram<Target>::getUniformLocation(const char* uniform, bool isOptional /*= false*/)
-		{
-			return _getUniformLocation(m_Program, uniform, isOptional);
-		}
-
-		/// Relinks an existing shader program to update based on external changes
-		template<GLenum Target>
-		bool ShaderProgram<Target>::relink()
-		{
-			return _relink(m_Program);
-		}
-
-		template<GLenum Target>
-		void ShaderProgram<Target>::dispose()
-		{
-			if (m_Program == 0) return;
-
-			if (glIsProgram(m_Program))
-			{
-				glDeleteProgram(m_Program);
-			}
-			else if (glIsShader(m_Program))
-			{
-				glDeleteShader(m_Program);
-			}
-
-			m_Program = 0;
-		}
-
-		template<GLenum Target>
-		ShaderProgram<Target>::~ShaderProgram()
-		{
-			dispose();
-		}
-
 #if ENABLE_PROGRAM_PIPELINE
 		class GPUProgramPipeline : public ProgramPipeline
 		{
@@ -765,6 +640,8 @@ namespace jet
 				m_pTE = pTE;
 				m_pGS = pGS;
 
+				m_pCS = NULL;
+
 				if (pVS){ glUseProgramStages(m_ProgramPipeline, GL_VERTEX_SHADER_BIT, pVS->getProgram()); }
 				if (pPS){ glUseProgramStages(m_ProgramPipeline, GL_FRAGMENT_SHADER_BIT, pPS->getProgram()); }
 				if (pTC){ glUseProgramStages(m_ProgramPipeline, GL_TESS_CONTROL_SHADER_BIT, pTC->getProgram()); }
@@ -775,6 +652,12 @@ namespace jet
 			{
 				m_pCS = pCS;
 				if (pCS){ glUseProgramStages(m_ProgramPipeline, GL_COMPUTE_SHADER_BIT, pCS->getProgram()); }
+
+				m_pVS = NULL;
+				m_pPS = NULL;
+				m_pTC = NULL;
+				m_pTE = NULL;
+				m_pGS = NULL;
 			}
 
 			GLuint getProgram() { return 0; }
@@ -835,6 +718,52 @@ namespace jet
 				{
 					glDeleteProgramPipelines(1, &m_ProgramPipeline);
 				}
+			}
+
+			template<GLenum Target>
+			static void _setUniform2f(ShaderProgram<Target>* pShader, const char* name, float x, float y)
+			{
+				if (pShader != NULL)
+				{
+					GLint location = _getUniformLocation(pShader->getProgram(), name, true);
+					if (location >= 0)
+					{
+						glProgramUniform2f(pShader->getProgram(), location, x, y);
+					}
+				}
+			}
+
+			void setUniform2f(const char* name, float x, float y) override
+			{
+				_setUniform2f(m_pVS, name, x, y);
+				_setUniform2f(m_pPS, name, x, y);
+				_setUniform2f(m_pTC, name, x, y);
+				_setUniform2f(m_pTE, name, x, y);
+				_setUniform2f(m_pGS, name, x, y);
+				_setUniform2f(m_pCS, name, x, y);
+			}
+
+			template<GLenum Target>
+			static void _setUniform1i(ShaderProgram<Target>* pShader, const char* name, int v)
+			{
+				if (pShader != NULL)
+				{
+					GLint location = _getUniformLocation(pShader->getProgram(), name, true);
+					if (location >= 0)
+					{
+						glProgramUniform1i(pShader->getProgram(), location, v);
+					}
+				}
+			}
+
+			void setUniform1i(const char* name, int x) override
+			{
+				_setUniform1i(m_pVS, name, x);
+				_setUniform1i(m_pPS, name, x);
+				_setUniform1i(m_pTC, name, x);
+				_setUniform1i(m_pTE, name, x);
+				_setUniform1i(m_pGS, name, x);
+				_setUniform1i(m_pCS, name, x);
 			}
 
 			~GPUProgramPipeline()
@@ -994,13 +923,20 @@ namespace jet
 			void setUniform2f(const char* name, float x, float y) override
 			{
 				GLint location = _getUniformLocation(m_Program, name, false);
-				glUniform2f(location, x, y);
+				if (location >= 0)
+				{
+					glUniform2f(location, x, y);
+				}
+				
 			}
 
 			void setUniform1i(const char* name, int v) override
 			{
 				GLint location = _getUniformLocation(m_Program, name, false);
-				glUniform1i(location, v);
+				if (location >= 0)
+				{
+					glUniform1i(location, v);
+				}
 			}
 
 			void dispose()

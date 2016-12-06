@@ -32,11 +32,7 @@ namespace jet
 			~RenderTargetPool();
 
 			void findFreeElement(const Texture2DDesc& pDesc, std::unique_ptr<RenderTarget>& out);
-			void freeUnusedResource(std::unique_ptr<RenderTarget>& in)
-			{
-				Texture2DDesc desc = in->getDesc();
-				m_RenderTargetPool[desc] = std::move(in);
-			}
+			void freeUnusedResource(std::unique_ptr<RenderTarget>& in);
 
 			static RenderTargetPool* getInstance();
 			static void shutDown();
@@ -45,7 +41,7 @@ namespace jet
 			RenderTargetPool() {}
 			RenderTargetPool(RenderTargetPool&) = delete;
 
-			std::map<Texture2DDesc, std::unique_ptr<RenderTarget>> m_RenderTargetPool;
+			std::multimap<Texture2DDesc, std::unique_ptr<RenderTarget>> m_RenderTargetPool;
 
 			static RenderTargetPool* m_Instance;
 		};
@@ -107,7 +103,7 @@ namespace jet
 		public:
 			void init()
 			{
-				GLSLProgram::createShaderFromFile("DefaultScreenSpaceVS.vert", this);
+				GLSLProgram::createShaderFromFile<GL_VERTEX_SHADER>("DefaultScreenSpaceVS.vert", this);
 			}
 		};
 
@@ -276,6 +272,8 @@ namespace jet
 
 		public:
 
+			PPRenderContext() :m_pDefualtScreenQuadPS(NULL){}
+
 			// The function only called once.
 			void initlizeGL();
 
@@ -326,6 +324,16 @@ namespace jet
 			}
 
 			void renderTo(Texture2D* src, Texture2D* dst);
+			void finalize()
+			{
+				if (!m_RenderPassList.empty())
+				{
+					std::vector<PPRenderPass*> lastPass(1);
+					lastPass[0] = m_RenderPassList.back().get();
+
+					resolveDependencies(lastPass);
+				}
+			}
 
 			void performancePostProcessing();
 

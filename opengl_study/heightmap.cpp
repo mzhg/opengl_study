@@ -11,6 +11,7 @@ typedef struct Rect
 
 void HeightmapDemo::onCreate()
 {
+	m_SceneColorBuffer = new Texture2D();
 	const GLubyte* render = glGetString(GL_RENDERER);
 	const GLubyte* version = glGetString(GL_VERSION);
 	const GLubyte* glslVersion = glGetString(GL_SHADING_LANGUAGE_VERSION);
@@ -29,6 +30,7 @@ void HeightmapDemo::onCreate()
 	CreateAnimatedTrianglesGeometry();
 
 	glEnable(GL_FRAMEBUFFER_SRGB);
+	m_PostProcessing = new PostProcessing();
 }
 
 typedef glm::vec2 float2;
@@ -50,7 +52,6 @@ static const int        g_ATCount = 32;
 static GLsizei          g_ATIndexCount = 0;
 static GLuint     g_ATPositionSlot = 0;
 static GLuint     g_ATColorSlot = 1;
-static GLuint           g_ATVAOVertices = 0;
 static ATVertex         g_ATVerts[g_ATCount * 3];
 
 #define GL_CHECK(x) x
@@ -100,8 +101,8 @@ void HeightmapDemo::CreateAnimatedTrianglesGeometry()
 	// Create the VBO for positions:
 //	DEBUG_PRINT(_L("        - Create the VBO pos"));
 	GLsizei stride = sizeof(ATVertex);
-	GL_CHECK(glGenBuffers(1, &g_ATVAOVertices));
-	GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, g_ATVAOVertices));
+	GL_CHECK(glGenBuffers(1, &m_ATVAOVertices));
+	GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, m_ATVAOVertices));
 	GL_CHECK(glBufferData(GL_ARRAY_BUFFER, sizeof(g_ATVerts), g_ATVerts, GL_DYNAMIC_DRAW));
 	GL_CHECK(glEnableVertexAttribArray(g_ATPositionSlot));
 	GL_CHECK(glVertexAttribPointer(g_ATPositionSlot, 2, GL_FLOAT, GL_FALSE, stride, 0));
@@ -168,7 +169,7 @@ void HeightmapDemo::DrawAnimatedTriangles(double deltaSeconds, bool messWithTheG
 
 	GL_CHECK(m_AnimatedTrianglesProgram->enable());
 	GL_CHECK(glBindVertexArray(m_ATVAO));
-	GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, g_ATVAOVertices));
+	GL_CHECK(glBindBuffer(GL_ARRAY_BUFFER, m_ATVAOVertices));
 	GL_CHECK(glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(g_ATVerts), g_ATVerts));
 	GL_CHECK(glDrawElements(GL_TRIANGLES, g_ATIndexCount, GL_UNSIGNED_INT, 0));
 	GL_CHECK(glUseProgram(0));
@@ -204,6 +205,8 @@ void HeightmapDemo::onResize(GLuint width, GLuint height)
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_ScreenColorTexture, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	TextureUtil::createTexture2D(GL_TEXTURE_2D, m_ScreenColorTexture, m_SceneColorBuffer);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -294,10 +297,28 @@ void HeightmapDemo::onRender()
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	GL_CHECK(glUseProgram(0));
+
+	checkGLError();
+
+	// 4*n - 1
+	m_PostProcessing->addGaussBlur(35);
+	FrameAttribs frameAttribs;
+	frameAttribs.SceneColorBuffer = m_SceneColorBuffer;
+
+	m_PostProcessing->performancePostProcessing(frameAttribs);
+ 	checkGLError();
 }
 
 void HeightmapDemo::onDispose(){
 	printf("onDispose called!!!\n");
+	SAFE_DISPOSE(m_AnimatedTrianglesProgram);
+	SAFE_DISPOSE(mpTestTexture);
+	SAFE_RELEASE_VERTEX_ARRAY(m_ATVAO);
+	SAFE_RELEASE_BUFFER(m_ATVAOVertices);
+	SAFE_RELEASE_FRAMEBUFFER(m_FBO);
+	SAFE_DISPOSE(m_SceneColorBuffer);
+	
+	delete m_PostProcessing;
 }
 
 int main(int argc, char** argv)

@@ -33,6 +33,11 @@ namespace jet
 			
 			// The Output destination, if NULL, will output to the default framebuffer.
 			Texture2D* OutputBuffer;
+
+			FrameAttribs() : Viewport(), ClipRect(), SceneColorBuffer(NULL), SceneDepthBuffer(NULL), OutputBuffer(NULL){}
+			FrameAttribs(PPRectangle viewport, PPRectangle clipRect, Texture2D* sceneColor, Texture2D* sceneDepth, Texture2D* output) :
+				Viewport(viewport), ClipRect(clipRect), SceneColorBuffer(sceneColor), SceneDepthBuffer(sceneDepth), OutputBuffer(output)
+			{}
 		};
 
 		class PostProcessing
@@ -40,112 +45,16 @@ namespace jet
 
 		public:
 			PostProcessing() :m_RenderContext(NULL){}
+			~PostProcessing();
 
-			void addGaussBlur(int kernal)
-			{
-				m_CurrentEffects.insert(GAUSS_BLUR);
-				kernal = Numeric::max(1, kernal);
-				if (kernal % 2 == 0)
-				{
-					kernal++;
-				}
-				m_Parameters.GaussBlur_Kernal = kernal;
-			}
+			void addGaussBlur(int kernal);
 
-			void performancePostProcessing(const FrameAttribs& frameAttribs)
-			{
-				prepare(frameAttribs);
+			void performancePostProcessing(const FrameAttribs& frameAttribs);
 
-				m_RenderContext->performancePostProcessing(/* TODO: don't forget the parameters */);
-
-				// Clear effects for next loop
-				m_CurrentEffects.clear();
-
-				if (!m_AddedRenderPasses.empty())
-				{
-					Texture2D* src = m_AddedRenderPasses.back().get()->getOutput(0);
-					m_RenderContext->renderTo(src, frameAttribs.OutputBuffer);
-				}
-			}
-
-			void shutDown()
-			{
-				if (m_RenderContext != NULL)
-				{
-					m_RenderContext->shutDown();
-					m_RenderContext = NULL;
-				}
-
-				m_AddedRenderPasses.clear();
-				m_CurrentEffects.clear();
-
-				RenderTargetPool::shutDown();
-				PostProcessGaussBlur::shutDown();
-			}
+			void shutDown();
 
 		private:
-			void prepare(const FrameAttribs& frameAttribs)
-			{
-				if (m_RenderContext == NULL)
-				{
-					m_RenderContext = new PPRenderContext();
-					m_RenderContext->initlizeGL();
-				}
-
-				if (m_CurrentEffects.empty())
-				{
-					return;
-				}
-
-
-				if (m_CurrentEffects != m_PrevEffects)
-				{
-					m_AddedRenderPasses.clear();
-					// add the color and depth buffer first.
-					std::shared_ptr<PPRenderPass> sceneColorPass = std::shared_ptr<PPRenderPass>(new PPRenderPassInput(frameAttribs.SceneColorBuffer));
-					std::shared_ptr<PPRenderPass> sceneDepthPass = std::shared_ptr<PPRenderPass>(new PPRenderPassInput(frameAttribs.SceneDepthBuffer, static_cast<uint32_t>(INPUT_DEPTH - INPUT_COLOR0)));
-
-					m_AddedRenderPasses.push_back(sceneColorPass);
-					m_AddedRenderPasses.push_back(sceneDepthPass);
-
-					bool haveGaussBlur = m_CurrentEffects.find(GAUSS_BLUR) != m_CurrentEffects.end();
-
-					std::shared_ptr<PPRenderPass> guassBlurPass = sceneColorPass;
-					if (haveGaussBlur)
-					{
-						PPRenderPass* pGaussBlurPass = new PostProcessGaussBlur();
-						guassBlurPass = std::shared_ptr<PPRenderPass>(pGaussBlurPass);
-						m_AddedRenderPasses.push_back(guassBlurPass);
-						guassBlurPass->setDependency(0, sceneColorPass.get()->getName(), 0);
-					}
-
-					std::map<PassName, int> passDenpendencyCount;
-					const size_t count = m_AddedRenderPasses.size();
-					for (int i = static_cast<int>(count - 1); i > 0; i--)
-					{
-						const std::shared_ptr<PPRenderPass>& pass = m_AddedRenderPasses[i];
-						PPRenderPassDesc desc = pass->getPassDesc();
-						for (uint32_t j = 0; j < desc.InputCount; j++)
-						{
-							if (desc.InputDescs[j].DependencyPass != INPUT_NONE)
-							{
-								passDenpendencyCount[desc.InputDescs[j].DependencyPass] ++;  // TODO, I am not sure....
-							}
-						}
-					}
-
-					for (size_t i = 0; i < count; i++)
-					{
-						PassName name = m_AddedRenderPasses[i]->getName();
-						m_AddedRenderPasses[i]->setDependencies(passDenpendencyCount[name]);
-					}
-
-					m_RenderContext->setRenderPasses(m_AddedRenderPasses);
-
-					m_PrevEffects.clear();
-					m_PrevEffects.insert(m_CurrentEffects.begin(), m_CurrentEffects.end());
-				}
-			}
+			void prepare(const FrameAttribs& frameAttribs);
 
 		private:
 			std::set<PassName> m_CurrentEffects;
