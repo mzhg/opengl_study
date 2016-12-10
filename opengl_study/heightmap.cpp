@@ -301,7 +301,7 @@ void HeightmapDemo::onRender()
 	checkGLError();
 
 	// 4*n - 1
-	m_PostProcessing->addGaussBlur(35);
+//	m_PostProcessing->addGaussBlur(79);
 	FrameAttribs frameAttribs;
 	frameAttribs.SceneColorBuffer = m_SceneColorBuffer;
 

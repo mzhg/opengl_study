@@ -1,5 +1,6 @@
-#include "PostProcessGaussBlur.h"
+#include "PostProcessingGaussBlur.h"
 #include "GaussianBlur.h"
+#include "FileUtil.h"
 
 namespace jet
 {
@@ -25,6 +26,9 @@ namespace jet
 			shaderCode += pMainCode;
 			AssetLoaderFree(pMainCode);
 			ShaderSourceItem sourceItem = ShaderSourceItem(shaderCode.c_str(), GL_FRAGMENT_SHADER);
+//			printf("Guass Blur Shaders:\n %s\n", shaderCode.c_str());
+			FileUtil::saveStringToFile("E:/shaders/guass_blurPS.frag", shaderCode.c_str());
+
 			GLSLProgram::createShaderFromStrings(sourceItem, this);
 #if 0
 			m_HalfSizeIndex = getUniformLocation("g_HalfPixelSize", true);

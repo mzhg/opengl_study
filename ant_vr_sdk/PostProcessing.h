@@ -6,7 +6,7 @@
 #include "PostProcessingFramework.h"
 #include <set>
 
-#include "PostProcessGaussBlur.h"
+#include "PostProcessingGaussBlur.h"
 namespace jet
 {
 	namespace util

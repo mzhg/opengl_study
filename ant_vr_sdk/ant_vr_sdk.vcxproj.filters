@@ -73,7 +73,13 @@
     <ClCompile Include="PostProcessingFramework.cpp">
       <Filter>PostProcessing</Filter>
     </ClCompile>
-    <ClCompile Include="PostProcessGaussBlur.cpp">
+    <ClCompile Include="FileUtil.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessingGaussBlur.cpp">
+      <Filter>PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessingDownsample.cpp">
       <Filter>PostProcessing</Filter>
     </ClCompile>
   </ItemGroup>
@@ -108,11 +114,17 @@
     <ClInclude Include="PostProcessingFramework.h">
       <Filter>PostProcessing</Filter>
     </ClInclude>
-    <ClInclude Include="PostProcessGaussBlur.h">
-      <Filter>PostProcessing</Filter>
-    </ClInclude>
     <ClInclude Include="GaussianBlur.h">
       <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="FileUtil.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcessingGaussBlur.h">
+      <Filter>PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcessingDownsample.h">
+      <Filter>PostProcessing</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -123,6 +135,9 @@
       <Filter>ShaderResources</Filter>
     </None>
     <None Include="assets\GuassBlurPS_Template.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\DownsamplePS.frag">
       <Filter>ShaderResources</Filter>
     </None>
   </ItemGroup>

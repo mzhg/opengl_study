@@ -109,7 +109,7 @@ namespace jet
 					}
 
 					// build the Vertex Array if supported.
-					if (m_IsSupportVertexID)
+					if (m_IsSupportVertexArray)
 					{
 						glBindVertexArray(m_VertexArray);
 						{
@@ -239,6 +239,10 @@ namespace jet
 				glDrawBuffers(m_BindingColorTextureCount, drawbuffers);
 
 				delete[] drawbuffers;
+			}
+			else
+			{
+				glDrawBuffer(GL_NONE);
 			}
 		}
 

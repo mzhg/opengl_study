@@ -164,14 +164,14 @@ inline std::string GenerateGaussShaderKernelWeightsAndOffsets( int kernelSize, b
     if( !workaroundForNoCLikeArrayInitialization )
     {
         if( !forPreprocessorDefine) shaderCode += indent + "//" + eol;
-        shaderCode += indent + "const float gWeights[stepCount] ={" + eol;
+        shaderCode += indent + "const float gWeights[stepCount] =float[stepCount](" + eol;
         for( int i = 0; i < numSamples; i++ )
             shaderCode += indent + stringFormatA( "   %.5f", weights[i] ) + ((i!=(numSamples-1))?(","):("")) + eol;
-        shaderCode += indent + "};"+eol;
-        shaderCode += indent + "const float gOffsets[stepCount] ={"+eol;
+        shaderCode += indent + ");"+eol;
+        shaderCode += indent + "const float gOffsets[stepCount] =float[stepCount]("+eol;
         for( int i = 0; i < numSamples; i++ )
             shaderCode += indent + stringFormatA( "   %.5f", offsets[i] ) + ((i!=(numSamples-1))?(","):("")) + eol;
-        shaderCode += indent + "};" + eol;
+        shaderCode += indent + ");" + eol;
     }
     else
     {

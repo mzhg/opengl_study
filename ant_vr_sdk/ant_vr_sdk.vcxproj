@@ -139,12 +139,14 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="GLSLProgram.cpp" />
     <ClCompile Include="AssetLoaderAndroid.cpp" />
     <ClCompile Include="GLUtil.cpp" />
     <ClCompile Include="Numeric.cpp" />
     <ClCompile Include="NvAssetLoaderWin.cpp" />
-    <ClCompile Include="PostProcessGaussBlur.cpp" />
+    <ClCompile Include="PostProcessingDownsample.cpp" />
+    <ClCompile Include="PostProcessingGaussBlur.cpp" />
     <ClCompile Include="PostProcessing.cpp" />
     <ClCompile Include="PostProcessingFramework.cpp" />
     <ClCompile Include="Texture.cpp" />
@@ -153,11 +155,13 @@
   <ItemGroup>
     <ClInclude Include="AssetLoader.h" />
     <ClInclude Include="Disposeable.h" />
+    <ClInclude Include="FileUtil.h" />
     <ClInclude Include="GaussianBlur.h" />
     <ClInclude Include="GLSLProgram.h" />
     <ClInclude Include="GLUtil.h" />
     <ClInclude Include="Numeric.h" />
-    <ClInclude Include="PostProcessGaussBlur.h" />
+    <ClInclude Include="PostProcessingDownsample.h" />
+    <ClInclude Include="PostProcessingGaussBlur.h" />
     <ClInclude Include="PostProcessing.h" />
     <ClInclude Include="PostProcessingFramework.h" />
     <ClInclude Include="Texture.h" />
@@ -167,6 +171,7 @@
   <ItemGroup>
     <None Include="assets\DefaultScreenSpacePS.frag" />
     <None Include="assets\DefaultScreenSpaceVS.vert" />
+    <None Include="assets\DownsamplePS.frag" />
     <None Include="assets\GuassBlurPS_Template.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
