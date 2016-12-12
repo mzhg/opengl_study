@@ -69,6 +69,9 @@ namespace jet
 #define INPUT_COLOR0 0
 #define INPUT_DEPTH  8
 #define GAUSS_BLUR   9
+#define DOWNSAMPLE   100
+#define BLOOM_SETUP  200
+#define COMBINE      300
 #endif
 
 		struct InputDesc
@@ -86,16 +89,31 @@ namespace jet
 			PassName Name;
 		};
 
+		enum class DownsampleMethod
+		{
+			FASTEST = 0,
+			NORMAL,
+			COMBINED_DEPTH,
+			COUNT
+		};
 
 		class PostProcessingParameters
 		{
 		public:
 			friend class PostProcessing;
 
-			int getGaussBlurKernal() const  { return GaussBlur_Kernal; }
+			inline int getGaussBlurKernal() const  { return GaussBlur_Kernal; }
+			inline DownsampleMethod getDownsampleMethod() const { return Downsample_Method; }
+			inline float getBloomThreshold() const	{ return BloomThreshold; }
+			inline float getExposureScale() const { return ExposureScale; }
+			inline float getBloomIntensity() const { return BloomIntensity; }
 		private:
 
 			int GaussBlur_Kernal;
+			DownsampleMethod Downsample_Method;
+			float BloomThreshold;
+			float ExposureScale;
+			float BloomIntensity;
 		};
 
 		class DefaultScreenQuadVertexShader : public VertexShader
@@ -290,6 +308,7 @@ namespace jet
 				m_Program->setRenderShader(pVertexShader, pPixelShader);
 			}
 
+			void setUniform4f(const char* name, float x, float y, float z, float w) { m_Program->setUniform4f(name, x, y,z,w); }
 			void setUniform2f(const char* name, float x, float y) {m_Program->setUniform2f(name, x,y);}
 			void setUniform1i(const char* name, int x)			  {m_Program->setUniform1i(name, x);}
 #if ENABLE_PROGRAM_PIPELINE

@@ -1,15 +1,64 @@
 
 #include "PostProcessing.h"
+#include "PostProcessingGaussBlur.h"
+#include "PostProcessingDownsample.h"
+#include "PostProcessingBloomSetup.h"
+#include "PostProcessingCombinePass.h"
 
 namespace jet
 {
 	namespace util
 	{
+		bool operator < (const PostProcessing::EffectDesc& a, const PostProcessing::EffectDesc& b)
+		{
+			GEN_LESS_COMPARE(a, b, name);
+			GEN_LESS_COMPARE(a, b, length);
+			if (a.length == 0)
+				return false;
+
+			int cmp = memcmp(a.pData, b.pData, a.length);
+			return cmp < 0;
+		}
+
+		bool operator == (const PostProcessing::EffectDesc& a, const PostProcessing::EffectDesc& b)
+		{
+			if (a.name != b.name || a.length != b.length)
+				return false;
+			
+			return memcmp(a.pData, b.pData, a.length) == 0;
+		}
+
+		bool operator != (const PostProcessing::EffectDesc& a, const PostProcessing::EffectDesc& b)
+		{
+			if (a.name != b.name || a.length != b.length)
+				return true;
+
+			return memcmp(a.pData, b.pData, a.length) != 0;
+		}
+
 		PostProcessing::~PostProcessing() { shutDown(); }
+
+		void PostProcessing::addBloom(float bloomThreshold, float exposureScale, float bloomIntensity)
+		{
+			addGaussBlur(27);
+			m_Parameters.BloomThreshold = Numeric::max(bloomThreshold, 0.25f);
+			m_Parameters.ExposureScale = exposureScale;
+			m_Parameters.BloomIntensity = Numeric::max(bloomIntensity, 0.01f);
+
+			struct BloomDesc
+			{
+				float BloomThreshold;
+				float ExposureScale;
+				float BloomIntensity;
+			};
+
+			BloomDesc* desc = new BloomDesc{ m_Parameters.BloomThreshold, m_Parameters.ExposureScale, m_Parameters.BloomIntensity };
+			m_CurrentEffects.insert(EffectDesc{ PostProcessingEffect::BLOOM, sizeof(BloomDesc), desc});
+		}
 
 		void PostProcessing::addGaussBlur(int kernal)
 		{
-			m_CurrentEffects.insert(GAUSS_BLUR);
+//			m_CurrentEffects.insert(GAUSS_BLUR);
 			if (kernal < 1)
 				// kernel less 1 we could igore the gauss blur.
 				return;
@@ -44,6 +93,30 @@ namespace jet
 			}
 		}
 
+		PostProcessGaussBlur* PostProcessing::createGaussionBlurPass()
+		{
+			assert(m_iGaussionBlurPassCount < 100);
+			return new PostProcessGaussBlur(m_iGaussionBlurPassCount++);
+		}
+
+		PostProcessingBloomSetup* PostProcessing::createBloomSetupPass()
+		{
+			assert(m_iBloomSetupPassCount < 100);
+			return new PostProcessingBloomSetup(m_iBloomSetupPassCount++);
+		}
+
+		PostProcessingCombinePass* PostProcessing::createCombinePass()
+		{
+			assert(m_iCombinePassCount < 100);
+			return new PostProcessingCombinePass(m_iCombinePassCount++);
+		}
+		
+		PostProcessingDownsample* PostProcessing::createDownsamplePass(DownsampleMethod method)
+		{
+			assert(m_iDownsamplePassCount < 100);
+			return new PostProcessingDownsample(method, m_iDownsamplePassCount++);
+		}
+
 		void PostProcessing::shutDown()
 		{
 			if (m_RenderContext != NULL)
@@ -57,6 +130,7 @@ namespace jet
 
 			RenderTargetPool::shutDown();
 			PostProcessGaussBlur::shutDown();
+			PostProcessingDownsample::shutDown();
 		}
 
 		void PostProcessing::prepare(const FrameAttribs& frameAttribs)
@@ -74,8 +148,11 @@ namespace jet
 			}
 
 
-			if (m_CurrentEffects != m_PrevEffects)
+//			if (m_CurrentEffects != m_PrevEffects)
+			if (!Numeric::isEqual(m_CurrentEffects, m_PrevEffects))
 			{
+				checkEffectBits();
+				reset();
 				m_AddedRenderPasses.clear();
 				// add the color and depth buffer first.
 				std::shared_ptr<PPRenderPass> sceneColorPass = std::shared_ptr<PPRenderPass>(new PPRenderPassInput(frameAttribs.SceneColorBuffer));
@@ -84,15 +161,26 @@ namespace jet
 				m_AddedRenderPasses.push_back(sceneColorPass);
 				m_AddedRenderPasses.push_back(sceneDepthPass);
 
-				bool haveGaussBlur = m_CurrentEffects.find(GAUSS_BLUR) != m_CurrentEffects.end();
+				bool haveBloomEffect = isBloomEnabled();
 
-				std::shared_ptr<PPRenderPass> guassBlurPass;
-				if (haveGaussBlur)
-				{
-					PPRenderPass* pGaussBlurPass = new PostProcessGaussBlur();
-					guassBlurPass = std::shared_ptr<PPRenderPass>(pGaussBlurPass);
-					m_AddedRenderPasses.push_back(guassBlurPass);
-					guassBlurPass->setDependency(0, sceneColorPass.get()->getName(), 0);
+				{// Add Bloom Effect
+					// first the Add the downsample Pass.
+					std::shared_ptr<PPRenderPass> downsamplePass = std::shared_ptr<PPRenderPass>(createDownsamplePass(DownsampleMethod::NORMAL));
+					downsamplePass->setDependency(0, sceneColorPass->getName(), 0);
+					m_AddedRenderPasses.push_back(downsamplePass);
+
+					std::shared_ptr<PPRenderPass> bloomSetupPass = std::shared_ptr<PPRenderPass>(createBloomSetupPass());
+					bloomSetupPass->setDependency(0, downsamplePass->getName(), 0);
+					m_AddedRenderPasses.push_back(bloomSetupPass);
+
+					std::shared_ptr<PPRenderPass> gaussionBlurPass = std::shared_ptr<PPRenderPass>(createGaussionBlurPass());
+					gaussionBlurPass->setDependency(0, bloomSetupPass->getName(), 0);
+					m_AddedRenderPasses.push_back(gaussionBlurPass);
+
+					std::shared_ptr<PPRenderPass> combinePass = std::shared_ptr<PPRenderPass>(createCombinePass());
+					combinePass->setDependency(0, sceneColorPass->getName(), 0);
+					combinePass->setDependency(1, gaussionBlurPass->getName(), 0);
+					m_AddedRenderPasses.push_back(combinePass);
 				}
 
 				std::map<PassName, int> passDenpendencyCount;
@@ -120,7 +208,7 @@ namespace jet
 				m_RenderContext->setRenderPasses(m_AddedRenderPasses);
 
 				m_PrevEffects.clear();
-				m_PrevEffects.insert(m_CurrentEffects.begin(), m_CurrentEffects.end());
+				m_PrevEffects.swap(m_CurrentEffects);
 			}
 		}
 	}

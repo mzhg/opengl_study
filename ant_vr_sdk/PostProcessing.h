@@ -6,7 +6,6 @@
 #include "PostProcessingFramework.h"
 #include <set>
 
-#include "PostProcessingGaussBlur.h"
 namespace jet
 {
 	namespace util
@@ -40,6 +39,12 @@ namespace jet
 			{}
 		};
 
+		enum class PostProcessingEffect
+		{
+			BLOOM,
+			COUNT
+		};
+
 		class PostProcessing
 		{
 
@@ -47,6 +52,7 @@ namespace jet
 			PostProcessing() :m_RenderContext(NULL){}
 			~PostProcessing();
 
+			void addBloom(float bloomThreshold = 0.25f, float exposureScale = 1.02f, float bloomIntensity = 1.12f);
 			void addGaussBlur(int kernal);
 
 			void performancePostProcessing(const FrameAttribs& frameAttribs);
@@ -54,16 +60,65 @@ namespace jet
 			void shutDown();
 
 		private:
+			PostProcessing(PostProcessing&) = delete;
 			void prepare(const FrameAttribs& frameAttribs);
+			void checkEffectBits()
+			{
+				memset(m_bEffectBits, 0, sizeof(m_bEffectBits));
+				int first = static_cast<int>(PostProcessingEffect::BLOOM);
+				for (auto it = m_CurrentEffects.begin(); it != m_CurrentEffects.end(); it++)
+				{
+					int idx = static_cast<int>(it->name) -first;
+					m_bEffectBits[idx] = true;
+				}
+			}
+
+			bool isBloomEnabled() const { return m_bEffectBits[static_cast<int>(PostProcessingEffect::BLOOM)]; }
+
+			class PostProcessGaussBlur* createGaussionBlurPass();
+			class PostProcessingBloomSetup* createBloomSetupPass();
+			class PostProcessingCombinePass* createCombinePass();
+			class PostProcessingDownsample* createDownsamplePass(DownsampleMethod method);
+
+			void reset()
+			{
+				m_iDownsamplePassCount = 0;
+				m_iGaussionBlurPassCount = 0;
+				m_iBloomSetupPassCount = 0;
+				m_iCombinePassCount = 0;
+			}
 
 		private:
-			std::set<PassName> m_CurrentEffects;
-			std::set<PassName> m_PrevEffects;
+			struct EffectDesc
+			{
+				PostProcessingEffect name;
+				uint32_t length;  // The length of data
+				void* pData;
+
+				~EffectDesc()
+				{
+					delete pData;
+				}
+			};
+
+			friend bool operator < (const EffectDesc& a, const EffectDesc& b);
+			friend bool operator == (const EffectDesc& a, const EffectDesc& b);
+			friend bool operator != (const EffectDesc& a, const EffectDesc& b);
+
+		private:
+			std::set<EffectDesc> m_CurrentEffects;
+			std::set<EffectDesc> m_PrevEffects;
 
 			std::vector<std::shared_ptr<PPRenderPass>> m_AddedRenderPasses;
 			PostProcessingParameters m_Parameters;
 
+			bool m_bEffectBits[static_cast<int>(PostProcessingEffect::COUNT)];
 			PPRenderContext* m_RenderContext;
+
+			uint32_t m_iDownsamplePassCount;
+			uint32_t m_iGaussionBlurPassCount;
+			uint32_t m_iBloomSetupPassCount;
+			uint32_t m_iCombinePassCount;
 		};
 	}
 }

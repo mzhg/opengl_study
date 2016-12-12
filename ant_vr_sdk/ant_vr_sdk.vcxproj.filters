@@ -82,6 +82,12 @@
     <ClCompile Include="PostProcessingDownsample.cpp">
       <Filter>PostProcessing</Filter>
     </ClCompile>
+    <ClCompile Include="PostProcessingBloomSetup.cpp">
+      <Filter>PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessingCombinePass.cpp">
+      <Filter>PostProcessing</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GLSLProgram.h">
@@ -126,6 +132,12 @@
     <ClInclude Include="PostProcessingDownsample.h">
       <Filter>PostProcessing</Filter>
     </ClInclude>
+    <ClInclude Include="PostProcessingBloomSetup.h">
+      <Filter>PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcessingCombinePass.h">
+      <Filter>PostProcessing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\DefaultScreenSpacePS.frag">
@@ -138,6 +150,12 @@
       <Filter>ShaderResources</Filter>
     </None>
     <None Include="assets\DownsamplePS.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\BloomSetupPS.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\DefaultCombinePS.frag">
       <Filter>ShaderResources</Filter>
     </None>
   </ItemGroup>

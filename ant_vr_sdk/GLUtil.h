@@ -30,6 +30,7 @@ namespace jet
 
 		const char* GetOpenGLVersionString();
 
+		const char* GetGLErrorString(int error_code);
 		void checkGLError();
 
 		class GLUtil

@@ -6,6 +6,7 @@
 #endif
 #include "Numeric.h"
 #include "Util.h"
+#include <map>
 
 namespace jet
 {
@@ -168,8 +169,45 @@ namespace jet
 
 		void checkGLError()
 		{
+#if defined(_DEBUG)||defined(DEBUG)
 			GLenum errorCode = glGetError();
+			if (errorCode != 0)
+			{
+				const char* errorMSG = GetGLErrorString(errorCode);
+				printf_s("GL Error: %s\n", errorMSG);
+			}
 			assert(errorCode == 0);
+#endif
+		}
+
+		const char* GetGLErrorString(int error_code)
+		{
+#define CONVERT_GL_TO_STR(x) {x, #x}
+			static std::map<int, const char*> error_code_to_str = 
+			{
+				CONVERT_GL_TO_STR(GL_NO_ERROR),
+				CONVERT_GL_TO_STR(GL_INVALID_ENUM),
+				CONVERT_GL_TO_STR(GL_INVALID_VALUE),
+				CONVERT_GL_TO_STR(GL_INVALID_OPERATION),
+				CONVERT_GL_TO_STR(GL_INVALID_FRAMEBUFFER_OPERATION),
+				CONVERT_GL_TO_STR(GL_OUT_OF_MEMORY),
+				CONVERT_GL_TO_STR(GL_STACK_UNDERFLOW),
+				CONVERT_GL_TO_STR(GL_STACK_OVERFLOW),
+			};
+
+#undef CONVERT_GL_TO_STR
+
+			auto it = error_code_to_str.find(error_code);
+			if (it != error_code_to_str.end())
+			{
+				return it->second;
+			}
+			else
+			{
+				static char error_msg[40];
+				sprintf_s(error_msg, "No found the error code: %x\n", error_code);
+				return error_msg;
+			}
 		}
 
 		GLUtil::GLUtil()

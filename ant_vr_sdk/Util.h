@@ -15,7 +15,11 @@
 #define CHECK_GL_ERROR
 #endif
 
-
+#define GEN_LESS_COMPARE(a, b, x)  \
+	if(a.x < b.x)\
+		return true; \
+		else if(a.x > b.x)\
+		return false;
 
 #include "Numeric.h"
 

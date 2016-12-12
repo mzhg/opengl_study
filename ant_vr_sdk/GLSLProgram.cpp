@@ -744,6 +744,29 @@ namespace jet
 			}
 
 			template<GLenum Target>
+			static void _setUniform4f(ShaderProgram<Target>* pShader, const char* name, float x, float y, float z, float w)
+			{
+				if (pShader != NULL)
+				{
+					GLint location = _getUniformLocation(pShader->getProgram(), name, true);
+					if (location >= 0)
+					{
+						glProgramUniform4f(pShader->getProgram(), location, x, y, z, w);
+					}
+				}
+			}
+
+			void setUniform4f(const char* name, float x, float y, float z, float w) override
+			{
+				_setUniform4f(m_pVS, name, x, y,z,w);
+				_setUniform4f(m_pPS, name, x, y,z,w);
+				_setUniform4f(m_pTC, name, x, y,z,w);
+				_setUniform4f(m_pTE, name, x, y,z,w);
+				_setUniform4f(m_pGS, name, x, y,z,w);
+				_setUniform4f(m_pCS, name, x, y,z,w);
+			}
+
+			template<GLenum Target>
 			static void _setUniform1i(ShaderProgram<Target>* pShader, const char* name, int v)
 			{
 				if (pShader != NULL)
@@ -918,6 +941,15 @@ namespace jet
 			void disable()
 			{
 				glUseProgram(0);
+			}
+
+			void setUniform4f(const char* name, float x, float y, float z, float w) override
+			{
+				GLint location = _getUniformLocation(m_Program, name, false);
+				if (location >= 0)
+				{
+					glUniform4f(location, x, y, z, w);
+				}
 			}
 
 			void setUniform2f(const char* name, float x, float y) override

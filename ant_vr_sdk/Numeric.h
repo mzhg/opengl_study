@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <set>
 namespace jet
 {
 	namespace util
@@ -21,7 +22,7 @@ namespace jet
 
 			/** Divides two integers and rounds up */
 			template<typename T>
-			static int divideAndRoundUp(int dividend, int divisor)
+			static int divideAndRoundUp(T dividend, T divisor)
 			{
 				return (dividend + divisor - 1) / divisor;
 			}
@@ -38,6 +39,28 @@ namespace jet
 				}
 
 				return -1;
+			}
+
+			template<typename T>
+			static bool isEqual(const std::set<T>& a, const std::set<T>& b)
+			{
+				if (a.size() != b.size()) return false;
+
+				auto a_it = a.begin();
+				auto b_it = b.begin();
+
+				while (a_it != a.end())
+				{
+					if (*a_it != *b_it)
+					{
+						return false;
+					}
+
+					a_it++;
+					b_it++;
+				}
+
+				return true;
 			}
 
 		private:

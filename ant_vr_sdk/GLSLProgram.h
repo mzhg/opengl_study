@@ -231,11 +231,11 @@ namespace jet
 			}
 
 			template<GLenum Target>
-			static void  createShaderFromFile(const char* filename, ShaderProgram<Target>* pOut, bool strict = false)
+			static void  createShaderFromFile(const char* filename, ShaderProgram<Target>* pOut, bool strict = false, uint32_t length = 0, Macro* pMacros = nullptr)
 			{
 				int32_t len;
 				char* shaderSrc = AssetLoaderRead(filename, len);
-				ShaderSourceItem item = ShaderSourceItem(shaderSrc, Target);
+				ShaderSourceItem item = ShaderSourceItem(shaderSrc, Target, length, pMacros);
 //				item.attribLength = attribLength;
 //				item.attribs = attribs;
 				createShaderFromStrings(item, pOut, strict);
@@ -349,6 +349,7 @@ namespace jet
 			// The Program pipeline doesn't need to implemente this because it had performance issue.
 			virtual void setUniform2f(const char* name, float x, float y){};
 			virtual void setUniform1i(const char* name, int v){}
+			virtual void setUniform4f(const char* name, float x, float y, float z, float w){}
 
 			// Noto: Only worked for the non-sperate shader program.
 			void setPreLoadAttribs(int count, const AttribBinding* attribs)

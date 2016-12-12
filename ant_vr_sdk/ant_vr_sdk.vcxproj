@@ -145,6 +145,8 @@
     <ClCompile Include="GLUtil.cpp" />
     <ClCompile Include="Numeric.cpp" />
     <ClCompile Include="NvAssetLoaderWin.cpp" />
+    <ClCompile Include="PostProcessingBloomSetup.cpp" />
+    <ClCompile Include="PostProcessingCombinePass.cpp" />
     <ClCompile Include="PostProcessingDownsample.cpp" />
     <ClCompile Include="PostProcessingGaussBlur.cpp" />
     <ClCompile Include="PostProcessing.cpp" />
@@ -160,6 +162,8 @@
     <ClInclude Include="GLSLProgram.h" />
     <ClInclude Include="GLUtil.h" />
     <ClInclude Include="Numeric.h" />
+    <ClInclude Include="PostProcessingBloomSetup.h" />
+    <ClInclude Include="PostProcessingCombinePass.h" />
     <ClInclude Include="PostProcessingDownsample.h" />
     <ClInclude Include="PostProcessingGaussBlur.h" />
     <ClInclude Include="PostProcessing.h" />
@@ -169,6 +173,8 @@
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="assets\BloomSetupPS.frag" />
+    <None Include="assets\DefaultCombinePS.frag" />
     <None Include="assets\DefaultScreenSpacePS.frag" />
     <None Include="assets\DefaultScreenSpaceVS.vert" />
     <None Include="assets\DownsamplePS.frag" />
