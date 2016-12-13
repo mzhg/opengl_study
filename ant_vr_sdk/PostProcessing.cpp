@@ -4,6 +4,7 @@
 #include "PostProcessingDownsample.h"
 #include "PostProcessingBloomSetup.h"
 #include "PostProcessingCombinePass.h"
+#include "PostProcessingFXAA.h"
 
 namespace jet
 {
@@ -25,7 +26,7 @@ namespace jet
 			if (a.name != b.name || a.length != b.length)
 				return false;
 			
-			return memcmp(a.pData, b.pData, a.length) == 0;
+			return a.length == 0 || memcmp(a.pData, b.pData, a.length) == 0;
 		}
 
 		bool operator != (const PostProcessing::EffectDesc& a, const PostProcessing::EffectDesc& b)
@@ -33,7 +34,7 @@ namespace jet
 			if (a.name != b.name || a.length != b.length)
 				return true;
 
-			return memcmp(a.pData, b.pData, a.length) != 0;
+			return a.length != 0 && memcmp(a.pData, b.pData, a.length) != 0;
 		}
 
 		PostProcessing::~PostProcessing() { shutDown(); }
@@ -54,6 +55,12 @@ namespace jet
 
 			BloomDesc* desc = new BloomDesc{ m_Parameters.BloomThreshold, m_Parameters.ExposureScale, m_Parameters.BloomIntensity };
 			m_CurrentEffects.insert(EffectDesc{ PostProcessingEffect::BLOOM, sizeof(BloomDesc), desc});
+		}
+
+		void PostProcessing::addFXAA(uint32_t quality)
+		{
+			m_Parameters.FXAA_Quality = Numeric::min(6U, quality);
+			m_CurrentEffects.insert(EffectDesc{ PostProcessingEffect::FXAA, 0, 0 });
 		}
 
 		void PostProcessing::addGaussBlur(int kernal)
@@ -82,14 +89,17 @@ namespace jet
 			checkGLError();
 			m_RenderContext->performancePostProcessing(/* TODO: don't forget the parameters */);
 			checkGLError();
-			// Clear effects for next loop
-			m_CurrentEffects.clear();
 
 			if (!m_AddedRenderPasses.empty())
 			{
 				Texture2D* src = m_AddedRenderPasses.back().get()->getOutput(0);
-				m_RenderContext->renderTo(src, frameAttribs.OutputBuffer);
+//				printf("renderTo src Name: %d\n", src->getTexture());
+				m_RenderContext->renderTo(src, frameAttribs.OutputBuffer, frameAttribs.Viewport);
 				m_RenderContext->finalize();
+			}
+			else
+			{
+				m_RenderContext->renderTo(frameAttribs.SceneColorBuffer, frameAttribs.OutputBuffer, frameAttribs.Viewport);
 			}
 		}
 
@@ -117,6 +127,11 @@ namespace jet
 			return new PostProcessingDownsample(method, m_iDownsamplePassCount++);
 		}
 
+		PostProcessingFXAA* PostProcessing::createFXAAPass(uint32_t quality)
+		{
+			return new PostProcessingFXAA(quality);
+		}
+
 		void PostProcessing::shutDown()
 		{
 			if (m_RenderContext != NULL)
@@ -131,6 +146,9 @@ namespace jet
 			RenderTargetPool::shutDown();
 			PostProcessGaussBlur::shutDown();
 			PostProcessingDownsample::shutDown();
+			PostProcessingBloomSetup::shutDown();
+			PostProcessingCombinePass::shutDown();
+			PostProcessingFXAA::shutDown();
 		}
 
 		void PostProcessing::prepare(const FrameAttribs& frameAttribs)
@@ -147,40 +165,65 @@ namespace jet
 				return;
 			}
 
-
+			bool TestPassRepeatBuild = false;
 //			if (m_CurrentEffects != m_PrevEffects)
-			if (!Numeric::isEqual(m_CurrentEffects, m_PrevEffects))
+			if (!Numeric::isEqual(m_CurrentEffects, m_PrevEffects) || TestPassRepeatBuild)
 			{
+				printf("Reconstruct the Pass List\n");
 				checkEffectBits();
 				reset();
 				m_AddedRenderPasses.clear();
+
+				std::shared_ptr<PPRenderPass> last_color_buffer;
 				// add the color and depth buffer first.
 				std::shared_ptr<PPRenderPass> sceneColorPass = std::shared_ptr<PPRenderPass>(new PPRenderPassInput(frameAttribs.SceneColorBuffer));
-				std::shared_ptr<PPRenderPass> sceneDepthPass = std::shared_ptr<PPRenderPass>(new PPRenderPassInput(frameAttribs.SceneDepthBuffer, static_cast<uint32_t>(INPUT_DEPTH - INPUT_COLOR0)));
-
 				m_AddedRenderPasses.push_back(sceneColorPass);
-				m_AddedRenderPasses.push_back(sceneDepthPass);
+				last_color_buffer = sceneColorPass;
+
+				/* We add the depth buffer when we needed.
+				if (frameAttribs.SceneDepthBuffer)
+				{
+					std::shared_ptr<PPRenderPass> sceneDepthPass = std::shared_ptr<PPRenderPass>(new PPRenderPassInput(frameAttribs.SceneDepthBuffer, static_cast<uint32_t>(INPUT_DEPTH - INPUT_COLOR0)));
+					m_AddedRenderPasses.push_back(sceneDepthPass);
+				}
+				*/
 
 				bool haveBloomEffect = isBloomEnabled();
 
+				if(haveBloomEffect)
 				{// Add Bloom Effect
 					// first the Add the downsample Pass.
 					std::shared_ptr<PPRenderPass> downsamplePass = std::shared_ptr<PPRenderPass>(createDownsamplePass(DownsampleMethod::NORMAL));
 					downsamplePass->setDependency(0, sceneColorPass->getName(), 0);
 					m_AddedRenderPasses.push_back(downsamplePass);
-
+//					
+					
 					std::shared_ptr<PPRenderPass> bloomSetupPass = std::shared_ptr<PPRenderPass>(createBloomSetupPass());
 					bloomSetupPass->setDependency(0, downsamplePass->getName(), 0);
 					m_AddedRenderPasses.push_back(bloomSetupPass);
-
+					
+					
 					std::shared_ptr<PPRenderPass> gaussionBlurPass = std::shared_ptr<PPRenderPass>(createGaussionBlurPass());
 					gaussionBlurPass->setDependency(0, bloomSetupPass->getName(), 0);
 					m_AddedRenderPasses.push_back(gaussionBlurPass);
 
+					
 					std::shared_ptr<PPRenderPass> combinePass = std::shared_ptr<PPRenderPass>(createCombinePass());
 					combinePass->setDependency(0, sceneColorPass->getName(), 0);
 					combinePass->setDependency(1, gaussionBlurPass->getName(), 0);
 					m_AddedRenderPasses.push_back(combinePass);
+
+					last_color_buffer = combinePass;
+				}
+
+				// Add FXAA Pass.
+				if (isFXAAEnabled() && m_Parameters.FXAA_Quality)
+				{
+					std::shared_ptr<PPRenderPass> fxaaPass = std::shared_ptr<PPRenderPass>(createFXAAPass(m_Parameters.FXAA_Quality - 1));
+					fxaaPass->setDependency(0, last_color_buffer->getName(), 0);
+					m_AddedRenderPasses.push_back(fxaaPass);
+
+					last_color_buffer = fxaaPass;
 				}
 
 				std::map<PassName, int> passDenpendencyCount;
@@ -193,7 +236,7 @@ namespace jet
 					{
 						if (desc.InputDescs[j].DependencyPass != INPUT_NONE)
 						{
-							passDenpendencyCount[desc.InputDescs[j].DependencyPass] ++;  // TODO, I am not sure....
+							passDenpendencyCount[desc.InputDescs[j].DependencyPass] ++;
 						}
 					}
 				}
@@ -207,8 +250,25 @@ namespace jet
 				m_AddedRenderPasses.back()->setDependencies(1);
 				m_RenderContext->setRenderPasses(m_AddedRenderPasses);
 
+				std::vector<EffectDesc> list = std::vector<EffectDesc>(m_PrevEffects.begin(), m_PrevEffects.end());
+				for (auto it = list.begin(); it != list.end(); it++)
+				{
+					it->release();
+				}
 				m_PrevEffects.clear();
-				m_PrevEffects.swap(m_CurrentEffects);
+				m_PrevEffects.insert(m_CurrentEffects.begin(), m_CurrentEffects.end());
+				m_CurrentEffects.clear();
+			}
+			else
+			{
+				// release the memory allocated from addXXXEffect
+				std::vector<EffectDesc> list = std::vector<EffectDesc>(m_CurrentEffects.begin(), m_CurrentEffects.end());
+				
+				for (auto it = list.begin(); it != list.end(); it++)
+				{
+					it->release();
+				}
+				m_CurrentEffects.clear();
 			}
 		}
 	}

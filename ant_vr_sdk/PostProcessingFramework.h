@@ -72,6 +72,7 @@ namespace jet
 #define DOWNSAMPLE   100
 #define BLOOM_SETUP  200
 #define COMBINE      300
+#define PP_FXAA      1000        
 #endif
 
 		struct InputDesc
@@ -97,6 +98,19 @@ namespace jet
 			COUNT
 		};
 
+		struct PPRectangle
+		{
+			GLint X, Y;
+			GLint Width, Height;
+
+			PPRectangle() : X(0), Y(0), Width(0), Height(0){}
+			PPRectangle(GLint x, GLint y, GLint w, GLint h) :
+				X(x), Y(y), Width(w), Height(h)
+			{}
+
+			bool isValid() { return Width > 0 && Height > 0; }
+		};
+
 		class PostProcessingParameters
 		{
 		public:
@@ -114,6 +128,9 @@ namespace jet
 			float BloomThreshold;
 			float ExposureScale;
 			float BloomIntensity;
+
+			// Range from 0... 6. 0 means off
+			uint32_t FXAA_Quality;
 		};
 
 		class DefaultScreenQuadVertexShader : public VertexShader
@@ -141,7 +158,6 @@ namespace jet
 			friend class PPRenderContext;
 			friend class PostProcessing;
 		protected:
-
 			void set(uint32_t inputCount, uint32_t outputCount)
 			{
 				m_PassDesc.InputCount = inputCount;
@@ -173,9 +189,10 @@ namespace jet
 				return getOutputTexture(idx);
 			}
 
+			/* Release output resource!*/
 			virtual void releaseResource()
 			{
-				int length = m_PassDesc.InputCount;
+				int length = m_PassDesc.OutputCount;
 				for (int i = 0; i < length; i++)
 				{
 					RenderTargetPool::getInstance()->freeUnusedResource(m_PassOutputs[i]);
@@ -335,14 +352,16 @@ namespace jet
 				size_t count = inRenderPasses.size();
 				for (int i = 0; i < count; i++)
 				{
-					std::shared_ptr<PPRenderPass>& pass = inRenderPasses[i];
+					std::shared_ptr<PPRenderPass> pass = inRenderPasses[i];
 
-					m_RenderPasses[pass->getName()] = pass;
+//					m_RenderPasses[pass->getName()] = pass;
+					auto pairValue = std::pair < PassName, std::shared_ptr<PPRenderPass>>(pass->getName(), pass);
+					m_RenderPasses.insert(pairValue);
 					m_RenderPassList.push_back(pass);
 				}
 			}
 
-			void renderTo(Texture2D* src, Texture2D* dst);
+			void renderTo(Texture2D* src, Texture2D* dst, PPRectangle viewport);
 			void finalize()
 			{
 				if (!m_RenderPassList.empty())

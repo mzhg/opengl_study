@@ -128,5 +128,5 @@ void main()
 	// mask 0..1
 	float fBloomAmount = clamp(fBloomLuminance / 2.0, 0.0, 1.0);
 
-	f4FragColor = float4(fBloomAmount * f3LinearColor, f4SceneColor.a);
+	f4FragColor = vec4(fBloomAmount * f3LinearColor, f4SceneColor.a);
 }

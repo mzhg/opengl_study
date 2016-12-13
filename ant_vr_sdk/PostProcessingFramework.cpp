@@ -316,7 +316,7 @@ namespace jet
 			m_InBeginBlock = false;
 		}
 
-		void PPRenderContext::renderTo(Texture2D* src, Texture2D* dst)
+		void PPRenderContext::renderTo(Texture2D* src, Texture2D* dst, PPRectangle viewport)
 		{
 			if (m_pDefualtScreenQuadPS == NULL)
 			{
@@ -324,20 +324,18 @@ namespace jet
 				GLSLProgram::createShaderFromFile("DefaultScreenSpacePS.frag", m_pDefualtScreenQuadPS);
 			}
 
-
 			if (dst != NULL)
 			{
 				glBindFramebuffer(GL_FRAMEBUFFER, m_Framebuffer);
-				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, src->getTarget(), src->getTexture(), 0);
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, dst->getTarget(), dst->getTexture(), 0);
 				glDrawBuffer(GL_COLOR_ATTACHMENT0);
-				glViewport(0, 0, dst->getWidth(), dst->getHeight());
 			}
 			else
 			{
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
-				glViewport(0, 0, src->getWidth(), src->getHeight());
 			}
 			
+			glViewport(viewport.X, viewport.Y, viewport.Width, viewport.Height);
 			glDisable(GL_DEPTH_TEST);
 
 			AttribBinding attribs = { "aPosition", 0 };
@@ -345,6 +343,9 @@ namespace jet
 			m_Program->enable();
 			m_Program->setRenderShader(m_pDefaultScreenQuadVS, m_pDefualtScreenQuadPS);
 			m_Program->setUniform1i("g_Texture", 0);
+
+			glActiveTexture(GL_TEXTURE0);	
+			glBindTexture(src->getTarget(), src->getTexture());
 
 			if (m_IsSupportVertexArray)
 			{

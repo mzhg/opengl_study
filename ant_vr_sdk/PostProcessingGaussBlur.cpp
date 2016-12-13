@@ -38,7 +38,7 @@ namespace jet
 			glUniform1i(textureIndex, 0);
 			disable();
 #endif
-			checkGLError();
+			CHECK_GL_ERROR
 		}
 
 #if 0
@@ -60,26 +60,26 @@ namespace jet
 			RenderTargetPool::getInstance()->findFreeElement(inputTexture->getDesc(), tempTexture);
 			PPGuassBlurPS* pixelShader = getGuassBlurPS(parameters.getGaussBlurKernal());
 
-			checkGLError();
+			CHECK_GL_ERROR
 			context->begin();
 			{
 				context->setShader(pixelShader);
 				context->setUniform1i("g_Texture", 0);
-				checkGLError();
+				CHECK_GL_ERROR
 				{  // first pass, draw the hori blur to the tempTexture.
 					context->setUniform2f("g_HalfPixelSize", 1.0f / inputTexture->getWidth(), 0);
-					checkGLError();
+					CHECK_GL_ERROR
 					glActiveTexture(GL_TEXTURE0);
 					glBindTexture(inputTexture->getTarget(), inputTexture->getTexture());
-					checkGLError();
+					CHECK_GL_ERROR
 					const RenderTarget* renderTargets[] = { tempTexture.get() };
 					context->setRenderTargets(1, renderTargets, NULL);
-					checkGLError();
+					CHECK_GL_ERROR
 					context->drawQuad();
-					checkGLError();
+					CHECK_GL_ERROR
 				}
 				
-				checkGLError();
+				CHECK_GL_ERROR
 
 				{
 					context->setUniform2f("g_HalfPixelSize", 0, 1.0f / inputTexture->getHeight());
@@ -91,7 +91,7 @@ namespace jet
 					context->drawQuad();
 				}
 
-				checkGLError();
+				CHECK_GL_ERROR
 				
 			}
 			context->end();

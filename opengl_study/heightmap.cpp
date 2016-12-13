@@ -290,20 +290,27 @@ void HeightmapDemo::onRender()
 	}
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClearColor(0, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glDisable(GL_DEPTH_TEST);
 
+	/*
 	m_FullScreenQuad->enable();
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, m_ScreenColorTexture);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	GL_CHECK(glUseProgram(0));
-
+	*/
 	checkGLError();
 
 	// 4*n - 1
 //	m_PostProcessing->addGaussBlur(79);
+	m_PostProcessing->addBloom(0.25f);
+	m_PostProcessing->addFXAA(0);
 	FrameAttribs frameAttribs;
 	frameAttribs.SceneColorBuffer = m_SceneColorBuffer;
+	frameAttribs.Viewport = { 0, 0, mWidth, mHeight };
 
 	m_PostProcessing->performancePostProcessing(frameAttribs);
  	checkGLError();

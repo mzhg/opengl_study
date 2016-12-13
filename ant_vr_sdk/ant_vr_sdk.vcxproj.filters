@@ -88,6 +88,9 @@
     <ClCompile Include="PostProcessingCombinePass.cpp">
       <Filter>PostProcessing</Filter>
     </ClCompile>
+    <ClCompile Include="PostProcessingFXAA.cpp">
+      <Filter>PostProcessing</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GLSLProgram.h">
@@ -138,6 +141,9 @@
     <ClInclude Include="PostProcessingCombinePass.h">
       <Filter>PostProcessing</Filter>
     </ClInclude>
+    <ClInclude Include="PostProcessingFXAA.h">
+      <Filter>PostProcessing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\DefaultScreenSpacePS.frag">
@@ -156,6 +162,12 @@
       <Filter>ShaderResources</Filter>
     </None>
     <None Include="assets\DefaultCombinePS.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\fullscreenFXAA.vert">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\fullscreenFXAA.frag">
       <Filter>ShaderResources</Filter>
     </None>
   </ItemGroup>

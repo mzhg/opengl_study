@@ -10,19 +10,6 @@ namespace jet
 {
 	namespace util
 	{
-		struct PPRectangle
-		{
-			GLint X, Y;
-			GLint Width, Height;
-
-			PPRectangle() : X(0), Y(0), Width(0), Height(0){}
-			PPRectangle(GLint x, GLint y, GLint w, GLint h):
-				X(x), Y(y), Width(w), Height(h)
-			{}
-
-			bool isValid() { return Width > 0 && Height > 0; }
-		};
-
 		struct FrameAttribs
 		{
 			PPRectangle Viewport;
@@ -42,6 +29,7 @@ namespace jet
 		enum class PostProcessingEffect
 		{
 			BLOOM,
+			FXAA,
 			COUNT
 		};
 
@@ -53,7 +41,8 @@ namespace jet
 			~PostProcessing();
 
 			void addBloom(float bloomThreshold = 0.25f, float exposureScale = 1.02f, float bloomIntensity = 1.12f);
-			void addGaussBlur(int kernal);
+			// Add the FXAA Antialised, quanlity ranged [0, 6], 0 means off, others are the quality.
+			void addFXAA(uint32_t quality);
 
 			void performancePostProcessing(const FrameAttribs& frameAttribs);
 
@@ -74,11 +63,13 @@ namespace jet
 			}
 
 			bool isBloomEnabled() const { return m_bEffectBits[static_cast<int>(PostProcessingEffect::BLOOM)]; }
+			bool isFXAAEnabled()  const { return m_bEffectBits[static_cast<int>(PostProcessingEffect::FXAA)]; }
 
 			class PostProcessGaussBlur* createGaussionBlurPass();
 			class PostProcessingBloomSetup* createBloomSetupPass();
 			class PostProcessingCombinePass* createCombinePass();
 			class PostProcessingDownsample* createDownsamplePass(DownsampleMethod method);
+			class PostProcessingFXAA* createFXAAPass(uint32_t quality);
 
 			void reset()
 			{
@@ -88,6 +79,7 @@ namespace jet
 				m_iCombinePassCount = 0;
 			}
 
+			void addGaussBlur(int kernal);
 		private:
 			struct EffectDesc
 			{
@@ -95,10 +87,7 @@ namespace jet
 				uint32_t length;  // The length of data
 				void* pData;
 
-				~EffectDesc()
-				{
-					delete pData;
-				}
+				void release() { if (length > 0) delete pData; }
 			};
 
 			friend bool operator < (const EffectDesc& a, const EffectDesc& b);

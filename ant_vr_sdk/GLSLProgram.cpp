@@ -567,7 +567,7 @@ namespace jet
 						continue;
 					}
 
-					macro_string_builder << item.macros[i].key << ' ' << item.macros[i].value;
+					macro_string_builder << "#define " << item.macros[i].key << ' ' << item.macros[i].value << std::endl;
 				}
 			}
 

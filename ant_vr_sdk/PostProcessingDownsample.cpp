@@ -43,7 +43,7 @@ namespace jet
 			PPDownsamplePS* result = g_DwonsamplePS[index];
 			if (result == NULL)
 			{
-				result = new PPDownsamplePS(method);
+				g_DwonsamplePS[index] = result = new PPDownsamplePS(method);
 			}
 
 			return result;
@@ -78,18 +78,18 @@ namespace jet
 			{
 				context->setShader(pShaderPixels);
 				context->setUniform1i("g_Texture", 0);
-				checkGLError();
+				CHECK_GL_ERROR
 				{  
 					context->setUniform2f("g_TexelSize", 1.0f / inputTexture->getWidth(), 1.0f/inputTexture->getHeight());
-					checkGLError();
+					CHECK_GL_ERROR
 					glActiveTexture(GL_TEXTURE0);
 					glBindTexture(inputTexture->getTarget(), inputTexture->getTexture());
-					checkGLError();
+					CHECK_GL_ERROR
 					const RenderTarget* renderTargets[] = { outputTexture };
 					context->setRenderTargets(1, renderTargets, NULL);
-					checkGLError();
+					CHECK_GL_ERROR
 					context->drawQuad();
-					checkGLError();
+					CHECK_GL_ERROR
 				}
 			}
 			context->end();

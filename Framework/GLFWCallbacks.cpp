@@ -20,7 +20,7 @@ namespace jet{
 		{
 			if (g_pGLFWCallback != nullptr)
 			{
-				g_pGLFWCallback->WindowFocus(focused);
+				g_pGLFWCallback->WindowFocus(focused != 0);
 			}
 		}
 
@@ -28,7 +28,7 @@ namespace jet{
 		{
 			if (g_pGLFWCallback != nullptr)
 			{
-				g_pGLFWCallback->WindowIconify(focused);
+				g_pGLFWCallback->WindowIconify(focused!=0);
 			}
 		}
 
@@ -36,7 +36,7 @@ namespace jet{
 		{
 			if (g_pGLFWCallback != nullptr)
 			{
-				g_pGLFWCallback->CursorEnter(focused);
+				g_pGLFWCallback->CursorEnter(focused!=0);
 			}
 		}
 

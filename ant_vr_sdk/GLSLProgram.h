@@ -235,7 +235,7 @@ namespace jet
 			{
 				int32_t len;
 				char* shaderSrc = AssetLoaderRead(filename, len);
-				ShaderSourceItem item = ShaderSourceItem(shaderSrc, Target, length, pMacros);
+				ShaderSourceItem item = ShaderSourceItem(shaderSrc, Target, length, pMacros, GetOpenGLVersion().toInt());
 //				item.attribLength = attribLength;
 //				item.attribs = attribs;
 				createShaderFromStrings(item, pOut, strict);

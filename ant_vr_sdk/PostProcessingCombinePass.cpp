@@ -45,18 +45,18 @@ namespace jet
 				context->setUniform1i("g_Texture0", 0);
 				context->setUniform1i("g_Texture1", 1);
 				context->setUniform2f("g_f2Intensity", 1.0f, parameters.getBloomIntensity());
-				checkGLError();
+				CHECK_GL_ERROR
 				{
 					glActiveTexture(GL_TEXTURE0);
 					glBindTexture(inputTexture0->getTarget(), inputTexture0->getTexture());
 					glActiveTexture(GL_TEXTURE1);
 					glBindTexture(inputTexture1->getTarget(), inputTexture1->getTexture());
-					checkGLError();
+					CHECK_GL_ERROR
 					const RenderTarget* renderTargets[] = { outputTexture };
 					context->setRenderTargets(1, renderTargets, NULL);
-					checkGLError();
+					CHECK_GL_ERROR
 					context->drawQuad();
-					checkGLError();
+					CHECK_GL_ERROR
 
 					glBindTexture(inputTexture1->getTarget(), 0);
 					glActiveTexture(GL_TEXTURE0);

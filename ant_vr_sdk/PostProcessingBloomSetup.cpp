@@ -42,18 +42,18 @@ namespace jet
 			{
 				context->setShader(pShaderPixels);
 				context->setUniform1i("g_Texture", 0);
-				checkGLError();
+				CHECK_GL_ERROR
 				{
 					context->setUniform2f("f2BloomThreshold", parameters.getBloomThreshold(), parameters.getExposureScale());
-					checkGLError();
+					CHECK_GL_ERROR
 					glActiveTexture(GL_TEXTURE0);
 					glBindTexture(inputTexture->getTarget(), inputTexture->getTexture());
-					checkGLError();
+					CHECK_GL_ERROR
 					const RenderTarget* renderTargets[] = { outputTexture };
 					context->setRenderTargets(1, renderTargets, NULL);
-					checkGLError();
+					CHECK_GL_ERROR
 					context->drawQuad();
-					checkGLError();
+					CHECK_GL_ERROR
 				}
 			}
 			context->end();
