@@ -152,6 +152,10 @@
     <ClCompile Include="PostProcessingGaussBlur.cpp" />
     <ClCompile Include="PostProcessing.cpp" />
     <ClCompile Include="PostProcessingFramework.cpp" />
+    <ClCompile Include="PostProcessingStaticMotionBlur.cpp" />
+    <ClCompile Include="SampleApp.cpp" />
+    <ClCompile Include="SampleColorTriangle.cpp" />
+    <ClCompile Include="SampleTunnel.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureUtil.cpp" />
   </ItemGroup>
@@ -170,6 +174,10 @@
     <ClInclude Include="PostProcessingGaussBlur.h" />
     <ClInclude Include="PostProcessing.h" />
     <ClInclude Include="PostProcessingFramework.h" />
+    <ClInclude Include="PostProcessingStaticMotionBlur.h" />
+    <ClInclude Include="SampleApp.h" />
+    <ClInclude Include="SampleColorTriangle.h" />
+    <ClInclude Include="SampleTunnel.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureUtil.h" />
     <ClInclude Include="Util.h" />
@@ -183,6 +191,9 @@
     <None Include="assets\fullscreenFXAA.frag" />
     <None Include="assets\fullscreenFXAA.vert" />
     <None Include="assets\GuassBlurPS_Template.frag" />
+    <None Include="assets\DynamicMotionblurES2.frag" />
+    <None Include="assets\DynamicMotionblurES2.vert" />
+    <None Include="assets\StaticSceneMotionBlur.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -49,7 +49,7 @@ namespace jet
 
 			context->begin();
 			{
-				context->setShader(pShaderPixels, pShaderVertex);
+				context->setShader(pShaderVertex, pShaderPixels);
 				context->setUniform1i("g_Texture", 0);
 				CHECK_GL_ERROR
 				{

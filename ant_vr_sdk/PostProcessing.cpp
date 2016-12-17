@@ -5,6 +5,7 @@
 #include "PostProcessingBloomSetup.h"
 #include "PostProcessingCombinePass.h"
 #include "PostProcessingFXAA.h"
+#include "PostProcessingStaticMotionBlur.h"
 
 namespace jet
 {
@@ -53,14 +54,22 @@ namespace jet
 				float BloomIntensity;
 			};
 
-			BloomDesc* desc = new BloomDesc{ m_Parameters.BloomThreshold, m_Parameters.ExposureScale, m_Parameters.BloomIntensity };
-			m_CurrentEffects.insert(EffectDesc{ PostProcessingEffect::BLOOM, sizeof(BloomDesc), desc});
+//			BloomDesc* desc = new BloomDesc{ m_Parameters.BloomThreshold, m_Parameters.ExposureScale, m_Parameters.BloomIntensity };
+//			m_CurrentEffects.insert(EffectDesc{ PostProcessingEffect::BLOOM, sizeof(BloomDesc), desc});
+			m_CurrentEffects.insert(EffectDesc{ PostProcessingEffect::BLOOM, 0, 0 });
 		}
 
 		void PostProcessing::addFXAA(uint32_t quality)
 		{
 			m_Parameters.FXAA_Quality = Numeric::min(6U, quality);
 			m_CurrentEffects.insert(EffectDesc{ PostProcessingEffect::FXAA, 0, 0 });
+		}
+
+		void PostProcessing::addStaticMotionBlur(glm::mat4 previouseViewProj, glm::mat4 viewProjInverse)
+		{
+			m_Parameters.PreviouseViewProjection = previouseViewProj;
+			m_Parameters.ViewProjectionInverse = viewProjInverse;
+			m_CurrentEffects.insert(EffectDesc{ PostProcessingEffect::STATIC_MOTION_BLUR, 0, 0 });
 		}
 
 		void PostProcessing::addGaussBlur(int kernal)
@@ -132,6 +141,11 @@ namespace jet
 			return new PostProcessingFXAA(quality);
 		}
 
+		PostProcessingStaticMotionBlur* PostProcessing::createStaticMotionBlurPass(uint32_t inputCount)
+		{
+			return new PostProcessingStaticMotionBlur(inputCount);
+		}
+
 		void PostProcessing::shutDown()
 		{
 			if (m_RenderContext != NULL)
@@ -149,6 +163,7 @@ namespace jet
 			PostProcessingBloomSetup::shutDown();
 			PostProcessingCombinePass::shutDown();
 			PostProcessingFXAA::shutDown();
+			PostProcessingStaticMotionBlur::shutDown();
 		}
 
 		void PostProcessing::prepare(const FrameAttribs& frameAttribs)
@@ -169,47 +184,62 @@ namespace jet
 //			if (m_CurrentEffects != m_PrevEffects)
 			if (!Numeric::isEqual(m_CurrentEffects, m_PrevEffects) || TestPassRepeatBuild)
 			{
+				typedef std::shared_ptr<PPRenderPass> RenderPass;
 				printf("Reconstruct the Pass List\n");
 				checkEffectBits();
 				reset();
 				m_AddedRenderPasses.clear();
 
-				std::shared_ptr<PPRenderPass> last_color_buffer;
+				RenderPass last_color_buffer;
+				RenderPass sceneDepthPass;
 				// add the color and depth buffer first.
-				std::shared_ptr<PPRenderPass> sceneColorPass = std::shared_ptr<PPRenderPass>(new PPRenderPassInput(frameAttribs.SceneColorBuffer));
+				RenderPass sceneColorPass = RenderPass(new PPRenderPassInput(frameAttribs.SceneColorBuffer));
 				m_AddedRenderPasses.push_back(sceneColorPass);
 				last_color_buffer = sceneColorPass;
 
-				/* We add the depth buffer when we needed.
-				if (frameAttribs.SceneDepthBuffer)
+				const bool haveMotionBlur = isStaticMotionBlurEnabled();
+
+				if (haveMotionBlur && frameAttribs.SceneDepthBuffer)
 				{
-					std::shared_ptr<PPRenderPass> sceneDepthPass = std::shared_ptr<PPRenderPass>(new PPRenderPassInput(frameAttribs.SceneDepthBuffer, static_cast<uint32_t>(INPUT_DEPTH - INPUT_COLOR0)));
+					sceneDepthPass = RenderPass(new PPRenderPassInput(frameAttribs.SceneDepthBuffer, static_cast<uint32_t>(INPUT_DEPTH - INPUT_COLOR0)));
 					m_AddedRenderPasses.push_back(sceneDepthPass);
 				}
-				*/
+				
+				if (haveMotionBlur && (frameAttribs.ColorDepthCombined || frameAttribs.SceneDepthBuffer != NULL))
+				{
+					RenderPass staticMotionBlurPass = RenderPass(createStaticMotionBlurPass(frameAttribs.ColorDepthCombined ? 1 : 2));
+					staticMotionBlurPass->setDependency(0, last_color_buffer->getName(), 0);
+					if (!frameAttribs.ColorDepthCombined)
+					{
+						staticMotionBlurPass->setDependency(1, sceneDepthPass->getName(), 0);
+					}
+					m_AddedRenderPasses.push_back(staticMotionBlurPass);
 
-				bool haveBloomEffect = isBloomEnabled();
+					last_color_buffer = staticMotionBlurPass;
+				}
+
+				const bool haveBloomEffect = isBloomEnabled();
 
 				if(haveBloomEffect)
 				{// Add Bloom Effect
 					// first the Add the downsample Pass.
-					std::shared_ptr<PPRenderPass> downsamplePass = std::shared_ptr<PPRenderPass>(createDownsamplePass(DownsampleMethod::NORMAL));
-					downsamplePass->setDependency(0, sceneColorPass->getName(), 0);
+					RenderPass downsamplePass = RenderPass(createDownsamplePass(DownsampleMethod::NORMAL));
+					downsamplePass->setDependency(0, last_color_buffer->getName(), 0);
 					m_AddedRenderPasses.push_back(downsamplePass);
 //					
 					
-					std::shared_ptr<PPRenderPass> bloomSetupPass = std::shared_ptr<PPRenderPass>(createBloomSetupPass());
+					RenderPass bloomSetupPass = RenderPass(createBloomSetupPass());
 					bloomSetupPass->setDependency(0, downsamplePass->getName(), 0);
 					m_AddedRenderPasses.push_back(bloomSetupPass);
 					
 					
-					std::shared_ptr<PPRenderPass> gaussionBlurPass = std::shared_ptr<PPRenderPass>(createGaussionBlurPass());
+					RenderPass gaussionBlurPass = RenderPass(createGaussionBlurPass());
 					gaussionBlurPass->setDependency(0, bloomSetupPass->getName(), 0);
 					m_AddedRenderPasses.push_back(gaussionBlurPass);
 
 					
-					std::shared_ptr<PPRenderPass> combinePass = std::shared_ptr<PPRenderPass>(createCombinePass());
-					combinePass->setDependency(0, sceneColorPass->getName(), 0);
+					RenderPass combinePass = RenderPass(createCombinePass());
+					combinePass->setDependency(0, last_color_buffer->getName(), 0);
 					combinePass->setDependency(1, gaussionBlurPass->getName(), 0);
 					m_AddedRenderPasses.push_back(combinePass);
 
@@ -219,7 +249,7 @@ namespace jet
 				// Add FXAA Pass.
 				if (isFXAAEnabled() && m_Parameters.FXAA_Quality)
 				{
-					std::shared_ptr<PPRenderPass> fxaaPass = std::shared_ptr<PPRenderPass>(createFXAAPass(m_Parameters.FXAA_Quality - 1));
+					RenderPass fxaaPass = RenderPass(createFXAAPass(m_Parameters.FXAA_Quality - 1));
 					fxaaPass->setDependency(0, last_color_buffer->getName(), 0);
 					m_AddedRenderPasses.push_back(fxaaPass);
 

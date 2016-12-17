@@ -12,7 +12,7 @@ namespace jet
 			PostProcessingBloomSetup(uint32_t offset = 0);
 			~PostProcessingBloomSetup();
 
-			virtual void process(PPRenderContext* context, const PostProcessingParameters& parameters);
+			virtual void process(PPRenderContext* context, const PostProcessingParameters& parameters) override;
 
 			virtual void drawQuad(){}
 

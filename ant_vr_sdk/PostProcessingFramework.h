@@ -11,6 +11,7 @@
 #include "GLSLProgram.h"
 #include "AssetLoader.h"
 #include "GLUtil.h"
+#include <glm.hpp>
 
 namespace jet
 {
@@ -40,6 +41,7 @@ namespace jet
 		private:
 			RenderTargetPool() {}
 			RenderTargetPool(RenderTargetPool&) = delete;
+			RenderTargetPool operator=(RenderTargetPool&) = delete;
 
 			std::multimap<Texture2DDesc, std::unique_ptr<RenderTarget>> m_RenderTargetPool;
 
@@ -73,6 +75,8 @@ namespace jet
 #define BLOOM_SETUP  200
 #define COMBINE      300
 #define PP_FXAA      1000        
+#define PP_STATIC_MOTION_BLUR   1001
+#define PP_DYNAMIC_MOTION_BLUR  1002
 #endif
 
 		struct InputDesc
@@ -121,6 +125,8 @@ namespace jet
 			inline float getBloomThreshold() const	{ return BloomThreshold; }
 			inline float getExposureScale() const { return ExposureScale; }
 			inline float getBloomIntensity() const { return BloomIntensity; }
+			inline const glm::mat4& getPreviouseViewProjection() const { return PreviouseViewProjection; }
+			inline const glm::mat4& getViewProjectionInverse() const { return ViewProjectionInverse; }
 		private:
 
 			int GaussBlur_Kernal;
@@ -131,6 +137,9 @@ namespace jet
 
 			// Range from 0... 6. 0 means off
 			uint32_t FXAA_Quality;
+
+			glm::mat4 PreviouseViewProjection;
+			glm::mat4 ViewProjectionInverse;
 		};
 
 		class DefaultScreenQuadVertexShader : public VertexShader
@@ -314,20 +323,26 @@ namespace jet
 
 			void begin();
 
-			void setShader(PixelShader* pPixelShader, VertexShader* pVertexShader = NULL)
+			void setShader(PixelShader* pPixelShader)
 			{
 				assert(m_InBeginBlock);
-				if (pVertexShader == NULL)
-				{
-					pVertexShader = m_pDefaultScreenQuadVS;
-				}
+		
+				m_Program->setRenderShader(m_pDefaultScreenQuadVS, pPixelShader);
+			}
 
+			void setShader(VertexShader* pVertexShader, PixelShader* pPixelShader)
+			{
+				assert(m_InBeginBlock);
 				m_Program->setRenderShader(pVertexShader, pPixelShader);
 			}
 
 			void setUniform4f(const char* name, float x, float y, float z, float w) { m_Program->setUniform4f(name, x, y,z,w); }
 			void setUniform2f(const char* name, float x, float y) {m_Program->setUniform2f(name, x,y);}
 			void setUniform1i(const char* name, int x)			  {m_Program->setUniform1i(name, x);}
+			void setUniformMatrix4(const char* name, uint32_t count, bool transpose, const float* pMats)
+			{
+				m_Program->setUniformMatrix4(name, count, transpose, pMats);
+			}
 #if ENABLE_PROGRAM_PIPELINE
 			void setActiveShader(GLenum target) { m_Program->setActiveShader(target); }
 #endif
@@ -352,11 +367,11 @@ namespace jet
 				size_t count = inRenderPasses.size();
 				for (int i = 0; i < count; i++)
 				{
-					std::shared_ptr<PPRenderPass> pass = inRenderPasses[i];
+					std::shared_ptr<PPRenderPass>& pass = inRenderPasses[i];
 
-//					m_RenderPasses[pass->getName()] = pass;
-					auto pairValue = std::pair < PassName, std::shared_ptr<PPRenderPass>>(pass->getName(), pass);
-					m_RenderPasses.insert(pairValue);
+					m_RenderPasses[pass->getName()] = pass;
+//					auto pairValue = std::pair < PassName, std::shared_ptr<PPRenderPass>>(pass->getName(), pass);
+//					m_RenderPasses.insert(pairValue);
 					m_RenderPassList.push_back(pass);
 				}
 			}

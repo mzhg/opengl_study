@@ -41,6 +41,9 @@
     <Filter Include="ShaderResources">
       <UniqueIdentifier>{5dc9d967-2a00-4689-86c5-d08740e9b61f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Samples">
+      <UniqueIdentifier>{d47fa0d7-afcf-4e19-9afa-0bc3742579c5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -90,6 +93,18 @@
     </ClCompile>
     <ClCompile Include="PostProcessingFXAA.cpp">
       <Filter>PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessingStaticMotionBlur.cpp">
+      <Filter>PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="SampleColorTriangle.cpp">
+      <Filter>Samples</Filter>
+    </ClCompile>
+    <ClCompile Include="SampleApp.cpp">
+      <Filter>Samples</Filter>
+    </ClCompile>
+    <ClCompile Include="SampleTunnel.cpp">
+      <Filter>Samples</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -144,6 +159,18 @@
     <ClInclude Include="PostProcessingFXAA.h">
       <Filter>PostProcessing</Filter>
     </ClInclude>
+    <ClInclude Include="PostProcessingStaticMotionBlur.h">
+      <Filter>PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="SampleColorTriangle.h">
+      <Filter>Samples</Filter>
+    </ClInclude>
+    <ClInclude Include="SampleApp.h">
+      <Filter>Samples</Filter>
+    </ClInclude>
+    <ClInclude Include="SampleTunnel.h">
+      <Filter>Samples</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\DefaultScreenSpacePS.frag">
@@ -168,6 +195,15 @@
       <Filter>ShaderResources</Filter>
     </None>
     <None Include="assets\fullscreenFXAA.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\StaticSceneMotionBlur.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\DynamicMotionblurES2.vert">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\DynamicMotionblurES2.frag">
       <Filter>ShaderResources</Filter>
     </None>
   </ItemGroup>

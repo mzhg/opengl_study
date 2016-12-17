@@ -121,6 +121,9 @@ bool AssetLoaderFileExists(const char *filePath) {
 
 AssetFilePtr AssetLoaderOpenFile(const char* name) {
     FILE *fp = NULL;
+	if ((fopen_s(&fp, name, "rb") == 0) || (fp != NULL))
+		return (AssetFilePtr)fp;
+
     // loop N times up the hierarchy, testing at each level
     std::string upPath;
     std::string fullPath;

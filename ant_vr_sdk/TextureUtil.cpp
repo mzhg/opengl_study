@@ -352,6 +352,7 @@ namespace jet
 			int result = stbi_info(filename, &width, &height, &cmp);
 			if (result == 0)
 			{
+				fprintf(stderr, "Error Occured when open image file: %s\n", filename);
 				return false;
 			}
 
@@ -404,20 +405,26 @@ namespace jet
 			result.m_Texture = textureID;
 
 			bool immutableFormat = glGetTexParameteri(target, GL_TEXTURE_IMMUTABLE_FORMAT) != 0;
-			if (immutableFormat){
+			if (immutableFormat)
+			{
 				result.m_MipLevels = glGetTexParameteri(target, GL_TEXTURE_VIEW_NUM_LEVELS);
 				result.m_ArraySize = glGetTexParameteri(target, GL_TEXTURE_VIEW_NUM_LAYERS);
-				if (result.m_MipLevels == 0){
+				if (result.m_MipLevels == 0)
+				{
 					result.m_MipLevels = glGetTexParameteri(target, GL_TEXTURE_IMMUTABLE_LEVELS);
 				}
 			}
-			else{
+			else
+			{
 				result.m_ArraySize = glGetTexLevelParameteri(target, 0, GL_TEXTURE_DEPTH);
-				if (result.m_Width > 0){
+				if (result.m_Width > 0)
+				{
 					int level = 1;
-					while (true){
+					while (true)
+					{
 						int width = glGetTexLevelParameteri(target, level, GL_TEXTURE_WIDTH);
-						if (width == 0){
+						if (width == 0)
+						{
 							break;
 						}
 
@@ -513,6 +520,8 @@ namespace jet
 			case GL_DEPTH24_STENCIL8:
 			case GL_DEPTH32F_STENCIL8:
 				return GL_DEPTH_STENCIL;
+			case GL_STENCIL_INDEX8:
+				return GL_STENCIL;
 			case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
 			case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
 			case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
@@ -684,7 +693,7 @@ namespace jet
 			else
 			{
 				static const char* UNKOWN_FORMAT = "UNKOWN_FORMAT";
-				printf("TextureUtil::getFormatName, unkown internalformat: %d\n", internalFormat);
+				fprintf(stderr, "TextureUtil::getFormatName, unkown internalformat: %d\n", internalFormat);
 				return UNKOWN_FORMAT;
 			}
 		}

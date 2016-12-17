@@ -19,10 +19,11 @@ namespace jet
 			
 			// The Output destination, if NULL, will output to the default framebuffer.
 			Texture2D* OutputBuffer;
+			bool ColorDepthCombined;
 
-			FrameAttribs() : Viewport(), ClipRect(), SceneColorBuffer(NULL), SceneDepthBuffer(NULL), OutputBuffer(NULL){}
-			FrameAttribs(PPRectangle viewport, PPRectangle clipRect, Texture2D* sceneColor, Texture2D* sceneDepth, Texture2D* output) :
-				Viewport(viewport), ClipRect(clipRect), SceneColorBuffer(sceneColor), SceneDepthBuffer(sceneDepth), OutputBuffer(output)
+			FrameAttribs() : Viewport(), ClipRect(), SceneColorBuffer(NULL), SceneDepthBuffer(NULL), OutputBuffer(NULL), ColorDepthCombined(false){}
+			FrameAttribs(PPRectangle viewport, PPRectangle clipRect, Texture2D* sceneColor, Texture2D* sceneDepth, Texture2D* output, bool colorDepthCombined) :
+				Viewport(viewport), ClipRect(clipRect), SceneColorBuffer(sceneColor), SceneDepthBuffer(sceneDepth), OutputBuffer(output), ColorDepthCombined(colorDepthCombined)
 			{}
 		};
 
@@ -30,6 +31,7 @@ namespace jet
 		{
 			BLOOM,
 			FXAA,
+			STATIC_MOTION_BLUR,
 			COUNT
 		};
 
@@ -43,6 +45,8 @@ namespace jet
 			void addBloom(float bloomThreshold = 0.25f, float exposureScale = 1.02f, float bloomIntensity = 1.12f);
 			// Add the FXAA Antialised, quanlity ranged [0, 6], 0 means off, others are the quality.
 			void addFXAA(uint32_t quality);
+
+			void addStaticMotionBlur(glm::mat4 previouseViewProj, glm::mat4 viewProjInverse);
 
 			void performancePostProcessing(const FrameAttribs& frameAttribs);
 
@@ -64,12 +68,14 @@ namespace jet
 
 			bool isBloomEnabled() const { return m_bEffectBits[static_cast<int>(PostProcessingEffect::BLOOM)]; }
 			bool isFXAAEnabled()  const { return m_bEffectBits[static_cast<int>(PostProcessingEffect::FXAA)]; }
+			bool isStaticMotionBlurEnabled() const { return m_bEffectBits[static_cast<int>(PostProcessingEffect::STATIC_MOTION_BLUR)]; }
 
 			class PostProcessGaussBlur* createGaussionBlurPass();
 			class PostProcessingBloomSetup* createBloomSetupPass();
 			class PostProcessingCombinePass* createCombinePass();
 			class PostProcessingDownsample* createDownsamplePass(DownsampleMethod method);
 			class PostProcessingFXAA* createFXAAPass(uint32_t quality);
+			class PostProcessingStaticMotionBlur* createStaticMotionBlurPass(uint32_t inputCount);
 
 			void reset()
 			{

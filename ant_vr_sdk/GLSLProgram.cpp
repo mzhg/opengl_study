@@ -789,6 +789,29 @@ namespace jet
 				_setUniform1i(m_pCS, name, x);
 			}
 
+			template<GLenum Target>
+			static void _setUniformMatrix4(ShaderProgram<Target>* pShader, const char* name, uint32_t count, bool transpose, const float* pMats)
+			{
+				if (pShader != NULL)
+				{
+					GLint location = _getUniformLocation(pShader->getProgram(), name, true);
+					if (location >= 0)
+					{
+						glProgramUniformMatrix4fv(pShader->getProgram(), location, count, transpose, pMats);
+					}
+				}
+			}
+
+			void setUniformMatrix4(const char* name, uint32_t count, bool transpose, const float* pMats) override
+			{
+				_setUniformMatrix4(m_pVS, name, count, transpose, pMats);
+				_setUniformMatrix4(m_pPS, name, count, transpose, pMats);
+				_setUniformMatrix4(m_pTC, name, count, transpose, pMats);
+				_setUniformMatrix4(m_pTE, name, count, transpose, pMats);
+				_setUniformMatrix4(m_pGS, name, count, transpose, pMats);
+				_setUniformMatrix4(m_pCS, name, count, transpose, pMats);
+			}
+
 			~GPUProgramPipeline()
 			{
 				dispose();
@@ -959,7 +982,6 @@ namespace jet
 				{
 					glUniform2f(location, x, y);
 				}
-				
 			}
 
 			void setUniform1i(const char* name, int v) override
@@ -968,6 +990,15 @@ namespace jet
 				if (location >= 0)
 				{
 					glUniform1i(location, v);
+				}
+			}
+
+			void setUniformMatrix4(const char* name, uint32_t count, bool transpose, const float* pMats) override
+			{
+				GLint location = _getUniformLocation(m_Program, name, false);
+				if (location >= 0)
+				{
+					glUniformMatrix4fv(location, count, transpose, pMats);
 				}
 			}
 

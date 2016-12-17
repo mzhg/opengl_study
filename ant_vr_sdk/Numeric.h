@@ -22,7 +22,7 @@ namespace jet
 
 			/** Divides two integers and rounds up */
 			template<typename T>
-			static int divideAndRoundUp(T dividend, T divisor)
+			static T divideAndRoundUp(T dividend, T divisor)
 			{
 				return (dividend + divisor - 1) / divisor;
 			}
