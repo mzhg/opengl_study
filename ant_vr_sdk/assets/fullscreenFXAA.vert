@@ -41,6 +41,11 @@
 #if ENABLE_IN_OUT_FEATURE
 out vec4 ScreenSpaceUV;
 out vec4 f4FXAA_ConsolePosPos;
+
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
 #else
 varying vec4 ScreenSpaceUV;
 varying vec4 f4FXAA_ConsolePosPos;

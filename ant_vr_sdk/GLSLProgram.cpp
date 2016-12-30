@@ -538,6 +538,7 @@ namespace jet
 			std::stringstream macro_string_builder;
 			if (item.compileVersion)
 			{
+#if _DEBUG || DEBUG
 				int idx = -1;
 				if (version.es)
 				{
@@ -548,6 +549,7 @@ namespace jet
 					idx = Numeric::indexOf(_countof(GL_VERSIONS), GL_VERSIONS, item.compileVersion);
 				}
 				assert(idx >= 0);
+#endif
 				
 				macro_string_builder << "#version " << item.compileVersion;
 				if (GetOpenGLVersion().es)
@@ -612,7 +614,7 @@ namespace jet
 				}
 			}
 
-			printf("Reconstruct Shader Source: \n%s\n", source.c_str());
+//			printf("Reconstruct Shader Source: \n%s\n", source.c_str());
 
 			return source;
 		}
@@ -703,6 +705,7 @@ namespace jet
 			void enable()
 			{
 				checkInit();
+				glUseProgram(0);
 				glBindProgramPipeline(m_ProgramPipeline);
 			}
 
@@ -774,7 +777,7 @@ namespace jet
 					GLint location = _getUniformLocation(pShader->getProgram(), name, true);
 					if (location >= 0)
 					{
-						glProgramUniform1i(pShader->getProgram(), location, v);
+						glProgramUniform1i(pShader->getProgram(), location, v); CHECK_GL_ERROR
 					}
 				}
 			}

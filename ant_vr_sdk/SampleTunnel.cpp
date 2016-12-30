@@ -1,7 +1,7 @@
 #include "SampleTunnel.h"
 #include "FileUtil.h"
 #include "TextureUtil.h"
-#include "Util.h"
+#include "GLUtil.h"
 #include <gtc/matrix_transform.hpp>
 
 namespace jet

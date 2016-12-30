@@ -52,6 +52,11 @@ uniform  mat4 u_mCurrentModelMat;  // In MotionBlurES2Shader
 uniform  mat4 u_mPreviousModelMat; // In MotionBlurES2Shader
 uniform float u_fStretchScale;     // In MotionBlurES2Shader
 
+out gl_PerVertex
+{
+	vec4 gl_Position;
+};
+
 void main()
 {
     vec4 vCurrPosWorldSpace = u_mCurrentModelMat  * a_vPosition;

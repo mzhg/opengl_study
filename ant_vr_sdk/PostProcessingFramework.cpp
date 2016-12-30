@@ -322,6 +322,7 @@ namespace jet
 			{
 				m_pDefualtScreenQuadPS = new PixelShader();
 				GLSLProgram::createShaderFromFile("DefaultScreenSpacePS.frag", m_pDefualtScreenQuadPS);
+				CHECK_GL_ERROR
 			}
 
 			if (dst != NULL)
@@ -335,6 +336,7 @@ namespace jet
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			}
 			
+			CHECK_GL_ERROR
 			glViewport(viewport.X, viewport.Y, viewport.Width, viewport.Height);
 			glDisable(GL_DEPTH_TEST);
 
@@ -342,7 +344,8 @@ namespace jet
 			m_Program->setPreLoadAttribs(1, &attribs);
 			m_Program->enable();
 			m_Program->setRenderShader(m_pDefaultScreenQuadVS, m_pDefualtScreenQuadPS);
-			m_Program->setUniform1i("g_Texture", 0);
+			CHECK_GL_ERROR
+			m_Program->setUniform1i("g_Texture", 0); CHECK_GL_ERROR
 
 			glActiveTexture(GL_TEXTURE0);	
 			glBindTexture(src->getTarget(), src->getTexture());

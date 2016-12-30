@@ -52,6 +52,8 @@ namespace jet
 			else
 			{
 				TextureUtil::createTexture2DFromFile(imagePath.c_str(), mpTestTexture);
+				glTextureParameteri(mpTestTexture->getTexture(), GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTextureParameteri(mpTestTexture->getTexture(), GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			}
 			m_FullScreenQuad = GLSLProgram::createFromFiles("DefaultScreenSpaceVS.vert", "DefaultScreenSpacePS.frag");
 
@@ -208,7 +210,7 @@ namespace jet
 			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 			glBindTexture(GL_TEXTURE_2D, 0);
 			GL_CHECK(glUseProgram(0));
-
+			
 			DrawAnimatedTriangles(0.016f, false);
 		}
 	}

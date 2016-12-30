@@ -89,7 +89,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;ENABLE_PROGRAM_PIPELINE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -140,6 +140,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="FileUtil.cpp" />
+    <ClCompile Include="FramebufferGL.cpp" />
     <ClCompile Include="GLSLProgram.cpp" />
     <ClCompile Include="AssetLoaderAndroid.cpp" />
     <ClCompile Include="GLUtil.cpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="AssetLoader.h" />
     <ClInclude Include="Disposeable.h" />
     <ClInclude Include="FileUtil.h" />
+    <ClInclude Include="FramebufferGL.h" />
     <ClInclude Include="GaussianBlur.h" />
     <ClInclude Include="GLSLProgram.h" />
     <ClInclude Include="GLUtil.h" />

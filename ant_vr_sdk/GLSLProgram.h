@@ -208,6 +208,7 @@ namespace jet
 						object = 0;
 					}
 
+					pOut->m_Program = object;
 				}
 				else
 #endif
@@ -228,6 +229,7 @@ namespace jet
 				{
 					return;
 				}
+
 			}
 
 			template<GLenum Target>

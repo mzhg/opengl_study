@@ -80,6 +80,7 @@ namespace jet{
 			bool& needCreateWindow = app->m_bNeedCreateWindow;
 			bool& windowCreated = app->m_bWindowCreated;
 			bool fullScreenMode = app->m_bFullScreenMode;
+			config = desc;
 
 			running = true;
 			bool lwjglInited = false;

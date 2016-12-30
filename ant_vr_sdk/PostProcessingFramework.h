@@ -112,7 +112,19 @@ namespace jet
 				X(x), Y(y), Width(w), Height(h)
 			{}
 
-			bool isValid() { return Width > 0 && Height > 0; }
+			bool isValid() const { return Width > 0 && Height > 0; }
+
+			static PPRectangle clamp(const PPRectangle& src, const PPRectangle& bound)
+			{
+				PPRectangle out;
+				out.X = glm::clamp(src.X, bound.X, bound.X + bound.Width);
+				out.Y = glm::clamp(src.Y, bound.Y, bound.Y + bound.Height);
+
+				out.Width  = glm::clamp(src.Width, 0, bound.X + bound.Width - out.X);
+				out.Height = glm::clamp(src.Height, 0, bound.Y + bound.Height - out.Y);
+
+				return out;
+			}
 		};
 
 		class PostProcessingParameters

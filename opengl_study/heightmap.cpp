@@ -15,8 +15,8 @@ void HeightmapDemo::onCreate()
 //	std::string filepath = jet::util::FileUtil::findFilePath("DrawSceneVS.vert");
 //	printf("testimg_1280x720.png full path: %s\n", filepath.c_str());
 
-	m_Sample = new SampleTunnel();
-//	m_Sample = new SampleColorTriangle();
+//	m_Sample = new SampleTunnel();
+	m_Sample = new SampleColorTriangle();
 	m_Sample->Create();
 	m_PostProcessing = new PostProcessing();
 }
@@ -129,8 +129,8 @@ void HeightmapDemo::onRender()
 	
 	// 4*n - 1
 //	m_PostProcessing->addGaussBlur(79);
-//	m_PostProcessing->addBloom(0.35f, 1.0, 3.1);
-//	m_PostProcessing->addFXAA(5);
+	m_PostProcessing->addBloom(0.45f, 1.0, 3.1);
+	m_PostProcessing->addFXAA(5);
 	m_PostProcessing->addStaticMotionBlur(g_PreviouseMat, viewProjInvert);
 	FrameAttribs frameAttribs;
 	frameAttribs.SceneColorBuffer = (Texture2D*)m_Sample->getColorTexture(0);
@@ -140,6 +140,7 @@ void HeightmapDemo::onRender()
 	glTextureParameteri(frameAttribs.SceneDepthBuffer->getTexture(), GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTextureParameteri(frameAttribs.SceneDepthBuffer->getTexture(), GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	frameAttribs.Viewport = { 0, 0, mWidth, mHeight };
+	CHECK_GL_ERROR;
 
 	m_PostProcessing->performancePostProcessing(frameAttribs);
  	checkGLError();

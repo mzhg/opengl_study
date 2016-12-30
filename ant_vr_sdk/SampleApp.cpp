@@ -41,6 +41,7 @@ namespace jet
 			desc.ColorFormats[0] = GL_RGBA8;
 			desc.DepthStencilFormat = GL_DEPTH_COMPONENT16_ARB;
 			desc.StencilOnly = false;
+			desc.EnableSRGB = true;
 		}
 
 		void SampleApp::Resize(int x, int y, int width, int height) {
@@ -63,12 +64,37 @@ namespace jet
 			{
 				if (needReAttachTextures || !m_ColorTextures[i] || (m_ColorTextures[i]->getWidth() != width || m_ColorTextures[i]->getHeight() != height))
 				{
-					Texture2DDesc colorDesc = Texture2DDesc(width, height, static_cast<GLuint>(mOutputDesc.ColorFormats[i]));
+					int internalFormat = mOutputDesc.ColorFormats[i];
+					if (false && mOutputDesc.EnableSRGB)
+					{
+						if (mOutputDesc.ColorFormats[i] == GL_RGB8)
+						{
+							internalFormat = GL_SRGB8_EXT;
+						}
+						else if (mOutputDesc.ColorFormats[i] == GL_RGBA8)
+						{
+							internalFormat = GL_RGBA8_SNORM;
+						}
+						else if (mOutputDesc.ColorFormats[i] = GL_RGB16)
+						{
+							internalFormat = GL_RGB16_SNORM;
+						}
+						else if (mOutputDesc.ColorFormats[i] = GL_RGBA16)
+						{
+							internalFormat = GL_RGBA16_SNORM;
+						}
+					}
+					Texture2DDesc colorDesc = Texture2DDesc(width, height, static_cast<GLuint>(internalFormat));
 					SAFE_DISPOSE(m_ColorTextures[i]);
 					m_ColorTextures[i] = new Texture2D();
 					TextureUtil::createTexture2D(&colorDesc, nullptr, m_ColorTextures[i]);
 					needReAttachTextures = true;
 				}
+			}
+
+			if (mOutputDesc.EnableSRGB && mOutputDesc.ColorCount)
+			{
+				glEnable(GL_FRAMEBUFFER_SRGB);
 			}
 
 			if (needReAttachTextures)
@@ -149,11 +175,23 @@ namespace jet
 			OnResize(x, y, width, height);
 		}
 
-		void SampleApp::Render(float elpsedTime)
+		void SampleApp::Render(bool renderToFBO, float elpsedTime)
 		{
-			glBindFramebuffer(GL_FRAMEBUFFER, m_Framebuffer);
+			if (renderToFBO)
+			{
+				glBindFramebuffer(GL_FRAMEBUFFER, m_Framebuffer);
+			}
+				
 			OnRender(elpsedTime);
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+			if (renderToFBO)
+			{
+				glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			}
+			if (mOutputDesc.EnableSRGB)
+			{
+//				glDisable(GL_FRAMEBUFFER_SRGB);
+			}
 		}
 	}
 }

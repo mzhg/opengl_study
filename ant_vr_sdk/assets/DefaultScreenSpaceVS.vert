@@ -39,6 +39,11 @@ const vec2 QuadTexCoordinates[4] = vec2[4]
 
 #if ENABLE_IN_OUT_FEATURE
 	out vec4 ScreenSpaceUV;
+
+	out gl_PerVertex
+	{
+		vec4 gl_Position;
+	};
 #else
 	varying vec4 ScreenSpaceUV;
 #endif
