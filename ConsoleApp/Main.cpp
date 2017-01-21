@@ -54,6 +54,19 @@ void dir(std::string path)
 	}
 }
 
+// 将str字符以spl分割,存于dst中，并返回子字符串数量
+int split(char dst[][80], char* str, const char* spl)
+{
+	int n = 0;
+	char *result = NULL;
+	result = strtok(str, spl);
+	while (result != NULL)
+	{
+		strcpy(dst[n++], result);
+		result = strtok(NULL, spl);
+	}
+	return n;
+}
 
 int main()
 {
@@ -62,7 +75,11 @@ int main()
 
 	std::cout << "v = (" << v.x << "," << v.y << "," << v.z << ")" << std::endl;
 
-
+	char str[] = "what is you name?";
+	char dst[10][80];
+	int cnt = split(dst, str, " ");
+	for (int i = 0; i < cnt; i++)
+		puts(dst[i]);
 	
 	std::string string = ToString("123445");
 	std::cout << string << std::endl;

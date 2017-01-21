@@ -211,7 +211,7 @@ namespace jet
 			glBindTexture(GL_TEXTURE_2D, 0);
 			GL_CHECK(glUseProgram(0));
 			
-			DrawAnimatedTriangles(0.016f, false);
+			DrawAnimatedTriangles(elpsedTime, false);
 		}
 	}
 }

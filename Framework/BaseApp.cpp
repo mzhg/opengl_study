@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include "GLCapabilities.h"
 
 namespace jet{
 	namespace util
@@ -193,6 +194,12 @@ namespace jet{
 						app->onResize(config.Width, config.Height);
 				}
 
+				if (app->m_CallbackChanged)
+				{
+					SetupCallbacks(app);
+					app->m_CallbackChanged = false;
+				}
+
 				/*
 				block();
 				renderFrame();
@@ -216,6 +223,7 @@ namespace jet{
 				app->onDispose();
 			}
 
+			GLCapabilities::release();
 			// Release window and window callbacks
 			glfwDestroyWindow(window);
 			// Terminate GLFW and release the GLFWerrorfun
@@ -242,7 +250,10 @@ namespace jet{
 
 		BaseApp::~BaseApp()
 		{
-			delete m_pGLFWCallback;
+#if 0
+			if (m_CallbackOwned)
+				delete m_pGLFWCallback;
+#endif
 		}
 
 		void BaseApp::onUpdate(float) {}

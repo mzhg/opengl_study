@@ -12,7 +12,6 @@
 #include <stddef.h>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-
 #include "GLFWEvent.h"
 
 namespace jet{
@@ -74,15 +73,16 @@ namespace jet{
 			GLuint Height;
 		}VideoMode;
 
-		class BaseApp : public MouseCallback, public KeyboardCallback
+		class BaseApp /*: public MouseCallback, public KeyboardCallback*/
 		{
 			
 		public:
 			BaseApp() : m_bRunning(false), m_bFullScreenMode(false), m_bResizeable(false),
 				m_bGLfwInited(false), m_bWindowCreated(false), m_bNeedCreateWindow(false),
-				m_pWindow(nullptr), m_pMonitor(nullptr), m_ConfigDesc(), m_pGLFWCallback(nullptr)
+				m_pWindow(nullptr), m_pMonitor(nullptr), m_ConfigDesc(), m_pGLFWCallback(nullptr), m_CallbackChanged(true)
 			{
-				m_pGLFWCallback = new InputAdapter(this, this);
+//				m_pGLFWCallback = new InputAdapter(this, this);
+//				m_CallbackChanged = true;
 			}
 
 			~BaseApp();
@@ -104,6 +104,27 @@ namespace jet{
 
 			friend void SetupCallbacks(BaseApp*);
 
+			void setInputAdapter(GLFWCallback* pAdapter)
+			{
+				if (m_pGLFWCallback == pAdapter)
+				{
+					return;
+				}
+
+				m_CallbackChanged = true;
+				m_pGLFWCallback = pAdapter;
+			}
+
+			const GLFWCallback* getGLFWCallback() const { return m_pGLFWCallback; }
+			GLFWCallback* getGLFWCallback() { return m_pGLFWCallback; }
+
+#if 0
+			void resetInput()
+			{
+				m_pGLFWCallback->SetKeyEventCallback(this);
+				m_pGLFWCallback->SetMouseCallback(this);
+			}
+
 			virtual void OnkeyPressed(int keycode, char keychar) {};
 			virtual void OnkeyReleased(int keycode, char keychar) {};
 			virtual void OnkeyTyped(int keycode, char keychar) {};
@@ -113,6 +134,7 @@ namespace jet{
 			virtual void OnMouseMoved(int x, int y, int dx, int dy) {};
 			virtual void OnMouseDraged(int x, int y, int dx, int dy, Button button){};
 			virtual void OnScrolled(int wheel) {};
+#endif
 
 			/*
 		private:
@@ -127,6 +149,7 @@ namespace jet{
 
 			GLFWCallback* m_pGLFWCallback;
 
+			bool m_CallbackChanged;
 			bool m_bRunning;
 			bool m_bFullScreenMode;
 			bool m_bResizeable;

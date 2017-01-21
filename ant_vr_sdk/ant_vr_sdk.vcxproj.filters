@@ -17,9 +17,6 @@
     <Filter Include="Renderer\Texture">
       <UniqueIdentifier>{c49bf209-1ffc-4fd8-8fdf-2263de0fd948}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Main">
-      <UniqueIdentifier>{b8c9b859-8524-4a14-8ab3-564451903e10}</UniqueIdentifier>
-    </Filter>
     <Filter Include="PostProcessing">
       <UniqueIdentifier>{9fe49796-8489-4ddf-ac7d-492d72acec41}</UniqueIdentifier>
     </Filter>
@@ -43,6 +40,9 @@
     </Filter>
     <Filter Include="Samples">
       <UniqueIdentifier>{d47fa0d7-afcf-4e19-9afa-0bc3742579c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math\Util">
+      <UniqueIdentifier>{6e082032-e025-4d0a-b6bc-0bc3f16ad75d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -108,6 +108,21 @@
     </ClCompile>
     <ClCompile Include="FramebufferGL.cpp">
       <Filter>Renderer\Texture</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderLoader.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NvInputTransformer.cpp">
+      <Filter>Samples</Filter>
+    </ClCompile>
+    <ClCompile Include="NvWin32StopWatch.cpp">
+      <Filter>Samples</Filter>
+    </ClCompile>
+    <ClCompile Include="GLStates.cpp">
+      <Filter>Renderer\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry2d.cpp">
+      <Filter>Math\Util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -176,6 +191,24 @@
     </ClInclude>
     <ClInclude Include="FramebufferGL.h">
       <Filter>Renderer\Texture</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderLoader.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NvInputTransformer.h">
+      <Filter>Samples</Filter>
+    </ClInclude>
+    <ClInclude Include="NvStopWatch.h">
+      <Filter>Samples</Filter>
+    </ClInclude>
+    <ClInclude Include="GLStates.h">
+      <Filter>Renderer\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry2d.h">
+      <Filter>Math\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry3d.h">
+      <Filter>Math\Util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

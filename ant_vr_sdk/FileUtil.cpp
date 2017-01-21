@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <io.h>
 #include <direct.h>
+#include "AssetLoader.h"
+#include <sstream>
 
 namespace jet
 {
@@ -21,9 +23,14 @@ namespace jet
 		{
 			FILE *fp = NULL;
 			if ((fopen_s(&fp, filename, "r") == 0) || (fp != NULL))
+			{
+				fclose(fp);
 				return true;
+			}
 			else
+			{
 				return false;
+			}
 		}
 
 		static std::string SplitFilename(const std::string& str)
@@ -157,6 +164,236 @@ namespace jet
 
 		FileUtil::~FileUtil()
 		{
+		}
+
+		bool LineReader::initFromFile(const char* filename)
+		{
+			std::string filepath = FileUtil::findFilePath(filename);
+			if (!filepath.empty())
+			{
+				int32_t legnth = 0;
+				char* pData = AssetLoaderRead(filepath.c_str(), legnth);
+
+				return initFromMemory(static_cast<unsigned>(legnth), pData, true);
+			}
+
+			return false;
+		}
+
+		bool LineReader::initFromMemory(unsigned length, const char* pData, bool owed)
+		{
+			if (length)
+			{
+				m_pData = pData;
+				mOwed = owed;
+				m_Length = length;
+				mInited = true;
+				m_pCursor = m_pData;
+				m_pLineHead = m_pData;
+			}
+
+			return mInited;
+		}
+
+		const char*  LineReader::readLine(unsigned& length)
+		{
+			if (!mInited)
+			{
+				length = 0;
+				return nullptr;
+			}
+
+			const char* pEnd = m_pData + m_Length;
+
+			m_pLineHead = m_pCursor;
+			while (m_pLineHead < pEnd && *m_pLineHead == '\n')
+			{
+				m_pLineHead++;
+			}
+
+			if (m_pLineHead == pEnd)
+			{
+				length = 0;
+				return nullptr;
+			}
+
+			m_pCursor = m_pLineHead;
+			while (m_pCursor < pEnd && *m_pCursor != '\n')
+			{
+				m_pCursor++;
+			}
+
+			length = m_pCursor - m_pLineHead;
+			return m_pLineHead;
+		}
+
+		LineReader::LineReader() :mInited(false), mOwed(false), m_Length(0), m_pCursor(0), m_pData(0), m_pLineHead(0)
+		{
+		}
+
+		LineReader::~LineReader()
+		{
+			if (mOwed)
+			{
+				AssetLoaderFree((char*)m_pData);
+			}
+		}
+
+		CommentFilter::CommentFilter() :m_Reader(), m_bInComment(false){}
+
+		bool CommentFilter::initFromFile(const char* filename)
+		{
+			return m_Reader.initFromFile(filename);
+		}
+
+		bool CommentFilter::initFromMemory(unsigned length, const char* pData, bool owed)
+		{
+			return m_Reader.initFromMemory(length, pData, owed);
+		}
+
+		static const char* singleComment = "//";
+		static const char* pairCommentLeft = "/*";
+		static const char* pairCommentRight = "*/";
+
+		const char*  CommentFilter::readLine(unsigned& length)
+		{
+			unsigned legnth;
+			const char* pLine = m_Reader.readLine(legnth);
+			if (!pLine)
+			{
+				return nullptr;
+			}
+
+			m_LineBuffer.clear();
+			while (parseLine(legnth, pLine))
+			{
+				pLine = m_Reader.readLine(legnth);
+				if (!pLine)
+				{
+					return m_LineBuffer.c_str();
+				}
+			}
+
+			return m_LineBuffer.c_str();
+		}
+
+		bool CommentFilter::parseLine(unsigned length, const char* pLine)
+		{
+			std::size_t fromIndex = 0;
+			std::size_t singleIndex;
+			std::size_t pairStart;
+
+			std::string line(pLine, pLine + length);
+#define LINE_END std::string::npos
+			while (true)
+			{
+				if (m_bInComment)
+				{
+					std::size_t pairEnd = line.find(pairCommentRight);
+					if (pairEnd != LINE_END)
+					{  // find the "*/"
+						fromIndex = pairEnd + 2;
+						m_bInComment = false;
+						continue;
+					}
+					else
+					{
+						// No find the "*/" continue parsing.
+						return true;
+					}
+				}
+				else
+				{
+					singleIndex = line.find(singleComment, fromIndex);
+					pairStart = line.find(pairCommentLeft, fromIndex);
+
+					if (singleIndex != LINE_END && pairStart != LINE_END)
+					{
+						if (singleIndex < pairStart)
+							pairStart = LINE_END;
+						else
+							singleIndex = LINE_END;
+					}
+
+					if (singleIndex != LINE_END)
+					{
+//						lineBuffer.append(line.substring(fromIndex, singleIndex));
+						m_LineBuffer += line.substr(fromIndex, singleIndex);
+						return false;
+					}
+
+					if (pairStart != LINE_END)
+					{
+						int length = 2;
+//						lineBuffer.append(line.substring(fromIndex, pairStart));
+						m_LineBuffer += line.substr(fromIndex, pairStart);
+						std::size_t pairEnd = line.find(pairCommentRight, pairStart + length);
+						if (pairEnd != LINE_END)
+						{
+							fromIndex = pairEnd + length;
+							continue;
+						}
+						else
+						{
+							m_bInComment = true;
+							return true;  // we need a new line.
+						}
+					}
+
+					// singleIndex and the pairStart are both -1. This is a pure string.
+//					lineBuffer.append(line.substring(fromIndex));
+					m_LineBuffer += line.substr(fromIndex);
+					return false;
+				}
+			}
+
+#undef LINE_END
+		}
+
+		void FileUtil::loadText(std::string& out, const char* filename, bool igoreComment, std::function<void(std::string& line)>  filter)
+		{
+			if (!igoreComment && !filter)
+			{
+				int32_t legnth = 0;
+				char* pData = AssetLoaderRead(filename, legnth);
+				if (pData)
+				{
+					out.append(pData, legnth);
+					AssetLoaderFree(pData);
+				}
+			}
+			else
+			{
+				std::stringstream ss;
+				LineReader* pReader;
+				if (igoreComment)
+				{
+					pReader = new CommentFilter();
+				}
+				else
+				{
+					pReader = new LineReader();
+				}
+
+				pReader->initFromFile(filename);
+				const char* line;
+				unsigned line_length;
+				std::string line_wrapper;
+				while ((line = pReader->readLine(line_length)))
+				{
+					line_wrapper.clear();
+					line_wrapper.append(line, line_length);
+					if (filter)
+					{
+						filter(line_wrapper);	
+					}
+
+					ss << line_wrapper;
+				}
+
+				delete pReader;
+				out += ss.str();
+			}
 		}
 	}
 }

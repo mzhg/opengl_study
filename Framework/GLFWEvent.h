@@ -3,6 +3,7 @@
 #pragma once
 
 #include <map>
+#include <vector>
 
 namespace jet
 {
@@ -17,26 +18,26 @@ namespace jet
 			* @param xpos   the new x-coordinate, in pixels, of the upper-left corner of the client area of the window
 			* @param ypos   the new y-coordinate, in pixels, of the upper-left corner of the client area of the window
 			*/
-			virtual void WindowPos(int xpos, int ypos) = 0;
+			virtual bool WindowPos(int xpos, int ypos) = 0;
 
 			/**
 			* The window close callback.
 			*/
-			virtual void WindowClose() = 0;
+			virtual bool WindowClose() = 0;
 
 			/**
 			* The window focus callback.
 			*
 			* @param focused true if the window was focused, or false if it was defocused
 			*/
-			virtual void WindowFocus(bool focused) = 0;
+			virtual bool WindowFocus(bool focused) = 0;
 
 			/**
 			* The window iconify callback.
 			*
 			* @param iconified true if the window was iconified, or false if it was restored
 			*/
-			virtual void WindowIconify(bool iconified) = 0;
+			virtual bool WindowIconify(bool iconified) = 0;
 		};
 
 		class GLFWCallback : public WindowEventCallback
@@ -49,7 +50,7 @@ namespace jet
 			* @param action the key action. One of:<p/>{@link GLFW#GLFW_PRESS}, {@link GLFW#GLFW_RELEASE}, {@link GLFW#GLFW_REPEAT}
 			* @param mods   bitfield describing which modifiers keys were held down
 			*/
-			virtual void Key(int key, int scancode, int action, int mods) = 0;
+			virtual bool Key(int key, int scancode, int action, int mods) = 0;
 
 
 			/**
@@ -58,7 +59,7 @@ namespace jet
 			* @param codepoint the Unicode code point of the character
 			* @param mods      bitfield describing which modifier keys were held down
 			*/
-			virtual void CharMods(unsigned int codepoint, int mods) = 0;
+			virtual bool CharMods(unsigned int codepoint, int mods) = 0;
 
 			/**
 			* The mouse button callback.
@@ -67,7 +68,7 @@ namespace jet
 			* @param action the button action. One of:<p/>{@link GLFW#GLFW_PRESS}, {@link GLFW#GLFW_RELEASE}
 			* @param mods   bitfield describing which modifiers keys were held down
 			*/
-			virtual void MouseButton(int button, int action, int mods) = 0;
+			virtual bool MouseButton(int button, int action, int mods) = 0;
 
 			/**
 			* The cursor move callback.
@@ -75,14 +76,14 @@ namespace jet
 			* @param xpos   the new x-coordinate, in screen coordinates of the cursor
 			* @param ypos   the new y-coordinate, in screen coordinates of the cursor
 			*/
-			virtual void CursorPos(double xpos, double ypos) = 0;
+			virtual bool CursorPos(double xpos, double ypos) = 0;
 
 			/**
 			* The cursor enter callback.
 			*
 			* @param entered true if the cursor enter the window's client area, or false if it left it
 			*/
-			virtual void CursorEnter(bool entered) = 0;
+			virtual bool CursorEnter(bool entered) = 0;
 
 			/**
 			* The scroll callback.
@@ -90,7 +91,7 @@ namespace jet
 			* @param xoffset the scroll offset along the x-axis
 			* @param yoffset the scroll offset along the y-axis
 			*/
-			virtual void Scroll(double xoffset, double yoffset) = 0;
+			virtual bool Scroll(double xoffset, double yoffset) = 0;
 		};
 
 		/// Abstract class define the keybaord events
@@ -99,9 +100,9 @@ namespace jet
 		public:
 
 			KeyboardCallback(){}
-			virtual void OnkeyPressed(int keycode, char keychar) = 0;
-			virtual void OnkeyReleased(int keycode, char keychar) = 0;
-			virtual void OnkeyTyped(int keycode, char keychar) = 0;
+			virtual bool OnkeyPressed(int keycode, char keychar) = 0;
+			virtual bool OnkeyReleased(int keycode, char keychar) = 0;
+			virtual bool OnkeyTyped(int keycode, char keychar) = 0;
 
 		private:
 			KeyboardCallback(KeyboardCallback&) = delete;
@@ -128,33 +129,54 @@ namespace jet
 		public:
 
 			MouseCallback(){}
-			virtual void OnMousePressed(int x, int y, Button button) = 0;
-			virtual void OnMouseReleased(int x, int y, Button button) = 0;
-			virtual void OnMouseMoved(int x, int y, int dx, int dy) = 0;
-			virtual void OnMouseDraged(int x, int y, int dx, int dy, Button button) = 0;
-			virtual void OnScrolled(int wheel) = 0;
-			virtual void OnCursorEnter(bool entered){}
+			virtual bool OnMousePressed(int x, int y, Button button) = 0;
+			virtual bool OnMouseReleased(int x, int y, Button button) = 0;
+			virtual bool OnMouseMoved(int x, int y, int dx, int dy) = 0;
+			virtual bool OnMouseDraged(int x, int y, int dx, int dy, Button button) = 0;
+			virtual bool OnScrolled(int wheel) = 0;
+			virtual bool OnCursorEnter(bool entered){ return false; }
 
 		private:
 			MouseCallback(MouseCallback&) = delete;
 		};
 
+		class GLFWCallbackChain : public GLFWCallback
+		{
+		public:
+			bool WindowPos(int xpos, int ypos) override;
+			bool WindowClose() override;
+			bool WindowFocus(bool focused) override;
+			bool WindowIconify(bool iconified) override;
+			bool Key(int key, int scancode, int action, int mods) override;
+			bool CharMods(unsigned int codepoint, int mods) override;
+			bool MouseButton(int button, int action, int mods) override;
+			bool CursorPos(double xpos, double ypos) override;
+			bool CursorEnter(bool entered) override;
+			bool Scroll(double xoffset, double yoffset) override;
+
+			void addGLFWCallback(GLFWCallback* pCallback);
+			void removeGLFWCallback(GLFWCallback* pCallback);
+			std::vector<GLFWCallback*>& getGLFWCallbacks() { return m_Chains; }
+
+		private:
+			std::vector<GLFWCallback*> m_Chains;
+		};
+
 		class InputAdapter : public GLFWCallback
 		{
-
 		public:
 			InputAdapter(KeyboardCallback* =nullptr, MouseCallback* = nullptr, WindowEventCallback* = nullptr);
 
-			virtual void WindowPos(int xpos, int ypos);
-			virtual void WindowClose();
-			virtual void WindowFocus(bool focused);
-			virtual void WindowIconify(bool iconified);
-			virtual void Key(int key, int scancode, int action, int mods);
-			virtual void CharMods(unsigned int codepoint, int mods);
-			virtual void MouseButton(int button, int action, int mods);
-			virtual void CursorPos(double xpos, double ypos);
-			virtual void CursorEnter(bool entered);
-			virtual void Scroll(double xoffset, double yoffset);
+			virtual bool WindowPos(int xpos, int ypos) override;
+			virtual bool WindowClose() override;
+			virtual bool WindowFocus(bool focused) override;
+			virtual bool WindowIconify(bool iconified) override;
+			virtual bool Key(int key, int scancode, int action, int mods) override;
+			virtual bool CharMods(unsigned int codepoint, int mods) override;
+			virtual bool MouseButton(int button, int action, int mods) override;
+			virtual bool CursorPos(double xpos, double ypos) override;
+			virtual bool CursorEnter(bool entered) override;
+			virtual bool Scroll(double xoffset, double yoffset) override;
 
 			void SetKeyEventCallback(KeyboardCallback* pCallback) { m_pKeyboardCallback = pCallback; }
 			const KeyboardCallback* GetKeyboardCallback()   const { return m_pKeyboardCallback; }

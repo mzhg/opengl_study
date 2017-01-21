@@ -30,6 +30,9 @@
     <ClInclude Include="GLFWEvent.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="GLCapabilities.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -42,6 +45,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="GLFWEvent.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GLCapabilities.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

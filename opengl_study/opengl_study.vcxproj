@@ -157,9 +157,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="heightmap.cpp" />
+    <ClCompile Include="simple_sdk.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="heightmap.h" />
+    <ClInclude Include="simple_sdk.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -13,6 +13,12 @@ namespace jet
 			SampleColorTriangle();
 			~SampleColorTriangle();
 
+
+			bool OnMousePressed(int x, int y, Button button) override
+			{
+				printf("Mouse Position: %d, %d.\n", x, y);
+				return true;
+			}
 		protected:
 			// Called When sample created 
 			void OnCreate() override;

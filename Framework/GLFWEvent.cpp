@@ -14,35 +14,43 @@ namespace jet
 			m_keyChars.clear();
 		}
 
-		void InputAdapter::WindowPos(int xpos, int ypos)
+		bool InputAdapter::WindowPos(int xpos, int ypos)
 		{
 			if (m_pWindowEventCallback != nullptr)
 			{
 				m_pWindowEventCallback->WindowPos(xpos, ypos);
 			}
+
+			return m_pWindowEventCallback != null;
 		}
 
-		void InputAdapter::WindowClose() 
+		bool InputAdapter::WindowClose() 
 		{
 			if (m_pWindowEventCallback != nullptr)
 			{
 				m_pWindowEventCallback->WindowClose();
 			}
+			return m_pWindowEventCallback != null;
+
 		}
 
-		void InputAdapter::WindowFocus(bool focused) 
+		bool InputAdapter::WindowFocus(bool focused)
 		{
 			if (m_pWindowEventCallback != nullptr)
 			{
 				m_pWindowEventCallback->WindowFocus(focused);
 			}
+
+			return m_pWindowEventCallback != null;
 		}
 
-		void InputAdapter::WindowIconify(bool iconified) 
+		bool InputAdapter::WindowIconify(bool iconified)
 		{
 			if (m_pWindowEventCallback != nullptr){
 				m_pWindowEventCallback->WindowIconify(iconified);
 			}
+
+			return m_pWindowEventCallback != null;
 		}
 
 		static bool isPrintableKey(int key){
@@ -52,7 +60,7 @@ namespace jet
 			return key < 0x100;
 		}
 
-		void InputAdapter::Key(int key, int scancode, int action, int mods) 
+		bool InputAdapter::Key(int key, int scancode, int action, int mods)
 		{
 			m_iCurrKey= key;
 			m_iKeyAction = action;
@@ -95,9 +103,11 @@ namespace jet
 					break;
 				}
 			}
+
+			return m_pKeyboardCallback != null;
 		}
 
-		void InputAdapter::CharMods(unsigned int codepoint, int mods) 
+		bool InputAdapter::CharMods(unsigned int codepoint, int mods)
 		{
 			if (m_pKeyboardCallback != nullptr)
 			{
@@ -116,9 +126,10 @@ namespace jet
 
 //			m_keyChars.put(currKey, codepoint);
 			m_keyChars[m_iCurrKey] = codepoint;
+			return true;
 		}
 
-		void InputAdapter::MouseButton(int button, int action, int mods) 
+		bool InputAdapter::MouseButton(int button, int action, int mods)
 		{
 			switch (action) {
 			case GLFW_PRESS:
@@ -138,9 +149,11 @@ namespace jet
 			default:
 				break;
 			}
+
+			return true;
 		}
 
-		void InputAdapter::CursorPos(double xpos, double ypos) 
+		bool InputAdapter::CursorPos(double xpos, double ypos)
 		{
 			m_iMouseX = static_cast<int>(xpos);
 			m_iMouseY = static_cast<int>(ypos);
@@ -173,19 +186,162 @@ namespace jet
 
 			lastX = mouseX;
 			lastY = mouseY;
+
+			return true;
 		}
 
-		void InputAdapter::CursorEnter(bool entered) 
+		bool InputAdapter::CursorEnter(bool entered)
 		{
 			if (m_pMouseCallback != null)
 			{
 				m_pMouseCallback->OnCursorEnter(entered);
 			}
+			return true;
 		}
 
-		void InputAdapter::Scroll(double xoffset, double yoffset) {
+		bool InputAdapter::Scroll(double xoffset, double yoffset) {
 			if (m_pMouseCallback != null){
 				m_pMouseCallback->OnScrolled(static_cast<int>(yoffset));
+			}
+
+			return true;
+		}
+
+
+		bool GLFWCallbackChain::WindowPos(int xpos, int ypos)
+		{
+			for (int i = 0; i < m_Chains.size(); i++)
+			{
+				if (m_Chains[i]->WindowPos(xpos, ypos))
+				{
+					return true;
+				}
+			}
+		}
+		bool GLFWCallbackChain::WindowClose()
+		{
+			for (int i = 0; i < m_Chains.size(); i++)
+			{
+				if (m_Chains[i]->WindowClose())
+				{
+					return true;
+				}
+			}
+		}
+		bool GLFWCallbackChain::WindowFocus(bool focused)
+		{
+			for (int i = 0; i < m_Chains.size(); i++)
+			{
+				if (m_Chains[i]->WindowFocus(focused))
+				{
+					return true;
+				}
+			}
+		}
+
+		bool GLFWCallbackChain::WindowIconify(bool iconified)
+		{
+			for (int i = 0; i < m_Chains.size(); i++)
+			{
+				if (m_Chains[i]->WindowIconify(iconified))
+				{
+					return true;
+				}
+			}
+		}
+		bool GLFWCallbackChain::Key(int key, int scancode, int action, int mods)
+		{
+			for (int i = 0; i < m_Chains.size(); i++)
+			{
+				if (m_Chains[i]->Key(key, scancode, action, mods))
+				{
+					return true;
+				}
+			}
+		}
+
+		bool GLFWCallbackChain::CharMods(unsigned int codepoint, int mods)
+		{
+			for (int i = 0; i < m_Chains.size(); i++)
+			{
+				if (m_Chains[i]->CharMods(codepoint, mods))
+				{
+					return true;
+				}
+			}
+		}
+
+		bool GLFWCallbackChain::MouseButton(int button, int action, int mods)
+		{
+			for (int i = 0; i < m_Chains.size(); i++)
+			{
+				if (m_Chains[i]->MouseButton(button, action,mods))
+				{
+					return true;
+				}
+			}
+		}
+		bool GLFWCallbackChain::CursorPos(double xpos, double ypos)
+		{
+			for (int i = 0; i < m_Chains.size(); i++)
+			{
+				if (m_Chains[i]->CursorPos(xpos, ypos))
+				{
+					return true;
+				}
+			}
+		}
+		bool GLFWCallbackChain::CursorEnter(bool entered)
+		{
+			for (int i = 0; i < m_Chains.size(); i++)
+			{
+				if (m_Chains[i]->CursorEnter(entered))
+				{
+					return true;
+				}
+			}
+		}
+
+		bool GLFWCallbackChain::Scroll(double xoffset, double yoffset)
+		{
+			for (int i = 0; i < m_Chains.size(); i++)
+			{
+				if (m_Chains[i]->Scroll(xoffset, yoffset))
+				{
+					return true;
+				}
+			}
+		}
+
+		void GLFWCallbackChain::addGLFWCallback(GLFWCallback* pCallback)
+		{
+			if (pCallback != nullptr)
+			{
+				for (int i = 0; i < m_Chains.size(); i++)
+				{
+					if (m_Chains[i] == pCallback)
+					{
+						return;
+					}
+				}
+
+				m_Chains.push_back(pCallback);
+			}
+		}
+
+		void GLFWCallbackChain::removeGLFWCallback(GLFWCallback* pCallback)
+		{
+			if (pCallback != nullptr)
+			{
+
+				for (auto i = m_Chains.begin(); i != m_Chains.end(); i++)
+				{
+					if (*i == pCallback)
+					{
+						m_Chains.erase(i);
+						return;
+					}
+				}
 			}
 		}
 	}

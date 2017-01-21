@@ -25,13 +25,20 @@ namespace jet
 			{
 				SAFE_DISPOSE(m_ColorTextures[i]);
 			}
+
+			SAFE_DELETE(m_Timer);
+			SAFE_DELETE(m_Transformer);
 		}
 
 		void SampleApp::Create() 
 		{
 			InitConfig(mOutputDesc);
 			int cmp = TextureUtil::measureComponent(mOutputDesc.DepthStencilFormat);
-			assert(cmp == GL_DEPTH_COMPONENT || cmp == GL_STENCIL || cmp == GL_DEPTH_STENCIL);
+			assert(mOutputDesc.NoFBO || cmp == GL_DEPTH_COMPONENT || cmp == GL_STENCIL || cmp == GL_DEPTH_STENCIL);
+
+			m_Timer = NvStopWatch::create();
+			m_Timer->start();
+			m_Transformer = new NvInputTransformer();
 			OnCreate();
 		}
 
@@ -41,7 +48,8 @@ namespace jet
 			desc.ColorFormats[0] = GL_RGBA8;
 			desc.DepthStencilFormat = GL_DEPTH_COMPONENT16_ARB;
 			desc.StencilOnly = false;
-			desc.EnableSRGB = true;
+			desc.NoFBO = false;
+//			desc.EnableSRGB = true;
 		}
 
 		void SampleApp::Resize(int x, int y, int width, int height) {
@@ -65,6 +73,7 @@ namespace jet
 				if (needReAttachTextures || !m_ColorTextures[i] || (m_ColorTextures[i]->getWidth() != width || m_ColorTextures[i]->getHeight() != height))
 				{
 					int internalFormat = mOutputDesc.ColorFormats[i];
+#if 0
 					if (false && mOutputDesc.EnableSRGB)
 					{
 						if (mOutputDesc.ColorFormats[i] == GL_RGB8)
@@ -84,6 +93,7 @@ namespace jet
 							internalFormat = GL_RGBA16_SNORM;
 						}
 					}
+#endif
 					Texture2DDesc colorDesc = Texture2DDesc(width, height, static_cast<GLuint>(internalFormat));
 					SAFE_DISPOSE(m_ColorTextures[i]);
 					m_ColorTextures[i] = new Texture2D();
@@ -91,12 +101,12 @@ namespace jet
 					needReAttachTextures = true;
 				}
 			}
-
+#if 0
 			if (mOutputDesc.EnableSRGB && mOutputDesc.ColorCount)
 			{
 				glEnable(GL_FRAMEBUFFER_SRGB);
 			}
-
+#endif
 			if (needReAttachTextures)
 			{
 				if (mOutputDesc.DepthStencilFormat != GL_NONE)
@@ -175,23 +185,82 @@ namespace jet
 			OnResize(x, y, width, height);
 		}
 
-		void SampleApp::Render(bool renderToFBO, float elpsedTime)
+		void SampleApp::Render(bool renderToFBO, float timeScale)
 		{
 			if (renderToFBO)
 			{
 				glBindFramebuffer(GL_FRAMEBUFFER, m_Framebuffer);
 			}
-				
+
+			m_Timer->stop();
+			float elpsedTime = m_Timer->getTime() * timeScale;
+			m_Transformer->update(elpsedTime);
 			OnRender(elpsedTime);
 
+			m_Timer->reset();
+			m_Timer->start();
+			
 			if (renderToFBO)
 			{
 				glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			}
-			if (mOutputDesc.EnableSRGB)
-			{
-//				glDisable(GL_FRAMEBUFFER_SRGB);
-			}
+		}
+
+		bool SampleApp::OnkeyPressed(int keycode, char keychar)
+		{
+			return m_Transformer->processKey(keycode, NvKeyActionType::DOWN);
+		}
+		bool SampleApp::OnkeyReleased(int keycode, char keychar)
+		{
+			return m_Transformer->processKey(keycode, NvKeyActionType::UP);
+		}
+		bool SampleApp::OnkeyTyped(int keycode, char keychar)
+		{
+			return m_Transformer->processKey(keycode, NvKeyActionType::REPEAT);
+		}
+
+		bool SampleApp::OnMousePressed(int x, int y, Button button)
+		{
+			NvPointerEvent event;
+			event.m_device = NvInputDeviceType::MOUSE;
+			event.m_id = static_cast<uint32_t>(button);
+			event.m_x = x;
+			event.m_y = y;
+
+			return m_Transformer->processPointer(NvInputDeviceType::MOUSE, NvPointerActionType::DOWN, 0, 1, &event);
+		}
+
+		bool SampleApp::OnMouseReleased(int x, int y, Button button)
+		{
+			NvPointerEvent event;
+			event.m_device = NvInputDeviceType::MOUSE;
+			event.m_id = static_cast<uint32_t>(button);
+			event.m_x = x;
+			event.m_y = y;
+
+			return m_Transformer->processPointer(NvInputDeviceType::MOUSE, NvPointerActionType::UP, 0, 1, &event);
+		}
+
+		bool SampleApp::OnMouseMoved(int x, int y, int dx, int dy)
+		{
+			NvPointerEvent event;
+			event.m_device = NvInputDeviceType::MOUSE;
+			event.m_id = 0;
+			event.m_x = x;
+			event.m_y = y;
+
+			return m_Transformer->processPointer(NvInputDeviceType::MOUSE, NvPointerActionType::MOTION, 0, 1, &event);
+		}
+
+		bool SampleApp::OnMouseDraged(int x, int y, int dx, int dy, Button button)
+		{
+			NvPointerEvent event;
+			event.m_device = NvInputDeviceType::MOUSE;
+			event.m_id = static_cast<uint32_t>(button);
+			event.m_x = x;
+			event.m_y = y;
+
+			return m_Transformer->processPointer(NvInputDeviceType::MOUSE, NvPointerActionType::MOTION, 0, 1, &event);
 		}
 	}
 }

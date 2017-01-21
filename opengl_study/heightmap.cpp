@@ -2,12 +2,38 @@
 #include "heightmap.h"
 #include "FileUtil.h"
 #include <glm.hpp>
+#include "simple_sdk.h"
 
 struct Rect
 {
 	int left, bottom;
 	int right, top;
 };
+
+static const char* g_pVertStr =
+"uniform mat4 g_Mat;\n"
+"attribute vec4  g_Position;\n"
+"attribute vec2  g_TextureCoord;\n"
+"varying   vec2  vTextureCoord;\n"
+
+"void main(){\n"
+"vTextureCoord = g_TextureCoord;\n"
+"gl_Position = g_Mat*g_Position;\n"
+"}\n";
+
+static const char* g_pFragStr =
+"#if GL_ES\n"
+"precision mediump float;\n"
+"#endif\n"
+
+"varying vec2  vTextureCoord;\n"
+"uniform sampler2D sparrow;\n"
+
+"void main(){\n"
+"	gl_FragColor = texture2D(sparrow, vTextureCoord);\n"
+"}\n";
+
+static bool g_test_sdk = true;
 
 void HeightmapDemo::onCreate()
 {
@@ -16,8 +42,30 @@ void HeightmapDemo::onCreate()
 //	printf("testimg_1280x720.png full path: %s\n", filepath.c_str());
 
 //	m_Sample = new SampleTunnel();
+
+	GLSLProgram* program_debug = GLSLProgram::createFromStrings(g_pVertStr, g_pFragStr, true);
+	if (g_test_sdk)
+	{
+		const char* search_path = "../ant_vr_sdk/";
+		std::string texpath = jet::util::FileUtil::findFilePath("testimg_1280x720.png", 1, &search_path);
+		TextureData texData;
+		int width;
+		int height;
+		jet::util::TextureUtil::loadTextureDataFromFile(texpath.c_str(), &texData, &width, &height);
+
+		ogl_init();
+		ogl_set_background_texture(width, height, texData.Format, (const char*)texData.pData);
+		ogl_set_rect_texture(width, height, texData.Format, (const char*)texData.pData);
+		ogl_set_rect_size((1280 - 600)/2, (720 - 200)/2, 600, 200);
+		return;
+	}
+
+	
 	m_Sample = new SampleColorTriangle();
 	m_Sample->Create();
+	m_Input = new InputAdapter();
+	setInputAdapter(m_Input);
+	m_Input->SetMouseCallback(m_Sample);
 	m_PostProcessing = new PostProcessing();
 }
 
@@ -28,6 +76,12 @@ void HeightmapDemo::onResize(GLuint width, GLuint height)
 
 	if (width == mWidth && height == mHeight)
 		return;
+
+	if (g_test_sdk)
+	{
+		ogl_resize((int)width, (int)height);
+		return;
+	}
 
 	mWidth = width;
 	mHeight = height;
@@ -101,6 +155,15 @@ static int g_iFrameCount = 0;
 void HeightmapDemo::onRender()
 {
 	g_iFrameCount++;
+	if (g_test_sdk)
+	{
+		ogl_set_background_rotation(g_iFrameCount * 0.01f, 0.0f, 0.0f);
+		ogl_read_texels_from_renderbuffer();
+		ogl_render(0.0f);
+		return;
+	}
+
+	
 	m_Sample->Render();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClearColor(0, 0, 0, 0);
@@ -129,7 +192,7 @@ void HeightmapDemo::onRender()
 	
 	// 4*n - 1
 //	m_PostProcessing->addGaussBlur(79);
-	m_PostProcessing->addBloom(0.45f, 1.0, 3.1);
+	m_PostProcessing->addBloom(0.45f, 1.0f, 3.1f);
 	m_PostProcessing->addFXAA(5);
 	m_PostProcessing->addStaticMotionBlur(g_PreviouseMat, viewProjInvert);
 	FrameAttribs frameAttribs;
@@ -155,6 +218,11 @@ void HeightmapDemo::onRender()
 
 void HeightmapDemo::onDispose()
 {
+	if (g_test_sdk)
+	{
+		ogl_destroy();
+		return;
+	}
 	delete m_Sample;
 	delete m_PostProcessing;
 }

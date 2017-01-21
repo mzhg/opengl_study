@@ -141,11 +141,15 @@
   <ItemGroup>
     <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="FramebufferGL.cpp" />
+    <ClCompile Include="geometry2d.cpp" />
     <ClCompile Include="GLSLProgram.cpp" />
     <ClCompile Include="AssetLoaderAndroid.cpp" />
+    <ClCompile Include="GLStates.cpp" />
     <ClCompile Include="GLUtil.cpp" />
     <ClCompile Include="Numeric.cpp" />
     <ClCompile Include="NvAssetLoaderWin.cpp" />
+    <ClCompile Include="NvInputTransformer.cpp" />
+    <ClCompile Include="NvWin32StopWatch.cpp" />
     <ClCompile Include="PostProcessingBloomSetup.cpp" />
     <ClCompile Include="PostProcessingCombinePass.cpp" />
     <ClCompile Include="PostProcessingDownsample.cpp" />
@@ -157,6 +161,7 @@
     <ClCompile Include="SampleApp.cpp" />
     <ClCompile Include="SampleColorTriangle.cpp" />
     <ClCompile Include="SampleTunnel.cpp" />
+    <ClCompile Include="ShaderLoader.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureUtil.cpp" />
   </ItemGroup>
@@ -166,9 +171,14 @@
     <ClInclude Include="FileUtil.h" />
     <ClInclude Include="FramebufferGL.h" />
     <ClInclude Include="GaussianBlur.h" />
+    <ClInclude Include="geometry2d.h" />
+    <ClInclude Include="geometry3d.h" />
     <ClInclude Include="GLSLProgram.h" />
+    <ClInclude Include="GLStates.h" />
     <ClInclude Include="GLUtil.h" />
     <ClInclude Include="Numeric.h" />
+    <ClInclude Include="NvInputTransformer.h" />
+    <ClInclude Include="NvStopWatch.h" />
     <ClInclude Include="PostProcessingBloomSetup.h" />
     <ClInclude Include="PostProcessingCombinePass.h" />
     <ClInclude Include="PostProcessingDownsample.h" />
@@ -180,6 +190,7 @@
     <ClInclude Include="SampleApp.h" />
     <ClInclude Include="SampleColorTriangle.h" />
     <ClInclude Include="SampleTunnel.h" />
+    <ClInclude Include="ShaderLoader.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureUtil.h" />
     <ClInclude Include="Util.h" />

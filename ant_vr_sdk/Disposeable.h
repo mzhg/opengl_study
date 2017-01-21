@@ -13,6 +13,7 @@ namespace jet
 #define SAFE_RELEASE_VERTEX_ARRAY(x)  if(x != 0 && glIsVertexArray(x)) {glDeleteVertexArrays(1, &x); x = 0; }
 
 #define SAFE_DISPOSE(x)  if(x != 0) {x->dispose(); delete x; x = 0;}
+#define SAFE_DELETE(x)  if(x != 0) {delete x; x = 0;}
 
 		class Disposeable
 		{

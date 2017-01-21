@@ -62,16 +62,36 @@ namespace jet
 				Width(width), Height(height), Format(format), MipLevels(mipLevels), ArraySize(arraySize), SampleCount(sampleCount){}
 		}Texture2DDesc;
 
+		enum class MemoryType
+		{
+			NONE,
+			NEW,
+			MALLOC,
+		};
+
 		typedef struct TextureData
 		{
 			const GLubyte* pData;
 			int Format;
 			int Type;
 			int UnpackAlignment;
+			MemoryType Owned;
 
-			TextureData() : pData(NULL), UnpackAlignment(4){}
-			TextureData(GLubyte* _pData, int _format, int _type, int unpackAlignment = 4) :pData(_pData), Format(_format), Type(_type), UnpackAlignment(unpackAlignment) {}
-
+			TextureData() : pData(NULL), UnpackAlignment(4), Owned(MemoryType::NONE){}
+			TextureData(GLubyte* _pData, int _format, int _type, int unpackAlignment = 4, MemoryType owned = MemoryType::NONE) :pData(_pData), Format(_format), Type(_type), UnpackAlignment(unpackAlignment), Owned(owned) {}
+			
+			virtual ~TextureData()
+			{
+				if (Owned == MemoryType::NEW)
+				{
+					delete[] pData;
+				}
+				else if (Owned == MemoryType::MALLOC)
+				{
+					free((void*)pData);
+				}
+			}
+		
 		}TextureData;
 
 		extern bool operator < (const Texture2DDesc& a, const Texture2DDesc& b);

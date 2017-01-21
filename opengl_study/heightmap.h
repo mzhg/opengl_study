@@ -24,4 +24,6 @@ private:
 
 	PostProcessing* m_PostProcessing;
 	SampleApp* m_Sample;
+
+	InputAdapter* m_Input;
 };
