@@ -55,8 +55,14 @@ void HeightmapDemo::onCreate()
 
 		ogl_init();
 		ogl_set_background_texture(width, height, texData.Format, (const char*)texData.pData);
-		ogl_set_rect_texture(width, height, texData.Format, (const char*)texData.pData);
+//		ogl_set_rect_texture(width, height, texData.Format, (const char*)texData.pData);
 		ogl_set_rect_size((1280 - 600)/2, (720 - 200)/2, 600, 200);
+		ogl_create_rect_default_texture(512, 512);
+		/*
+		Texture2D* tex2d = new Texture2D();
+		Texture2DDesc  desc = Texture2DDesc(1280, 720, GL_RGB8);
+		TextureUtil::createTexture2D(&desc, &texData, tex2d);
+		ogl_set_rect_texture_id(tex2d->getTexture());*/
 		return;
 	}
 
@@ -158,7 +164,7 @@ void HeightmapDemo::onRender()
 	if (g_test_sdk)
 	{
 		ogl_set_background_rotation(g_iFrameCount * 0.01f, 0.0f, 0.0f);
-		ogl_read_texels_from_renderbuffer();
+//		ogl_read_texels_from_renderbuffer();
 		ogl_render(0.0f);
 		return;
 	}

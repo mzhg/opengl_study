@@ -11,6 +11,8 @@ struct  Vec3
 	float z;
 };
 
+#define TEST_MACRO(X) a##X##b
+
 void changeValue(Vec3* v)
 {
 	(*v).x = 100;
@@ -86,5 +88,8 @@ int main()
 	char cdir[255];
 	char* path = _getcwd(cdir, 255);
 	dir(path);
+
+	char* a123b = "this is a test";
+	puts(TEST_MACRO(123));
 	return 0;
 }

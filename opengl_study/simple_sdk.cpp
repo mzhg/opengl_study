@@ -10,18 +10,23 @@
 #include <GLES2/gl2.h>
 #endif
 
+#define INIT_ONCE 1
+
 #define OGL_DEBUG 1
 #if OGL_DEBUG
 #define AND_LOG(...)  printf(__VA_ARGS__)
-#define INIT_ONCE 1
-#define GL(x) x; check_gl_error()
+#define _s_l_(x) #x
+#define _str_line_(x) _s_l_(x)
+#define __STR_LINE__ _str_line_(__LINE__)
+#define __STR_FILE__ _str_line_(__FILE__)
+#define GL(x) x; check_gl_error( __STR_FILE__, __STR_LINE__)
 
 #define OBJ_CHECK(name, func)  if(name == 0 || !func(name)) {AND_LOG(#name" is not valid!\n");}
 
 #else
 #define AND_LOG(...)
-#define INIT_ONCE 
 #define GL(x) x
+#define OBJ_CHECK(name, func)
 #endif
 
 #ifdef __cplusplus
@@ -51,9 +56,9 @@ extern "C"{
 		"	gl_FragColor = texture2D(sparrow, vTextureCoord);\n"
 		"}\n";
 
-	static void check_gl_error()
+	static void check_gl_error(const char* file, const char* line)
 	{
-		char* errorMsg;
+		char errorMsg[40];
 		GLenum error = glGetError();
 		switch (error)
 		{
@@ -61,20 +66,32 @@ extern "C"{
 			return;
 			break;
 		case GL_INVALID_ENUM:
-			errorMsg = "GL_INVALID_ENUM";
+			strcpy_s(errorMsg, "GL_INVALID_ENUM");
 			break;
 		case GL_INVALID_VALUE:
-			errorMsg = "GL_INVALID_VALUE";
+			strcpy_s(errorMsg, "GL_INVALID_VALUE");
 			break;
 		case GL_INVALID_OPERATION:
-			errorMsg = "GL_INVALID_OPERATION";
+			strcpy_s(errorMsg, "GL_INVALID_OPERATION");
+			break;
+		case GL_INVALID_FRAMEBUFFER_OPERATION:
+			strcpy_s(errorMsg, "GL_INVALID_FRAMEBUFFER_OPERATION");
+			break;
+		case GL_OUT_OF_MEMORY:
+			strcpy_s(errorMsg, "GL_OUT_OF_MEMORY");
+			break;
+		case GL_STACK_UNDERFLOW:
+			strcpy_s(errorMsg, "GL_STACK_UNDERFLOW");
+			break;
+		case GL_STACK_OVERFLOW:
+			strcpy_s(errorMsg, "GL_STACK_OVERFLOW");
 			break;
 		default:
-			errorMsg = "Other";
+			sprintf_s(errorMsg, "Other: %d", error);
 			break;
 		}
 
-		AND_LOG("Error msg: %s\n", errorMsg);
+		AND_LOG("Error msg occured at line %s in the file %s: %s\n", line, file, errorMsg);
 	}
 
 #define POSITION 0
@@ -468,7 +485,72 @@ extern "C"{
 		g_rect_texture_id.textureId = id;
 		g_rect_texture_id.owend = 0;
 
-		AND_LOG("Create rect texture with the given texture id.");
+		bool isValid = glIsTexture(id);
+		if (!isValid)
+		{
+			AND_LOG("ogl_set_rect_texture_id::Invalid texture id. \n");
+			return;
+		}
+		GL(glBindTexture(GL_TEXTURE_2D, id));
+		GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+		GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+		GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+		GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+#if 0
+		GLint width, height, internalFormat;
+		GL(glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width));
+		GL(glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height));
+
+		AND_LOG("Texture dimension = [%d, %d].\n", width, height);
+#endif
+		GL(glBindTexture(GL_TEXTURE_2D, 0));
+		AND_LOG("Create rect texture with the given texture id.\n");
+	}
+
+	static Vertex3 bilinear(const Vertex3& x, const Vertex3& y, const Vertex3& z, const Vertex3& w, float a, float b){
+		const float _a = 1 - a;
+		const float _b = 1 - b;
+		Vertex3 dest;
+
+		dest.x = _a * _b * x.x + a * _b * y.x + a * b * z.x + _a * b * w.x;
+		dest.y = _a * _b * x.y + a * _b * y.y + a * b * z.y + _a * b * w.y;
+		dest.z = _a * _b * x.z + a * _b * y.z + a * b * z.z + _a * b * w.z;
+
+		return dest;
+	}
+
+	void ogl_create_rect_default_texture(int width, int height)
+	{
+		struct RGB
+		{
+			unsigned char r, g, b;
+		};
+
+		release_texture(g_rect_texture_id);
+		RGB* pData = (RGB*)malloc(sizeof(RGB) * width * height);
+
+		Vertex3 red = setVertex(1, 0, 0);
+		Vertex3 green = setVertex(0, 1, 0);
+		Vertex3 blue = setVertex(0, 0, 1);
+		Vertex3 white = setVertex(1, 1, 1);
+		for (int i = 0; i < width; i++)
+		{
+			for (int j = 0; j < height; j++)
+			{
+				float a = (float)i / (float)(width - 1);
+				float b = (float)j / (float)(height - 1);
+
+				int idx = j * width + i;
+				Vertex3 color =  bilinear(red, green, blue, white, a, b);
+				RGB& rgbColor = pData[idx];
+				rgbColor.r = (unsigned char)(color.x * 255);
+				rgbColor.g = (unsigned char)(color.y * 255);
+				rgbColor.b = (unsigned char)(color.z * 255);
+			}
+		}
+
+		ogl_set_rect_texture(width, height, GL_RGB, (const char*)pData);
+		free(pData);
 	}
 
 	void ogl_set_rect_size(int x, int y, int width, int height)
@@ -481,14 +563,84 @@ extern "C"{
 		AND_LOG("set rect bound[x = %d, y = %d, width = %d, height = %d].\n", x,y,width, height);
 	}
 
+	typedef struct AttribDesc
+	{
+		GLint enabled;
+		GLint size;
+		GLint stride;
+		GLint type;
+		GLint normalized;
+		GLvoid* pointer;
+	}AttribDesc;
+
+	static void ogl_print_attrib_info(int index, const AttribDesc& info)
+	{
+		char* type_str = "Unkown";
+		switch (info.type)
+		{
+		case GL_BYTE: 
+			type_str = "GL_BYTE";
+			break;
+		case GL_UNSIGNED_BYTE:
+			type_str = "GL_UNSIGNED_BYTE";
+			break;
+		case GL_SHORT:
+			type_str = "GL_SHORT";
+			break;
+		case GL_UNSIGNED_SHORT:
+			type_str = "GL_UNSIGNED_SHORT";
+			break;
+		case GL_FIXED:
+			type_str = "GL_FIXED";
+			break;
+		case GL_FLOAT:
+			type_str = "GL_FLOAT";
+			break;
+		}
+
+		AND_LOG("Attrib[%d]: (enabled, size, stride, type, normalized, pointer) = [%s, %d, %d, %s, %s, %d].\n",
+			index,
+			(info.enabled ? "true":"false"), info.size, info.stride, type_str, 
+			(info.normalized ? "true" : "false"), (GLint)(info.pointer)
+			);
+	}
+
+	static void ogl_get_attrib_info(int index, AttribDesc& out)
+	{
+		glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &out.enabled);
+		glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_SIZE, &out.size);
+		glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &out.stride);
+		glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_TYPE, &out.type);
+		glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_NORMALIZED, &out.normalized);
+		glGetVertexAttribPointerv(index, GL_VERTEX_ATTRIB_ARRAY_POINTER, &out.pointer);
+	}
+
 	void ogl_render(float elpsedTime)
 	{
+
+		
+		/*
 		GL(glEnable(GL_DEPTH_TEST));
 		GL(glDepthFunc(GL_ALWAYS));
 		GL((GL_FALSE));
 		GL(glDisable(GL_CULL_FACE));
 		GL((GL_BLEND));
 		GL(glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE));
+		*/
+
+		GLint program;
+		glGetIntegerv(GL_CURRENT_PROGRAM, &program);
+
+		GLint activeTexture;
+		glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTexture);
+
+		GLint vertex_buffer, element_buffer;
+		glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &vertex_buffer);
+		glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &element_buffer);
+
+		AttribDesc attrib_slot0, attrib_slot1;
+		ogl_get_attrib_info(0, attrib_slot0);
+		ogl_get_attrib_info(1, attrib_slot1);
 		
 #if OGL_DEBUG
 		int viewports[4];
@@ -497,8 +649,19 @@ extern "C"{
 		GLint framebuffer;
 		glGetIntegerv(0x8CA6, &framebuffer);
 
+		GLboolean blend;
+		glGetBooleanv(GL_BLEND, &blend);
+
+		ogl_print_attrib_info(0, attrib_slot0);
+		ogl_print_attrib_info(1, attrib_slot1);
+
 		AND_LOG("The current Viewport = [%d, %d, %d, %d].\n", viewports[0], viewports[1], viewports[2], viewports[3]);
 		AND_LOG("The current framebuffer name = %d.\n", framebuffer);
+		AND_LOG("The current program name = %d.\n", program);
+		AND_LOG("The current vertex_buffer name = %d.\n", vertex_buffer);
+		AND_LOG("The current element_buffer name = %d.\n", element_buffer);
+		AND_LOG("The current activeTexture name = GL_TEXTURE0 + (%d).\n", (activeTexture - GL_TEXTURE0));
+		AND_LOG("The current   state is = %s.\n", (blend ? "true":"false"));
 
 		OBJ_CHECK(g_program, glIsProgram);
 		OBJ_CHECK(g_background_tex_id.textureId, glIsTexture);
@@ -584,9 +747,29 @@ extern "C"{
 			GL(glDisable(GL_BLEND));
 		}
 
-		GL(glDisable(GL_DEPTH_TEST));
-		GL(glDepthFunc(GL_LESS));
-		GL(glDepthMask(GL_TRUE));
+//		GL(glDisable(GL_DEPTH_TEST));
+//		GL(glDepthFunc(GL_LESS));
+//		GL(glDepthMask(GL_TRUE));
+
+		GL(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer));
+		
+		if (attrib_slot0.enabled)
+		{
+			GL(glEnableVertexAttribArray(0));
+			GL(glVertexAttribPointer(0, attrib_slot0.size, attrib_slot0.type, attrib_slot0.normalized, attrib_slot0.stride, attrib_slot0.pointer));
+		}
+
+		if (attrib_slot1.enabled)
+		{
+			GL(glEnableVertexAttribArray(1));
+			GL(glVertexAttribPointer(1, attrib_slot1.size, attrib_slot1.type, attrib_slot1.normalized, attrib_slot1.stride, attrib_slot1.pointer));
+		}
+
+		GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer));
+
+
+		GL(glUseProgram(program));
+		GL(glActiveTexture(activeTexture));
 	}
 
 	void ogl_destroy()
@@ -691,21 +874,18 @@ extern "C"{
 		// create ogl buffers
 		{
 			GLuint bufs[2];
-			glGenBuffers(2, bufs);
-			glBindBuffer(GL_ARRAY_BUFFER, bufs[0]);
-			glBufferData(GL_ARRAY_BUFFER, numVertices * sizeof(Vertex), pVertices, GL_STATIC_DRAW);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			GL(glGenBuffers(2, bufs));
+			GL(glBindBuffer(GL_ARRAY_BUFFER, bufs[0]));
+			GL(glBufferData(GL_ARRAY_BUFFER, numVertices * sizeof(Vertex), pVertices, GL_STATIC_DRAW));
+			GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
 
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufs[1]);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndices * sizeof(unsigned short), pIndices, GL_STATIC_DRAW);
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+			GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, bufs[1]));
+			GL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, numIndices * sizeof(unsigned short), pIndices, GL_STATIC_DRAW));
+			GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 
 			g_sphere_vbo = bufs[0];
 			g_sphere_ibo = bufs[1];
 		}
-
-		GLenum error = glGetError();
-		assert(error == GL_NONE);
 
 		free(pVertices);
 		free(pIndices);
@@ -739,13 +919,10 @@ extern "C"{
 			pVertices[i].texcoord.y = 0.5f * pVertices[i].position.y + 0.5f;
 		}
 
-		glGenBuffers(1, &g_rect_vbo);
-		glBindBuffer(GL_ARRAY_BUFFER, g_rect_vbo);
-		glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), pVertices, GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		GLenum error = glGetError();
-		assert(error == GL_NONE);
+		GL(glGenBuffers(1, &g_rect_vbo));
+		GL(glBindBuffer(GL_ARRAY_BUFFER, g_rect_vbo));
+		GL(glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), pVertices, GL_STATIC_DRAW));
+		GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
 	}
 
 	static void create_program()

@@ -10,19 +10,28 @@ namespace jet
 	{
 		enum class BlendFunc
 		{
-			ONE,
 			ZERO,
+			ONE,
 			SRC_ALPHA,
 			SRC_ALPHA_INVERT,
 			SRC_COLOR,
 			SRC_COLOR_INVERT,
+			DST_COLOR,
+			DST_COLOR_INVERT,
+			DST_ALPHA,
+			DST_ALPHA_INVERT,
+			CONSTANT_COLOR,
+			CONSTANT_COLOR_INVERT,
+			CONSTANT_ALPHA,
+			CONSTANT_ALPHA_INVERT,
 		};
-
 		enum class BlendOpFunc
 		{
 			ADD,
-			MINUS,
-			MUL,
+			SUBTRACT,
+			SUBTRACT_REVERSE,
+			MIN,
+			MAX
 		};
 
 		typedef struct RenderTargetBlendDesc
@@ -56,84 +65,48 @@ namespace jet
 				AlphaToCoverageEnable(false),
 				IndependentBlendEnable(false)
 			{
+				/*
 				for (int i = 0; i < 8; i++)
 				{
 					RenderTargets[i] = RenderTargetBlendDesc();
-				}
+				}*/
 			}
 		}BlendDesc;
 
 		enum class StencilOp
 		{
+			KEEP,
+			ZERO,
+			REPLACE,
 			INCR,
 			INCR_WRAP,
 			DECR,
 			DECR_WRAP,
-			KEEP,
+			INVERT,
 		};
-
+		extern "C" GLenum ConvertStencilOpToGLenum(StencilOp func);
+		extern "C" StencilOp ConvertGLenumToStencilOp(GLenum func);
 		enum class CompareFunc
 		{
 			NEVER,
-			ALWAYS,
 			LESS,
-			LESS_EQUAL,
+			LEQUAL,
 			GREATER,
-			GREATER_EQUAL,
+			GEQUAL,
 			EQUAL,
 			NOTEQUAL,
+			ALWAYS,
 		};
-
-		typedef struct DepthStencilOPDesc
-		{
-			union 
-			{
-				struct
-				{
-					StencilOp StencilFailOp : 8;
-					StencilOp StencilDepthFailOp : 8;
-					StencilOp StencilPassOp : 8;
-					CompareFunc StencilFunc : 8;
-				};
-
-				int value;
-			};
-
-			DepthStencilOPDesc():
-				StencilFailOp(StencilOp::KEEP),
-				StencilDepthFailOp(StencilOp::KEEP),
-				StencilPassOp(StencilOp::KEEP),
-				StencilFunc(CompareFunc::ALWAYS)
-			{}
-		}DepthStencilOPDesc;
-
-		typedef struct DepthStencilDesc
-		{
-			bool DepthEnable;
-			bool DepthWriteMask;
-			CompareFunc DepthFunc;
-			bool StencilEnable;
-			int StencilMask;
-			DepthStencilOPDesc FrontFace;
-			DepthStencilOPDesc BackFace;
-
-			DepthStencilDesc() :
-				DepthEnable(false),
-				DepthWriteMask(true),
-				DepthFunc(CompareFunc::LESS),
-				StencilEnable(false),
-				StencilMask(0xFF),
-				FrontFace(),
-				BackFace()
-			{}
-		}DepthStencilDesc;
-
+		extern "C" GLenum ConvertCompareFuncToGLenum(CompareFunc func);
+		extern "C" CompareFunc ConvertGLenumToCompareFunc(GLenum func);
 		enum class PolygonMode
 		{
+			POINT,
+			LINE,
 			FILL,
-			LINE
 		};
-
+		extern "C" GLenum ConvertPolygonModeToGLenum(PolygonMode func);
+		extern "C" PolygonMode ConvertGLenumToPolygonMode(GLenum func);
 		enum class FaceMode
 		{
 			NONE,
@@ -141,7 +114,8 @@ namespace jet
 			BACK,
 			FRONT_AND_BACK,
 		};
-
+		extern "C" GLenum ConvertFaceModeToGLenum(FaceMode func);
+		extern "C" FaceMode ConvertGLenumToFaceMode(GLenum func);
 		enum class LogicFunc
 		{
 			CLEAR,
@@ -151,7 +125,7 @@ namespace jet
 			NOOP,
 			INVERT,
 			AND,
-			MAND,
+			NAND,
 			OR,
 			NOR,
 			XOR,
@@ -161,6 +135,48 @@ namespace jet
 			OR_REVERSE,
 			OR_INVERT,
 		};
+		extern "C" GLenum ConvertLogicFuncToGLenum(LogicFunc func);
+		extern "C" LogicFunc ConvertGLenumToLogicFunc(GLenum func);
+
+		typedef struct DepthStencilOPDesc
+		{
+			StencilOp StencilFailOp;
+			StencilOp StencilDepthFailOp;
+			StencilOp StencilPassOp;
+			CompareFunc StencilFunc;
+			int		  StencilWriteMask;
+			int		  StencilMask;
+			int		  StencilRef;
+
+			DepthStencilOPDesc():
+				StencilFailOp(StencilOp::KEEP),
+				StencilDepthFailOp(StencilOp::KEEP),
+				StencilPassOp(StencilOp::KEEP),
+				StencilFunc(CompareFunc::ALWAYS),
+				StencilWriteMask(0xFF),
+				StencilMask(0xFF),
+				StencilRef(0)
+			{}
+		}DepthStencilOPDesc;
+
+		typedef struct DepthStencilDesc
+		{
+			bool DepthEnable;
+			bool DepthWriteMask;
+			CompareFunc DepthFunc;
+			bool StencilEnable;
+			DepthStencilOPDesc FrontFace;
+			DepthStencilOPDesc BackFace;
+
+			DepthStencilDesc() :
+				DepthEnable(false),
+				DepthWriteMask(true),
+				DepthFunc(CompareFunc::LESS),
+				StencilEnable(false),
+				FrontFace(),
+				BackFace()
+			{}
+		}DepthStencilDesc;
 
 		typedef struct LogicDesc
 		{
@@ -174,8 +190,8 @@ namespace jet
 
 		typedef struct DepthRangeDesc
 		{
-			float NearVal;
-			float FarVal;
+			double NearVal;
+			double FarVal;
 
 			DepthRangeDesc() : NearVal(0.0f), FarVal(1.0f){}
 		}DepthRangeDesc;
@@ -188,12 +204,23 @@ namespace jet
 				factor(0.0f), units(0.0f){}
 		}PolygonOffsetDesc;
 
+		typedef struct ClipPlaneDesc
+		{
+			double NormX, NormY, NormZ, W;
+			bool ClipPlaneEnable;
+
+			ClipPlaneDesc() :
+				NormX(0), NormY(0), NormZ(0), W(0),
+				ClipPlaneEnable(false){}
+		}ClipPlaneDesc;
+
 		typedef struct RasterizerDesc
 		{
 			PolygonMode FillMode;
 			FaceMode CullMode;
 			bool FrontCounterClockwise;
-			float DepthBias;
+			bool CullFaceEnable;
+//			float DepthBias;
 //			float depthBiasClamp;
 //			float slopeScaledDepthBias;
 			bool DepthClampEnable;
@@ -202,22 +229,23 @@ namespace jet
 			bool MultisampleEanble;
 			bool AntialiasedLineEnable;
 			bool AntialiasedPolygonEnable;
-			bool ClipPlaneEnable;
 			bool Dither;
 			bool SRGB;
 			bool PolygonOffsetEnable;
 			bool RasterizedDiscardEnable;
 			bool ProgramPointSizeEnable;
 			bool PrimitiveRestartEnable;
+//			ClipPlaneDesc ClipPlanes[6];
 			PolygonOffsetDesc PolygonOffset;
-			Plane3f ClipPlanes[6];
 			LogicDesc LogicMode;
+			Rectangle2i ScissorBox;
 
 			RasterizerDesc():
 				FillMode(PolygonMode::FILL),
 				CullMode(FaceMode::BACK),
 				FrontCounterClockwise(false),  // ccw
-				DepthBias(0.0f),
+				CullFaceEnable(false),
+//				DepthBias(0.0f),
 				DepthClampEnable(false),
 				DepthRange(),
 				Dither(false),
@@ -225,15 +253,22 @@ namespace jet
 				SRGB(false),
 				MultisampleEanble(false),
 				AntialiasedLineEnable(false),
-				ClipPlaneEnable(false),
 				LogicMode(),
 				PolygonOffsetEnable(false),
 				PolygonOffset(),
 				RasterizedDiscardEnable(false),
 				ProgramPointSizeEnable(false),
-				PrimitiveRestartEnable(false)
+				PrimitiveRestartEnable(false),
+				ScissorBox()
 			{}
 		}RasterizerDesc;
+
+
+
+		extern "C" GLenum ConvertBlendFuncToGLenum(BlendFunc func);
+		extern "C" BlendFunc ConvertGLenumToBlendFunc(GLenum func);
+		extern "C" GLenum ConvertBlendOpFuncToGLenum(BlendOpFunc func);
+		extern "C" BlendOpFunc ConvertGLenumToBlendOpFunc(GLenum func);
 
 		// Single-ton class.
 		class GLStates
@@ -250,7 +285,7 @@ namespace jet
 			void restoreBlendState();
 			void resetBlendState(bool force = false);
 
-			void setDSState(const DepthStencilOPDesc* pDS);
+			void setDSState(const DepthStencilDesc* pDS);
 			void restoreDSState();
 			void resetDSState(bool force = false);
 
@@ -258,7 +293,11 @@ namespace jet
 			void restoreRSState();
 			void resetRSState(bool force = false);
 
-			void setViewport(GLint x, GLint y, GLint width, GLint height);
+			void setViewport(GLint x, GLint y, GLint width, GLint height)
+			{
+				Rectangle2i viewport = {x,y,width, height};
+				setViewports(1, &viewport);
+			}
 			void setViewports(unsigned int count, const Rectangle2i* pViewports);
 			void restoreViewport(unsigned int index = 0);
 
@@ -269,12 +308,17 @@ namespace jet
 			void bindFramebuffer(GLuint framebuffer);
 			void restoreFramebuffer();
 			void resetFramebuffer(bool force = false);
-			void bindTextures(unsigned int count, const TextureGL* pTextures, const int* units = nullptr);
+			
+			void bindTextures(unsigned int count, const TextureGL** pTextures, const int* units = nullptr);
 			void restoreTextures();
 			void resetTextures(bool force = false);
 
+			void bindVAO(GLuint vao);
+			void restoreVAO();
+			void resetVAO(bool force = false);
+
 			BlendDesc getBlendState() const { return m_BlendState; }
-			DepthStencilOPDesc getDepthStencilState() const { return m_DepthStencilState; }
+			DepthStencilDesc getDepthStencilState() const { return m_DepthStencilState; }
 			RasterizerDesc getRasterizerState() const { return m_RasterizerState; }
 
 			GLuint getProgram() const { return m_ProgramState; }
@@ -285,7 +329,7 @@ namespace jet
 		private:
 
 			void setBlendState(const BlendDesc& blend);
-			void setDSState(const DepthStencilOPDesc& ds);
+			void setDSState(const DepthStencilDesc& ds);
 			void setRSState(const RasterizerDesc& raster);
 
 
@@ -294,20 +338,27 @@ namespace jet
 			GLStates operator=(GLStates&) = delete;
 
 			BlendDesc m_BlendState;
-			DepthStencilOPDesc m_DepthStencilState;
+			DepthStencilDesc m_DepthStencilState;
 			RasterizerDesc  m_RasterizerState;
 
 			GLuint m_ProgramState;  // Current program
 			GLuint m_FramebufferState;  // Current framebuffer object
+			GLuint m_VertexArrayState;  // Current Vertex Array Object
 
 			struct BindTexture
 			{
 				GLenum Target;
 				GLuint TextureID;
+				GLuint Unit;
+
+				BindTexture() :
+					Target(0), TextureID(0), Unit(0){}
 			};
 
 			BindTexture m_TextureStates[80];
-			Rectangle2i m_ViewportState;
+			unsigned int m_TextureCount;
+			Rectangle2i m_ViewportStates[16];
+			unsigned int m_ViewportCount;
 		};
 
 	}

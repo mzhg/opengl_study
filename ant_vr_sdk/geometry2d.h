@@ -22,5 +22,17 @@ namespace jet
 		typedef Rectangle2D<int> Rectangle2i;
 		typedef Rectangle2D<float> Rectangle2f;
 		typedef Rectangle2D<unsigned int> Rectangle2ui;
+
+		template<typename Type>
+		bool operator == (const Rectangle2D<Type>& a, const Rectangle2D<Type>& b)
+		{
+			return a.X == b.X && a.Y == b.Y && a.Width == b.Width && a.Height == b.Height;
+		}
+
+		template<typename Type>
+		bool operator != (const Rectangle2D<Type>& a, const Rectangle2D<Type>& b)
+		{
+			return a.X != b.X || a.Y != b.Y || a.Width != b.Width || a.Height != b.Height;
+		}
 	}
 }

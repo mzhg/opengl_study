@@ -20,6 +20,7 @@ extern "C" void ogl_read_texels_from_renderbuffer();
 
 extern "C" void ogl_set_background_texture_id(unsigned int id);
 extern "C" void ogl_set_rect_texture_id(unsigned int id);
+extern "C" void ogl_create_rect_default_texture(int width, int height);
 
 extern "C" void ogl_set_rect_size(int x, int y, int width, int height);
 extern "C" void ogl_set_background_rotation(float yaw, float pitch, float roll);

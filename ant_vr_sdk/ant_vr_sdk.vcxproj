@@ -139,6 +139,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="glstate_convertion.cpp" />
     <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="FramebufferGL.cpp" />
     <ClCompile Include="geometry2d.cpp" />

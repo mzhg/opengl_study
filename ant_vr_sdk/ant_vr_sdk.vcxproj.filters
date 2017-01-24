@@ -124,6 +124,9 @@
     <ClCompile Include="geometry2d.cpp">
       <Filter>Math\Util</Filter>
     </ClCompile>
+    <ClCompile Include="glstate_convertion.cpp">
+      <Filter>Renderer\Util</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GLSLProgram.h">
