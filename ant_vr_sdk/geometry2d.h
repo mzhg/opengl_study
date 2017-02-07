@@ -34,5 +34,27 @@ namespace jet
 		{
 			return a.X != b.X || a.Y != b.Y || a.Width != b.Width || a.Height != b.Height;
 		}
+
+		template<typename Type>
+		struct Range
+		{
+			Type Min, Max;
+		};
+
+		typedef Range<int> Rangei;
+		typedef Range<float> Rangef;
+		typedef Range<double> Ranged;
+
+		template<typename Type>
+		bool operator == (const Range<Type>& a, const Range<Type>& b)
+		{
+			return a.Min == b.Min && a.Max == b.Max;
+		}
+
+		template<typename Type>
+		bool operator != (const Range<Type>& a, const Range<Type>& b)
+		{
+			return a.Min != b.Min || a.Max != b.Max;
+		}
 	}
 }

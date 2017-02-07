@@ -213,6 +213,9 @@
     <ClInclude Include="geometry3d.h">
       <Filter>Math\Util</Filter>
     </ClInclude>
+    <ClInclude Include="gl_state_define.h">
+      <Filter>Renderer\Util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\DefaultScreenSpacePS.frag">

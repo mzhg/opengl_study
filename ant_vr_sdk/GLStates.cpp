@@ -11,7 +11,7 @@ namespace jet
 		static const DepthStencilDesc g_DSStateDefault = DepthStencilDesc();
 		static const RasterizerDesc g_RSStateDefault = RasterizerDesc();
 
-		static const GLCapabilities* g_Caps = GLCapabilities::getGLCapabilities();
+//		static const GLCapabilities* g_Caps = GLCapabilities::getGLCapabilities();
 
 		GLStates& GLStates::getGLStates()
 		{
@@ -30,8 +30,6 @@ namespace jet
 				setBlendState(g_BlendDefault);
 			}
 		}
-
-		
 
 		void GLStates::restoreBlendState()
 		{
@@ -343,6 +341,23 @@ namespace jet
 				GLint value;
 				glGetIntegerv(GL_LOGIC_OP_MODE, &value);
 				m_RasterizerState.LogicMode.LogicOp = ConvertGLenumToLogicFunc(value);
+
+				GLboolean colorWriteMask[4];
+				glGetBooleanv(GL_COLOR_WRITEMASK, colorWriteMask);
+				m_RasterizerState.ColorWriteMask.RedWriteMask = colorWriteMask[0] != 0;
+				m_RasterizerState.ColorWriteMask.GreenWriteMask = colorWriteMask[1] != 0;
+				m_RasterizerState.ColorWriteMask.BlueWriteMask = colorWriteMask[2] != 0;
+				m_RasterizerState.ColorWriteMask.AlphaWriteMask = colorWriteMask[3] != 0;
+			}
+
+			{
+				m_RasterizerState.PointSprite.PointSpriteEnabled = glIsEnabled(GL_POINT_SPRITE);
+				m_RasterizerState.PointSprite.ProgramPointSizeEnabled = glIsEnabled(GL_PROGRAM_POINT_SIZE);
+				glGetFloatv(GL_POINT_FADE_THRESHOLD_SIZE, &m_RasterizerState.PointSprite.PointFadeThresholdSize);
+
+				GLint out;
+				glGetIntegerv(GL_POINT_SPRITE_COORD_ORIGIN, &out);
+				m_RasterizerState.PointSprite.PointSpriteCoordOrigin = ConvertGLenumToSpriteCoordOrigin(out);
 			}
 		}
 
@@ -370,6 +385,9 @@ namespace jet
 				glPolygonOffset(0.0f, 0.0f);
 				glDisable(GL_COLOR_LOGIC_OP);
 				glLogicOp(GL_COPY);
+				glColorMask(true, true, true, true);
+				glDisable(GL_POINT_SPRITE);
+				glDisable(GL_PROGRAM_POINT_SIZE);
 
 				m_RasterizerState = g_RSStateDefault;
 			}
@@ -403,33 +421,52 @@ namespace jet
 			m_ProgramState = 0;
 		}
 
-		void GLStates::bindFramebuffer(GLuint framebuffer)
+		void GLStates::bindFramebuffer(GLuint framebuffer, FramebufferTarget target)
 		{
-			if (m_FramebufferState != framebuffer)
+			const int idx = static_cast<int>(target);
+			if (m_FramebufferState[idx] != framebuffer)
 			{
-				glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-				m_FramebufferState = framebuffer;
+				glBindFramebuffer(ConvertFramebufferTargetToGLenum(target), framebuffer);
+				m_FramebufferState[idx] = framebuffer;
 			}
 		}
 
-		void GLStates::restoreFramebuffer()
+		void GLStates::restoreFramebuffer(FramebufferTarget target)
 		{
-			glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, (GLint*)&m_FramebufferState);
+			const int idx = static_cast<int>(target);
+			GLenum mode;
+			switch (target)
+			{
+			case FramebufferTarget::FRAMEBUFFER:
+			case FramebufferTarget::DRAW: 
+				mode = GL_DRAW_FRAMEBUFFER_BINDING;
+				break;
+			case FramebufferTarget::READ:
+				mode = GL_READ_FRAMEBUFFER_BINDING;
+				break;
+			default:
+				assert(false);
+				break;
+			}
+
+			glGetIntegerv(mode, (GLint*)&m_FramebufferState[idx]);
 		}
 
-		void GLStates::resetFramebuffer(bool force)
+		void GLStates::resetFramebuffer(FramebufferTarget target, bool force)
 		{
+			const int idx = static_cast<int>(target);
 			if (force || m_FramebufferState != 0)
 			{
-				glBindFramebuffer(GL_FRAMEBUFFER, m_FramebufferState);
+				glBindFramebuffer(ConvertFramebufferTargetToGLenum(target), 0);
 			}
 
-			m_FramebufferState = 0;
+			m_FramebufferState[idx] = 0;
 		}
 
-		void GLStates::bindTextures(unsigned int count, const TextureGL** pTextures, const int* units)
+		void GLStates::bindTextures(unsigned int count, const TextureGL** pTextures, const unsigned int* units)
 		{
 			static GLuint textureNames[80];
+			assert(count <= 80);
 			for (unsigned int i = 0; i < count; i++)
 			{
 				textureNames[i] = pTextures && pTextures[i] ? pTextures[i]->getTexture() : 0;
@@ -894,20 +931,443 @@ namespace jet
 					glDisable(GL_COLOR_LOGIC_OP);
 				}
 			}
+
+			if (m_RasterizerState.ColorWriteMask.RedWriteMask != raster.ColorWriteMask.RedWriteMask ||
+				m_RasterizerState.ColorWriteMask.GreenWriteMask != raster.ColorWriteMask.GreenWriteMask ||
+				m_RasterizerState.ColorWriteMask.BlueWriteMask != raster.ColorWriteMask.BlueWriteMask ||
+				m_RasterizerState.ColorWriteMask.AlphaWriteMask != raster.ColorWriteMask.AlphaWriteMask)
+			{
+				m_RasterizerState.ColorWriteMask = raster.ColorWriteMask;
+				glColorMask(raster.ColorWriteMask.RedWriteMask, raster.ColorWriteMask.GreenWriteMask, raster.ColorWriteMask.BlueWriteMask, raster.ColorWriteMask.AlphaWriteMask);
+			}
 			
+			if (m_RasterizerState.PointSprite.PointSpriteEnabled != raster.PointSprite.PointSpriteEnabled)
+			{
+				if (raster.PointSprite.PointSpriteEnabled)
+				{
+					glEnable(GL_POINT_SPRITE);
+
+					if (raster.PointSprite.PointFadeThresholdSize != m_RasterizerState.PointSprite.PointFadeThresholdSize)
+					{
+						assert(raster.PointSprite.PointFadeThresholdSize >= 0.0);
+						m_RasterizerState.PointSprite.PointFadeThresholdSize = raster.PointSprite.PointFadeThresholdSize;
+						
+						glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, raster.PointSprite.PointFadeThresholdSize);
+					}
+
+					if (raster.PointSprite.PointSpriteCoordOrigin != m_RasterizerState.PointSprite.PointSpriteCoordOrigin)
+					{
+						m_RasterizerState.PointSprite.PointSpriteCoordOrigin = raster.PointSprite.PointSpriteCoordOrigin;
+
+						glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, ConvertSpriteCoordOriginToGLenum(raster.PointSprite.PointSpriteCoordOrigin));
+					}
+					
+				}
+				else
+				{
+					glDisable(GL_POINT_SPRITE);
+				}
+			}
+
+			if (raster.PointSprite.ProgramPointSizeEnabled != m_RasterizerState.PointSprite.ProgramPointSizeEnabled)
+			{
+				m_RasterizerState.PointSprite.ProgramPointSizeEnabled = raster.PointSprite.ProgramPointSizeEnabled;
+				if (raster.PointSprite.ProgramPointSizeEnabled)
+				{
+					glEnable(GL_PROGRAM_POINT_SIZE);
+				}
+				else
+				{
+					glDisable(GL_PROGRAM_POINT_SIZE);
+				}
+			}
 		}
 
-		GLStates::GLStates(): 
+		void GLStates::setActiveTexture(unsigned int unit)
+		{
+			if (unit != m_ActiveTextureUnit)
+			{
+				m_ActiveTextureUnit = unit;
+				glActiveTexture(GL_TEXTURE0 + unit);
+			}
+		}
+		
+		void GLStates::resetActiveTexture(bool force)
+		{
+			if (force || m_ActiveTextureUnit)
+			{
+				glActiveTexture(GL_TEXTURE0);
+				m_ActiveTextureUnit = 0;
+			}
+		}
+
+		void GLStates::restoreActiveTexture()
+		{
+			glGetIntegerv(GL_ACTIVE_TEXTURE, (GLint*)&m_ActiveTextureUnit);
+			m_ActiveTextureUnit -= GL_TEXTURE0;
+		}
+
+		// returns a pair of values indicating the range of widths supported for aliased lines. See glLineWidth.
+		Rangef GLStates::getAliasedLineWidthRange()
+		{
+			static Rangef out = {-1, -1};
+			if (out.Max == -1)
+			{
+				glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, (GLfloat*)&out);
+			}
+			
+			return out;
+		}
+		// returns two values: the smallest and largest supported sizes for points. The smallest size must be at most 1, and the largest size must be at least 1.
+		Rangef GLStates::getAliasedPointSizeRange()
+		{
+			static Rangef out = { -1, -1 };
+			if (out.Max == -1)
+			{
+				glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, (GLfloat*)&out);
+			}
+
+			return out;
+		}
+
+		// returns a list of symbolic constants of length GL_NUM_COMPRESSED_TEXTURE_FORMATS indicating which compressed texture formats are available. See glCompressedTexImage2D.
+		const GLenum* GLStates::getCompressedTextureFormats(GLuint& length)
+		{
+			static GLint number = -1;
+			static GLenum* formats = nullptr;
+
+			if (!formats)
+			{
+				glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &number);
+				if (!number)
+				{
+					length = 0;
+					return nullptr;
+				}
+
+				formats = new GLenum[number];
+				glGetIntegerv(GL_COMPRESSED_TEXTURE_FORMATS, (GLint*)formats);
+			}
+
+			length = number;
+			return formats;
+		}
+		// return an array of GL_NUM_PROGRAM_BINARY_FORMATS values, indicating the proram binary formats supported by the implementation.
+		const GLenum* GLStates::getProgramBinaryFormats(GLuint& length)
+		{
+			static GLint number = -1;
+			static GLenum* formats = nullptr;
+
+			if (!formats)
+			{
+				glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, &number);
+				if (!number)
+				{
+					length = 0;
+					return nullptr;
+				}
+					
+				formats = new GLenum[number];
+				glGetIntegerv(GL_PROGRAM_BINARY_FORMATS, (GLint*)formats);
+			}
+
+			length = number;
+			return formats;
+		}
+		// returns two values, the minimum and maximum viewport bounds range. The minimum range should be at least [-32768, 32767].
+		Rangei GLStates::getViewportBoundsRange()
+		{
+			Rangei out = {-1,-1};
+			if (out.Max == -1)
+			{
+				glGetIntegerv(GL_VIEWPORT_BOUNDS_RANGE, (GLint*)&out);
+			}
+
+			return out;
+		}
+
+		void GLStates::bindProgramPipeline(GLuint program)
+		{
+			if (m_ProgramPipelineState != program)
+			{
+				m_ProgramPipelineState = program;
+				glBindProgramPipeline(program);
+			}
+		}
+		void GLStates::restoreProgramPipeline()
+		{
+			glGetIntegerv(GL_PROGRAM_PIPELINE_BINDING, (GLint*)&m_ProgramPipelineState);
+		}
+
+		void GLStates::resetProgramPipeline(bool force)
+		{
+			if (force || m_ProgramPipelineState)
+			{
+				m_ProgramPipelineState = 0;
+				glBindProgramPipeline(0);
+			}
+		}
+
+		void GLStates::setHint(HintTarget target, HintMode mode)
+		{
+			const int idx = static_cast<int>(target);
+			if (m_HintStates[idx] != mode)
+			{
+				glHint(ConvertHintTargetToGLenum(target), ConvertHintModeToGLenum(mode));
+				m_HintStates[idx] = mode;
+			}
+		}
+		void GLStates::restoreHint(HintTarget target)
+		{
+			const int idx = static_cast<int>(target);
+			GLint mode;
+			GLenum pname = ConvertHintTargetToGLenum(target);
+			glGetIntegerv(pname, &mode);
+			m_HintStates[idx] = ConvertGLenumToHintMode(mode);
+		}
+		void GLStates::resetHint(HintTarget target, bool force)
+		{
+			const int idx = static_cast<int>(target);
+			GLenum pname = ConvertHintTargetToGLenum(target);
+			if (m_HintStates[idx] != HintMode::DONT_CARE)
+			{
+				glHint(pname, GL_DONT_CARE);
+				m_HintStates[idx] = HintMode::DONT_CARE;
+			}
+		}
+
+		void GLStates::bindBuffer(GLuint buffer, BufferTarget target)
+		{
+			const int idx = static_cast<int>(target);
+			GLenum gl_target = ConvertBufferTargetToGLenum(target);
+			if (m_BufferStates[idx] != buffer)
+			{
+				m_BufferStates[idx] = buffer;
+				glBindBuffer(gl_target, buffer);
+			}
+		}
+		
+		void GLStates::resetBuffer(BufferTarget target, bool force)
+		{
+			const int idx = static_cast<int>(target);
+			GLenum gl_target = ConvertBufferTargetToGLenum(target);
+			if (force || m_BufferStates[idx])
+			{
+				m_BufferStates[idx] = 0;
+				glBindBuffer(gl_target, 0);
+			}
+		}
+
+		void GLStates::restoreBuffer(BufferTarget target)
+		{
+			static const GLenum BINDINGS[] =
+			{
+				GL_ARRAY_BUFFER_BINDING,
+				GL_COPY_READ_BUFFER_BINDING,
+				GL_COPY_WRITE_BUFFER_BINDING,
+				GL_DISPATCH_INDIRECT_BUFFER_BINDING,
+				GL_DRAW_INDIRECT_BUFFER_BINDING,
+				GL_ELEMENT_ARRAY_BUFFER_BINDING,
+				GL_PIXEL_PACK_BUFFER_BINDING,
+				GL_PIXEL_UNPACK_BUFFER_BINDING,
+				GL_TEXTURE_BUFFER_BINDING,
+				GL_QUERY_BUFFER_BINDING,
+				GL_ATOMIC_COUNTER_BUFFER_BINDING,
+				GL_SHADER_STORAGE_BUFFER_BINDING,
+				GL_TRANSFORM_FEEDBACK_BUFFER_BINDING,
+				GL_UNIFORM_BUFFER_BINDING,
+			};
+
+			const int idx = static_cast<int>(target);
+			glGetIntegerv(BINDINGS[idx], (GLint*)&m_BufferStates[idx]);
+		}
+
+		void GLStates::setClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
+		{
+			GLfloat color[4] = { r, g, b, a };
+			setClearColor(color);
+		}
+
+		void GLStates::setClearColor(GLfloat color[4])
+		{
+			if (!Numeric::isEqual<GLfloat, 4>(color, m_ClearColor))
+			{
+				glClearColor(color[0], color[1], color[2], color[3]);
+				for (int i = 0; i < 4; i++)
+				{
+					m_ClearColor[i] = color[i];
+				}
+			}
+		}
+
+		void GLStates::restoreClearColor()
+		{
+			glGetFloatv(GL_COLOR_CLEAR_VALUE, m_ClearColor);
+		}
+
+		void GLStates::setClearDepth(GLfloat depth)
+		{
+			if (m_ClearDepth != depth)
+			{
+				glClearDepth(depth);
+				m_ClearDepth = depth;
+			}
+		}
+
+		void GLStates::restoreClearDepth()
+		{
+			glGetFloatv(GL_DEPTH_CLEAR_VALUE, &m_ClearDepth);
+		}
+
+		void GLStates::setClearStencil(GLint stencil)
+		{
+			if (m_ClearStencil != stencil)
+			{
+				m_ClearStencil = stencil;
+				glClearStencil(stencil);
+			}
+		}
+
+		void GLStates::restoreClearStencil()
+		{
+			glGetIntegerv(GL_STENCIL_CLEAR_VALUE, (GLint*)m_ClearStencil);
+		}
+
+		void GLStates::setLineWidth(GLfloat width)
+		{
+			if (m_LineWidth != width)
+			{
+				glLineWidth(width);
+				m_LineWidth = width;
+			}
+		}
+
+		void GLStates::restoreLineWidth()
+		{
+			glGetFloatv(GL_LINE_WIDTH, &m_LineWidth);
+		}
+
+		void GLStates::resetLineWidth(bool force)
+		{
+			if (force || m_LineWidth != 1.0f)
+			{
+				glLineWidth(1.0f);
+				m_LineWidth = 1.0f;
+			}
+		}
+
+		void GLStates::setPointSize(GLfloat size)
+		{
+			if (m_PointSize != size)
+			{
+				glPointSize(size);
+				m_PointSize = size;
+			}
+		}
+		void GLStates::restorePointSize()
+		{
+			glGetFloatv(GL_POINT_SIZE, &m_LineWidth);
+		}
+
+		void GLStates::resetPointSize(bool force)
+		{
+			if (force || m_PointSize != 1.0f)
+			{
+				glPointSize(1.0f);
+				m_PointSize = 1.0f;
+			}
+		}
+
+		void GLStates::setPrimitiveRestartIndex(GLint index)
+		{
+			if (m_PrimitiveRestartIndex != index)
+			{
+				m_PrimitiveRestartIndex = index;
+				glPrimitiveRestartIndex(index);
+			}
+		}
+		void GLStates::restorePrimitiveRestartIndex()
+		{
+			glGetIntegerv(GL_PRIMITIVE_RESTART_INDEX, (GLint*)&m_PrimitiveRestartIndex);
+		}
+		void GLStates::resetPrimitiveRestartIndex(bool force)
+		{
+			if (force || m_PrimitiveRestartIndex)
+			{
+				m_PrimitiveRestartIndex = 0;
+				glPrimitiveRestartIndex(0);
+			}
+		}
+
+		void GLStates::setRenderbuffer(GLuint renderbuffer)
+		{
+			if (m_RenderbufferState != renderbuffer)
+			{
+				glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+				m_RenderbufferState = renderbuffer;
+			}
+		}
+		void GLStates::restoreRenderbuffer()
+		{
+			glGetIntegerv(GL_RENDERBUFFER_BINDING, (GLint*)&m_RenderbufferState);
+		}
+
+		void GLStates::resetRenderbuffer(bool force)
+		{
+			if (force || m_RenderbufferState)
+			{
+				glBindRenderbuffer(GL_RENDERBUFFER, 0);
+				m_RenderbufferState = 0;
+			}
+		}
+
+		void GLStates::setSampler(GLuint sampler, GLuint unit)
+		{
+			if (m_SamplerStates[unit] != sampler)
+			{
+				glBindSampler(unit, sampler);
+				m_SamplerStates[unit] = sampler;
+			}
+		}
+		
+		void GLStates::restoreSampler(GLuint unit)
+		{
+			glGetIntegeri_v(GL_SAMPLER_BINDING, unit, (GLint*)m_SamplerStates[unit]);
+		}
+
+		void GLStates::resetSampler(GLuint unit, bool force)
+		{
+			if (force || m_SamplerStates[unit])
+			{
+				glBindSampler(unit, 0);
+				m_SamplerStates[unit] = 0;
+			}
+		}
+#if 0
+		void GLStates::setProvoke(ProvokeMode mode);
+		ProvokeMode getProvoke() const { return m_ProvokeState; }
+		void GLStates::restoreProvoke();
+		void GLStates::resetProvoke(bool force = false);
+#endif
+
+		GLStates::GLStates() :
 			m_BlendState(),
 			m_DepthStencilState(),
 			m_RasterizerState(),
 
 			m_ProgramState(0),
-			m_FramebufferState(0),
+			m_FramebufferState(),
 			m_VertexArrayState(0),
 
 			m_TextureCount(0),
-			m_ViewportCount(0)
+			m_ViewportCount(0),
+
+			m_ActiveTextureUnit(0),
+			m_LineWidth(1.0f),
+			m_PointSize(1.0f),
+			m_PrimitiveRestartIndex(0),
+			m_RenderbufferState(0),
+			m_ProvokeState(ProvokeMode::FIRST)
 		{}
 
 

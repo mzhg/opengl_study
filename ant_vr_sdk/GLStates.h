@@ -1,275 +1,11 @@
 #pragma once
-#include <GL\glew.h>
+
 #include "Texture.h"
-#include "geometry2d.h"
-#include "geometry3d.h"
 
 namespace jet
 {
 	namespace util
 	{
-		enum class BlendFunc
-		{
-			ZERO,
-			ONE,
-			SRC_ALPHA,
-			SRC_ALPHA_INVERT,
-			SRC_COLOR,
-			SRC_COLOR_INVERT,
-			DST_COLOR,
-			DST_COLOR_INVERT,
-			DST_ALPHA,
-			DST_ALPHA_INVERT,
-			CONSTANT_COLOR,
-			CONSTANT_COLOR_INVERT,
-			CONSTANT_ALPHA,
-			CONSTANT_ALPHA_INVERT,
-		};
-		enum class BlendOpFunc
-		{
-			ADD,
-			SUBTRACT,
-			SUBTRACT_REVERSE,
-			MIN,
-			MAX
-		};
-
-		typedef struct RenderTargetBlendDesc
-		{
-			bool BlendEnable;
-			BlendFunc SrcBlend;
-			BlendFunc DestBlend;
-			BlendOpFunc   BlendOp;
-			BlendFunc SrcBlendAlpha;
-			BlendFunc DestBlendAlpha;
-			BlendOpFunc BlendOpAlpha;
-
-			RenderTargetBlendDesc():
-				BlendEnable(false),
-				SrcBlend(BlendFunc::ONE),
-				DestBlend(BlendFunc::ZERO),
-				BlendOp(BlendOpFunc::ADD),
-				SrcBlendAlpha(BlendFunc::ONE),
-				DestBlendAlpha(BlendFunc::ZERO),
-				BlendOpAlpha(BlendOpFunc::ADD)
-			{}
-		}RenderTargetBlendDesc;
-
-		typedef struct BlendDesc
-		{
-			bool AlphaToCoverageEnable;
-			bool IndependentBlendEnable;
-
-			RenderTargetBlendDesc RenderTargets[8];
-			BlendDesc() :
-				AlphaToCoverageEnable(false),
-				IndependentBlendEnable(false)
-			{
-				/*
-				for (int i = 0; i < 8; i++)
-				{
-					RenderTargets[i] = RenderTargetBlendDesc();
-				}*/
-			}
-		}BlendDesc;
-
-		enum class StencilOp
-		{
-			KEEP,
-			ZERO,
-			REPLACE,
-			INCR,
-			INCR_WRAP,
-			DECR,
-			DECR_WRAP,
-			INVERT,
-		};
-		extern "C" GLenum ConvertStencilOpToGLenum(StencilOp func);
-		extern "C" StencilOp ConvertGLenumToStencilOp(GLenum func);
-		enum class CompareFunc
-		{
-			NEVER,
-			LESS,
-			LEQUAL,
-			GREATER,
-			GEQUAL,
-			EQUAL,
-			NOTEQUAL,
-			ALWAYS,
-		};
-		extern "C" GLenum ConvertCompareFuncToGLenum(CompareFunc func);
-		extern "C" CompareFunc ConvertGLenumToCompareFunc(GLenum func);
-		enum class PolygonMode
-		{
-			POINT,
-			LINE,
-			FILL,
-		};
-		extern "C" GLenum ConvertPolygonModeToGLenum(PolygonMode func);
-		extern "C" PolygonMode ConvertGLenumToPolygonMode(GLenum func);
-		enum class FaceMode
-		{
-			NONE,
-			FRONT,
-			BACK,
-			FRONT_AND_BACK,
-		};
-		extern "C" GLenum ConvertFaceModeToGLenum(FaceMode func);
-		extern "C" FaceMode ConvertGLenumToFaceMode(GLenum func);
-		enum class LogicFunc
-		{
-			CLEAR,
-			SET,
-			COPY,
-			COPY_INVERT,
-			NOOP,
-			INVERT,
-			AND,
-			NAND,
-			OR,
-			NOR,
-			XOR,
-			EQUIV,
-			AND_REVERSE,
-			AND_INVERT,
-			OR_REVERSE,
-			OR_INVERT,
-		};
-		extern "C" GLenum ConvertLogicFuncToGLenum(LogicFunc func);
-		extern "C" LogicFunc ConvertGLenumToLogicFunc(GLenum func);
-
-		typedef struct DepthStencilOPDesc
-		{
-			StencilOp StencilFailOp;
-			StencilOp StencilDepthFailOp;
-			StencilOp StencilPassOp;
-			CompareFunc StencilFunc;
-			int		  StencilWriteMask;
-			int		  StencilMask;
-			int		  StencilRef;
-
-			DepthStencilOPDesc():
-				StencilFailOp(StencilOp::KEEP),
-				StencilDepthFailOp(StencilOp::KEEP),
-				StencilPassOp(StencilOp::KEEP),
-				StencilFunc(CompareFunc::ALWAYS),
-				StencilWriteMask(0xFF),
-				StencilMask(0xFF),
-				StencilRef(0)
-			{}
-		}DepthStencilOPDesc;
-
-		typedef struct DepthStencilDesc
-		{
-			bool DepthEnable;
-			bool DepthWriteMask;
-			CompareFunc DepthFunc;
-			bool StencilEnable;
-			DepthStencilOPDesc FrontFace;
-			DepthStencilOPDesc BackFace;
-
-			DepthStencilDesc() :
-				DepthEnable(false),
-				DepthWriteMask(true),
-				DepthFunc(CompareFunc::LESS),
-				StencilEnable(false),
-				FrontFace(),
-				BackFace()
-			{}
-		}DepthStencilDesc;
-
-		typedef struct LogicDesc
-		{
-			LogicFunc LogicOp;
-			bool LogicEnable;
-
-			LogicDesc() :
-				LogicOp(LogicFunc::COPY),
-				LogicEnable(false){}
-		}LogicDesc;
-
-		typedef struct DepthRangeDesc
-		{
-			double NearVal;
-			double FarVal;
-
-			DepthRangeDesc() : NearVal(0.0f), FarVal(1.0f){}
-		}DepthRangeDesc;
-
-		typedef struct PolygonOffsetDesc
-		{
-			float factor;
-			float units;
-			PolygonOffsetDesc() :
-				factor(0.0f), units(0.0f){}
-		}PolygonOffsetDesc;
-
-		typedef struct ClipPlaneDesc
-		{
-			double NormX, NormY, NormZ, W;
-			bool ClipPlaneEnable;
-
-			ClipPlaneDesc() :
-				NormX(0), NormY(0), NormZ(0), W(0),
-				ClipPlaneEnable(false){}
-		}ClipPlaneDesc;
-
-		typedef struct RasterizerDesc
-		{
-			PolygonMode FillMode;
-			FaceMode CullMode;
-			bool FrontCounterClockwise;
-			bool CullFaceEnable;
-//			float DepthBias;
-//			float depthBiasClamp;
-//			float slopeScaledDepthBias;
-			bool DepthClampEnable;
-			DepthRangeDesc DepthRange;
-			bool ScissorEnable;
-			bool MultisampleEanble;
-			bool AntialiasedLineEnable;
-			bool AntialiasedPolygonEnable;
-			bool Dither;
-			bool SRGB;
-			bool PolygonOffsetEnable;
-			bool RasterizedDiscardEnable;
-			bool ProgramPointSizeEnable;
-			bool PrimitiveRestartEnable;
-//			ClipPlaneDesc ClipPlanes[6];
-			PolygonOffsetDesc PolygonOffset;
-			LogicDesc LogicMode;
-			Rectangle2i ScissorBox;
-
-			RasterizerDesc():
-				FillMode(PolygonMode::FILL),
-				CullMode(FaceMode::BACK),
-				FrontCounterClockwise(false),  // ccw
-				CullFaceEnable(false),
-//				DepthBias(0.0f),
-				DepthClampEnable(false),
-				DepthRange(),
-				Dither(false),
-				ScissorEnable(false),
-				SRGB(false),
-				MultisampleEanble(false),
-				AntialiasedLineEnable(false),
-				LogicMode(),
-				PolygonOffsetEnable(false),
-				PolygonOffset(),
-				RasterizedDiscardEnable(false),
-				ProgramPointSizeEnable(false),
-				PrimitiveRestartEnable(false),
-				ScissorBox()
-			{}
-		}RasterizerDesc;
-
-
-
-		extern "C" GLenum ConvertBlendFuncToGLenum(BlendFunc func);
-		extern "C" BlendFunc ConvertGLenumToBlendFunc(GLenum func);
-		extern "C" GLenum ConvertBlendOpFuncToGLenum(BlendOpFunc func);
-		extern "C" BlendOpFunc ConvertGLenumToBlendOpFunc(GLenum func);
-
 		// Single-ton class.
 		class GLStates
 		{
@@ -302,14 +38,19 @@ namespace jet
 			void restoreViewport(unsigned int index = 0);
 
 			void bindProgram(GLuint program);
+			GLuint getProgram() const { return m_ProgramState; }
 			void restoreProgram();
 			void resetProgram(bool force = false);
 
-			void bindFramebuffer(GLuint framebuffer);
-			void restoreFramebuffer();
-			void resetFramebuffer(bool force = false);
-			
-			void bindTextures(unsigned int count, const TextureGL** pTextures, const int* units = nullptr);
+			void bindFramebuffer(GLuint framebuffer, FramebufferTarget target = FramebufferTarget::FRAMEBUFFER);
+			void restoreFramebuffer(FramebufferTarget target = FramebufferTarget::FRAMEBUFFER);
+			void resetFramebuffer(FramebufferTarget target = FramebufferTarget::FRAMEBUFFER, bool force = false);
+			GLuint getBindingFramebuffer(FramebufferTarget target = FramebufferTarget::FRAMEBUFFER) const
+			{
+				return m_FramebufferState[static_cast<int>(target)];
+			}
+
+			void bindTextures(unsigned int count, const TextureGL** pTextures, const unsigned int* units = nullptr);
 			void restoreTextures();
 			void resetTextures(bool force = false);
 
@@ -321,17 +62,113 @@ namespace jet
 			DepthStencilDesc getDepthStencilState() const { return m_DepthStencilState; }
 			RasterizerDesc getRasterizerState() const { return m_RasterizerState; }
 
-			GLuint getProgram() const { return m_ProgramState; }
-			GLuint getFramebuffer() const { return m_FramebufferState; }
+			void setActiveTexture(unsigned int unit = 0);
+			GLuint getActiveTexture() const { return m_ActiveTextureUnit; }
+			void resetActiveTexture(bool force = false);
+			void restoreActiveTexture();
+
+			// returns a pair of values indicating the range of widths supported for aliased lines. See glLineWidth.
+			static Rangef getAliasedLineWidthRange();
+			// returns two values: the smallest and largest supported sizes for points. The smallest size must be at most 1, and the largest size must be at least 1.
+			static Rangef getAliasedPointSizeRange();
+
+			// returns a list of symbolic constants of length GL_NUM_COMPRESSED_TEXTURE_FORMATS indicating which compressed texture formats are available. See glCompressedTexImage2D.
+			static const GLenum* getCompressedTextureFormats(GLuint& length);
+			// return an array of GL_NUM_PROGRAM_BINARY_FORMATS values, indicating the proram binary formats supported by the implementation.
+			static const GLenum* getProgramBinaryFormats(GLuint& length);
+			// returns two values, the minimum and maximum viewport bounds range. The minimum range should be at least [-32768, 32767].
+			static Rangei getViewportBoundsRange();
+
+			void bindProgramPipeline(GLuint program);
+			GLuint getProgramPipeline() const { return m_ProgramPipelineState; }
+			void restoreProgramPipeline();
+			void resetProgramPipeline(bool force = false);
+
+			void setHint(HintTarget target, HintMode mode);
+			void restoreHint(HintTarget target);
+			void resetHint(HintTarget target, bool force = false);
+			HintMode getHint(FramebufferTarget target) const
+			{
+				return m_HintStates[static_cast<int>(target)];
+			}
+
+			void bindBuffer(GLuint buffer, BufferTarget target);
+			GLuint getBindingBuffer(BufferTarget target) const
+			{
+				return m_BufferStates[static_cast<int>(target)];
+			}
+			void resetBuffer(BufferTarget target,bool force = false);
+			void restoreBuffer(BufferTarget target);
+
+			void setClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
+			void setClearColor(GLfloat color[4]);
+			void getClearColor(GLfloat color[4]) const 
+			{ 
+				color[0] = m_ClearColor[0];
+				color[1] = m_ClearColor[1];
+				color[2] = m_ClearColor[2];
+				color[3] = m_ClearColor[3];
+			}
+
+			void restoreClearColor();
+
+			void setClearDepth(GLfloat depth);
+			GLfloat getClearDepth() const
+			{
+				return m_ClearDepth;
+			}
+
+			void restoreClearDepth();
+
+			void setClearStencil(GLint stencil);
+			GLint getClearStencil() const
+			{
+				return m_ClearStencil;
+			}
+
+			void restoreClearStencil();
+
+			void setLineWidth(GLfloat width);
+			GLfloat getLineWidth()const { return m_LineWidth; }
+			void restoreLineWidth();
+			void resetLineWidth(bool force = false);
+
+			void setPointSize(GLfloat size);
+			GLfloat getPointSize()const { return m_PointSize; }
+			void restorePointSize();
+			void resetPointSize(bool force = false);
+
+			void setPrimitiveRestartIndex(GLint size);
+			GLint getPrimitiveRestartIndex()const { return m_PrimitiveRestartIndex; }
+			void restorePrimitiveRestartIndex();
+			void resetPrimitiveRestartIndex(bool force = false);
+
+			void setRenderbuffer(GLuint renderbuffer);
+			GLuint getRenderbuffer()const { return m_RenderbufferState; }
+			void restoreRenderbuffer();
+			void resetRenderbuffer(bool force = false);
+
+			void setSampler(GLuint sampler, GLuint unit = 0);
+			GLuint getSampler(GLuint unit = 0)const { return m_SamplerStates[unit]; }
+			void restoreSampler(GLuint unit = 0);
+			void resetSampler(GLuint unit = 0, bool force = false);
+
+#if 0
+			void setProvoke(ProvokeMode mode);
+			ProvokeMode getProvoke() const { return m_ProvokeState; }
+			void restoreProvoke();
+			void resetProvoke(bool force = false);
+#endif
 
 			~GLStates();
+		public:
+			static const unsigned MAX_TEXTURES_BINDING = 80;
 
 		private:
 
 			void setBlendState(const BlendDesc& blend);
 			void setDSState(const DepthStencilDesc& ds);
 			void setRSState(const RasterizerDesc& raster);
-
 
 			GLStates();
 			GLStates(GLStates&) = delete;
@@ -342,7 +179,8 @@ namespace jet
 			RasterizerDesc  m_RasterizerState;
 
 			GLuint m_ProgramState;  // Current program
-			GLuint m_FramebufferState;  // Current framebuffer object
+			GLuint m_ProgramPipelineState; //Current Program Pipeline.
+			GLuint m_FramebufferState[3];  // Current framebuffer object
 			GLuint m_VertexArrayState;  // Current Vertex Array Object
 
 			struct BindTexture
@@ -357,8 +195,27 @@ namespace jet
 
 			BindTexture m_TextureStates[80];
 			unsigned int m_TextureCount;
+
 			Rectangle2i m_ViewportStates[16];
 			unsigned int m_ViewportCount;
+
+			GLuint m_ActiveTextureUnit;
+			GLuint m_BufferStates[static_cast<int>(BufferTarget::COUNT)];
+
+			GLfloat m_ClearColor[4];
+			GLfloat m_ClearDepth;
+			GLint   m_ClearStencil;
+
+			// line width
+			GLfloat m_LineWidth;
+			GLfloat m_PointSize;
+
+			HintMode m_HintStates[4];
+			ProvokeMode m_ProvokeState;
+
+			GLint m_PrimitiveRestartIndex;
+			GLuint m_RenderbufferState;
+			GLuint m_SamplerStates[MAX_TEXTURES_BINDING];
 		};
 
 	}

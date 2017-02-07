@@ -271,6 +271,294 @@ namespace jet
 					break;
 				}
 			}
+
+			TextureFilter ConvertGLenumToTextureFilter(GLenum enumValue)
+			{
+				switch (enumValue)
+				{
+				case GL_NEAREST: return TextureFilter::NEAREST;
+				case GL_LINEAR: return TextureFilter::LINEAR;
+				case GL_NEAREST_MIPMAP_NEAREST: return TextureFilter::NEAREST_MIPMAP_NEAREST;
+				case GL_LINEAR_MIPMAP_NEAREST: return TextureFilter::LINEAR_MIPMAP_NEAREST;
+				case GL_NEAREST_MIPMAP_LINEAR: return TextureFilter::NEAREST_MIPMAP_LINEAR;
+				case GL_LINEAR_MIPMAP_LINEAR: return TextureFilter::LINEAR_MIPMAP_LINEAR;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			GLenum ConvertTextureWrapToGLenum(TextureWrap enumValue)
+			{
+				switch (enumValue)
+				{
+				case TextureWrap::CLAMP: return GL_CLAMP_TO_EDGE;
+				case TextureWrap::MIRRORED_REPEAT: return GL_MIRRORED_REPEAT;
+				case TextureWrap::REPEAT: return GL_REPEAT;
+				case TextureWrap::MIRROR_CLAMP: return GL_MIRROR_CLAMP_TO_EDGE;
+				case TextureWrap::BORDER: return GL_CLAMP_TO_BORDER;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			TextureWrap ConvertGLenumToTextureWrap(GLenum enumValue)
+			{
+				switch (enumValue)
+				{
+				case GL_CLAMP_TO_EDGE: return TextureWrap::CLAMP;
+				case GL_MIRRORED_REPEAT: return TextureWrap::MIRRORED_REPEAT;
+				case GL_REPEAT: return TextureWrap::REPEAT;
+				case GL_MIRROR_CLAMP_TO_EDGE: return TextureWrap::MIRROR_CLAMP;
+				case GL_CLAMP_TO_BORDER: return TextureWrap::BORDER;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			GLenum ConvertTextureFilterToGLenum(TextureFilter enumValue)
+			{
+				switch (enumValue)
+				{
+				case TextureFilter::NEAREST: return GL_NEAREST;
+				case TextureFilter::LINEAR: return GL_LINEAR;
+				case TextureFilter::NEAREST_MIPMAP_NEAREST: return GL_NEAREST_MIPMAP_NEAREST;
+				case TextureFilter::LINEAR_MIPMAP_NEAREST: return GL_LINEAR_MIPMAP_NEAREST;
+				case TextureFilter::NEAREST_MIPMAP_LINEAR: return GL_NEAREST_MIPMAP_LINEAR;
+				case TextureFilter::LINEAR_MIPMAP_LINEAR: return GL_LINEAR_MIPMAP_LINEAR;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			GLenum ConvertColorSwizzleToGLenum(ColorSwizzle enumValue)
+			{
+				switch (enumValue)
+				{
+				case ColorSwizzle::RED: return GL_RED;
+				case ColorSwizzle::GREEN: return GL_GREEN;
+				case ColorSwizzle::BLUE: return GL_BLUE;
+				case ColorSwizzle::ALPHA: return GL_ALPHA;
+				case ColorSwizzle::ZERO: return GL_ZERO;
+				case ColorSwizzle::ONE: return GL_ONE;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			ColorSwizzle ConvertGLenumToColorSwizzle(GLenum enumValue)
+			{
+				switch (enumValue)
+				{
+				case GL_RED: return ColorSwizzle::RED;
+				case GL_GREEN: return ColorSwizzle::GREEN;
+				case GL_BLUE: return ColorSwizzle::BLUE;
+				case GL_ALPHA: return ColorSwizzle::ALPHA;
+				case GL_ZERO: return ColorSwizzle::ZERO;
+				case GL_ONE: return ColorSwizzle::ONE;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			GLenum ConvertBufferTargetToGLenum(BufferTarget enumValue)
+			{
+				switch (enumValue)
+				{
+				case BufferTarget::ARRAY: return GL_ARRAY_BUFFER;
+				case BufferTarget::ATOMIC_COUNTER: return GL_ATOMIC_COUNTER_BUFFER;
+				case BufferTarget::COPY_READ: return GL_COPY_READ_BUFFER;
+				case BufferTarget::COPY_WRITE: return GL_COPY_WRITE_BUFFER;
+				case BufferTarget::DISPATCH_INDIRECT: return GL_DISPATCH_INDIRECT_BUFFER;
+				case BufferTarget::DRAW_INDIRECT: return GL_DRAW_INDIRECT_BUFFER;
+				case BufferTarget::ELEMENT: return GL_ELEMENT_ARRAY_BUFFER;
+				case BufferTarget::PIXEL_PACK: return GL_PIXEL_PACK_BUFFER;
+				case BufferTarget::PIXEL_UNPACK: return GL_PIXEL_UNPACK_BUFFER;
+				case BufferTarget::SHADER_STORAGE: return GL_SHADER_STORAGE_BUFFER;
+				case BufferTarget::TEXTURE: return GL_TEXTURE_BUFFER;
+				case BufferTarget::TRANSFORM_FEEDBACK: return GL_TRANSFORM_FEEDBACK_BUFFER;
+				case BufferTarget::UNIFORM: return GL_UNIFORM_BUFFER;
+				case BufferTarget::QUERY: return GL_QUERY_BUFFER;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			BufferTarget ConvertGLenumToBufferTarget(GLenum enumValue)
+			{
+				switch (enumValue)
+				{
+				case GL_ARRAY_BUFFER: return BufferTarget::ARRAY;
+				case GL_ATOMIC_COUNTER_BUFFER: return BufferTarget::ATOMIC_COUNTER;
+				case GL_COPY_READ_BUFFER: return BufferTarget::COPY_READ;
+				case GL_COPY_WRITE_BUFFER: return BufferTarget::COPY_WRITE;
+				case GL_DISPATCH_INDIRECT_BUFFER: return BufferTarget::DISPATCH_INDIRECT;
+				case GL_DRAW_INDIRECT_BUFFER: return BufferTarget::DRAW_INDIRECT;
+				case GL_ELEMENT_ARRAY_BUFFER: return BufferTarget::ELEMENT;
+				case GL_PIXEL_PACK_BUFFER: return BufferTarget::PIXEL_PACK;
+				case GL_PIXEL_UNPACK_BUFFER: return BufferTarget::PIXEL_UNPACK;
+				case GL_SHADER_STORAGE_BUFFER: return BufferTarget::SHADER_STORAGE;
+				case GL_TEXTURE_BUFFER: return BufferTarget::TEXTURE;
+				case GL_TRANSFORM_FEEDBACK_BUFFER: return BufferTarget::TRANSFORM_FEEDBACK;
+				case GL_UNIFORM_BUFFER: return BufferTarget::UNIFORM;
+				case GL_QUERY_BUFFER: return BufferTarget::QUERY;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			GLenum ConvertFramebufferTargetToGLenum(FramebufferTarget enumValue)
+			{
+				switch (enumValue)
+				{
+				case FramebufferTarget::FRAMEBUFFER: return GL_FRAMEBUFFER;
+				case FramebufferTarget::DRAW: return GL_DRAW_FRAMEBUFFER;
+				case FramebufferTarget::READ: return GL_READ_FRAMEBUFFER;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			FramebufferTarget ConvertGLenumToFramebufferTarget(GLenum enumValue)
+			{
+				switch (enumValue)
+				{
+				case GL_FRAMEBUFFER: return FramebufferTarget::FRAMEBUFFER;
+				case GL_DRAW_FRAMEBUFFER: return FramebufferTarget::DRAW;
+				case GL_READ_FRAMEBUFFER: return FramebufferTarget::READ;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			GLenum ConvertHintTargetToGLenum(HintTarget enumValue)
+			{
+				switch (enumValue)
+				{
+				case HintTarget::LINE_SMOOTH: return GL_LINE_SMOOTH_HINT;
+				case HintTarget::POLYGON_SMOOTH: return GL_POLYGON_SMOOTH_HINT;
+				case HintTarget::TEXTURE_COMPRESSION: return GL_TEXTURE_COMPRESSION_HINT;
+				case HintTarget::FRAGMENT_SHADER_DERIVATIVE: return GL_FRAGMENT_SHADER_DERIVATIVE_HINT;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			HintTarget ConvertGLenumToHintTarget(GLenum enumValue)
+			{
+				switch (enumValue)
+				{
+				case GL_LINE_SMOOTH_HINT: return HintTarget::LINE_SMOOTH;
+				case GL_POLYGON_SMOOTH_HINT: return HintTarget::POLYGON_SMOOTH;
+				case GL_TEXTURE_COMPRESSION_HINT: return HintTarget::TEXTURE_COMPRESSION;
+				case GL_FRAGMENT_SHADER_DERIVATIVE_HINT: return HintTarget::FRAGMENT_SHADER_DERIVATIVE;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			GLenum ConvertHintModeToGLenum(HintMode enumValue)
+			{
+				switch (enumValue)
+				{
+				case HintMode::FASTEST: return GL_FASTEST;
+				case HintMode::NICEST: return GL_NICEST;
+				case HintMode::DONT_CARE: return GL_DONT_CARE;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			HintMode ConvertGLenumToHintMode(GLenum enumValue)
+			{
+				switch (enumValue)
+				{
+				case GL_FASTEST: return HintMode::FASTEST;
+				case GL_NICEST: return HintMode::NICEST;
+				case GL_DONT_CARE: return HintMode::DONT_CARE;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			GLenum ConvertProvokeModeToGLenum(ProvokeMode enumValue)
+			{
+				switch (enumValue)
+				{
+				case ProvokeMode::FIRST: return GL_FIRST_VERTEX_CONVENTION;
+				case ProvokeMode::LAST: return GL_LAST_VERTEX_CONVENTION;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			ProvokeMode ConvertGLenumToProvokeMode(GLenum enumValue)
+			{
+				switch (enumValue)
+				{
+				case GL_FIRST_VERTEX_CONVENTION: return ProvokeMode::FIRST;
+				case GL_LAST_VERTEX_CONVENTION: return ProvokeMode::LAST;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			GLenum ConvertSpriteCoordOriginToGLenum(SpriteCoordOrigin enumValue)
+			{
+				switch (enumValue)
+				{
+				case SpriteCoordOrigin::LOWER_LEFT: return GL_LOWER_LEFT;
+				case SpriteCoordOrigin::UPPER_LEFT: return GL_UPPER_LEFT;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			SpriteCoordOrigin ConvertGLenumToSpriteCoordOrigin(GLenum enumValue)
+			{
+				switch (enumValue)
+				{
+				case GL_LOWER_LEFT: return SpriteCoordOrigin::LOWER_LEFT;
+				case GL_UPPER_LEFT: return SpriteCoordOrigin::UPPER_LEFT;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
 		}
 	}
 }

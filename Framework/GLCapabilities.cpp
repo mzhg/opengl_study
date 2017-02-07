@@ -398,6 +398,10 @@ namespace jet
 		{
 			int n = 0;
 			char *result = NULL;
+			if (str == NULL)
+			{
+				return n;
+			}
 			result = strtok(str, spl);
 			while (result != NULL)
 			{

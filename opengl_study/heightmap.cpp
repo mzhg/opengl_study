@@ -54,7 +54,7 @@ void HeightmapDemo::onCreate()
 		jet::util::TextureUtil::loadTextureDataFromFile(texpath.c_str(), &texData, &width, &height);
 
 		ogl_init();
-		ogl_set_background_texture(width, height, texData.Format, (const char*)texData.pData);
+		ogl_set_background_texture(width, height, texData.Format, (const char*)texData.pData[0]);
 //		ogl_set_rect_texture(width, height, texData.Format, (const char*)texData.pData);
 		ogl_set_rect_size((1280 - 600)/2, (720 - 200)/2, 600, 200);
 		ogl_create_rect_default_texture(512, 512);
@@ -66,7 +66,6 @@ void HeightmapDemo::onCreate()
 		return;
 	}
 
-	
 	m_Sample = new SampleColorTriangle();
 	m_Sample->Create();
 	m_Input = new InputAdapter();

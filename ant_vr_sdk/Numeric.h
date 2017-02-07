@@ -63,6 +63,20 @@ namespace jet
 				return true;
 			}
 
+			template<typename T, unsigned int Size>
+			static bool isEqual(const T a[Size], const T b[Size])
+			{
+				for (unsigned i = 0; i < Size; i++)
+				{
+					if (a[i] != b[i])
+					{
+						return false;
+					}
+				}
+
+				return true;
+			}
+
 		private:
 			Numeric(Numeric&) = delete;
 		};

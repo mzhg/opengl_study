@@ -2,6 +2,8 @@
 #ifndef _JET_UTIL_DISPOSE_H
 #define _JET_UTIL_DISPOSE_H
 
+#include <string>
+
 namespace jet
 {
 	namespace util
@@ -18,8 +20,14 @@ namespace jet
 		class Disposeable
 		{
 		public:
+			Disposeable() :m_Name("Unkown"){}
 
+			void setName(const std::string& name){ m_Name = name; }
+			void setName(const char* name) { m_Name = name; }
+			const std::string& getName() { return m_Name; }
 			virtual void dispose() = 0;
+		private:
+			std::string m_Name;
 		};
 	}
 }

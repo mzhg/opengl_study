@@ -177,6 +177,7 @@
     <ClInclude Include="GLSLProgram.h" />
     <ClInclude Include="GLStates.h" />
     <ClInclude Include="GLUtil.h" />
+    <ClInclude Include="gl_state_define.h" />
     <ClInclude Include="Numeric.h" />
     <ClInclude Include="NvInputTransformer.h" />
     <ClInclude Include="NvStopWatch.h" />
