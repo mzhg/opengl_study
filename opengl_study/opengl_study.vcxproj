@@ -158,10 +158,13 @@
   <ItemGroup>
     <ClCompile Include="heightmap.cpp" />
     <ClCompile Include="simple_sdk.cpp" />
+    <ClCompile Include="simple_sdk_common.cpp" />
+    <ClCompile Include="simple_sdk_billbaord.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="heightmap.h" />
     <ClInclude Include="simple_sdk.h" />
+    <ClInclude Include="simple_sdk_common.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

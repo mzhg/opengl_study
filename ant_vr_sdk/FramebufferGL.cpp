@@ -27,7 +27,7 @@ namespace jet
 
 		void FramebufferGL::addTextures(unsigned int count, const TextureGL** pTextures, const TextureAttachDesc* descs)
 		{
-			GLStates& states = GLStates::getGLStates();
+			GLStates& states = GLStates::get();
 			assert(m_Framebuffer);
 			assert(states.getBindingFramebuffer() == m_Framebuffer);
 
@@ -64,8 +64,20 @@ namespace jet
 				case AttachType::TEXTURE_2D:
 					if (pTex)
 					{
-						assert(pTex->getTarget() == GL_TEXTURE_2D /*|| pTex->getTarget() == GL_TEXTURE_1D_ARRAY*/);
-						glFramebufferTexture2D(GL_FRAMEBUFFER, measureTextureAttachment(pTex, desc.Index), GL_TEXTURE_2D, pTex->getTexture(), desc.Level);
+						GLenum target = pTex->getTarget();
+						assert(target == GL_TEXTURE_2D || target == GL_TEXTURE_CUBE_MAP || target == GL_TEXTURE_RECTANGLE ||
+							target == GL_TEXTURE_2D_MULTISAMPLE);
+						if (target == GL_TEXTURE_CUBE_MAP)
+						{
+							for (int i = 0; i < _countof(CUBE_FACES); i++)
+							{
+								glFramebufferTexture2D(GL_FRAMEBUFFER, measureTextureAttachment(pTex, desc.Index), CUBE_FACES[i], pTex->getTexture(), desc.Level);
+							}
+						}
+						else
+						{
+							glFramebufferTexture2D(GL_FRAMEBUFFER, measureTextureAttachment(pTex, desc.Index), target, pTex->getTexture(), desc.Level);
+						}
 						m_AttachCount++;
 					}
 					else
@@ -88,7 +100,9 @@ namespace jet
 				case AttachType::TEXTURE_LAYER:
 					if (pTex)
 					{
-						assert(pTex->getTarget() == GL_TEXTURE_3D || pTex->getTarget() == GL_TEXTURE_2D_ARRAY || pTex->getTarget() == GL_TEXTURE_1D_ARRAY);
+						GLenum target = pTex->getTarget();
+						assert(target == GL_TEXTURE_3D || target == GL_TEXTURE_2D_ARRAY || target == GL_TEXTURE_1D_ARRAY
+							|| target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY || target == GL_TEXTURE_CUBE_MAP_ARRAY);
 						glFramebufferTextureLayer(GL_FRAMEBUFFER, measureTextureAttachment(pTex, desc.Index), pTex->getTexture(), desc.Level, desc.Layer);
 						m_AttachCount++;
 					}
@@ -135,7 +149,7 @@ namespace jet
 
 		void FramebufferGL::enable()
 		{
-			GLStates& states = GLStates::getGLStates();
+			GLStates& states = GLStates::get();
 			if (m_Framebuffer == 0)
 			{
 				glGenFramebuffers(1, &m_Framebuffer);
@@ -147,7 +161,7 @@ namespace jet
 
 		void FramebufferGL::disable()
 		{
-			GLStates& states = GLStates::getGLStates();
+			GLStates& states = GLStates::get();
 			states.resetFramebuffer();
 		}
 
@@ -168,7 +182,7 @@ namespace jet
 
 		void RenderTargets::enable()
 		{
-			GLStates& states = GLStates::getGLStates();
+			GLStates& states = GLStates::get();
 			if (m_Framebuffer == 0)
 			{
 				glGenFramebuffers(1, &m_Framebuffer);
@@ -180,7 +194,7 @@ namespace jet
 
 		void RenderTargets::disable()
 		{
-			GLStates& states = GLStates::getGLStates();
+			GLStates& states = GLStates::get();
 			states.resetFramebuffer();
 		}
 
@@ -193,7 +207,7 @@ namespace jet
 				if (pTex)
 				{
 					assert(pTex->getTarget() == GL_TEXTURE_1D);
-					if (!info.attached || info.textureTarget != pTex->getTarget || info.textureId != pTex->getTexture() || info.level != desc.Level)
+					if (!info.attached || info.textureTarget != pTex->getTarget() || info.textureId != pTex->getTexture() || info.level != desc.Level)
 					{
 						glFramebufferTexture1D(GL_FRAMEBUFFER, attachment, pTex->getTarget(), pTex->getTexture(), desc.Level);
 						info.attached = true;
@@ -219,7 +233,7 @@ namespace jet
 				if (pTex)
 				{
 					assert(pTex->getTarget() == GL_TEXTURE_3D);
-					if (!info.attached || info.textureTarget != pTex->getTarget || info.textureId != pTex->getTexture() || info.level != desc.Level || info.layer != desc.Layer)
+					if (!info.attached || info.textureTarget != pTex->getTarget() || info.textureId != pTex->getTexture() || info.level != desc.Level || info.layer != desc.Layer)
 					{
 						glFramebufferTexture3D(GL_FRAMEBUFFER, attachment, pTex->getTarget(), pTex->getTexture(), desc.Level, desc.Layer);
 						info.attached = true;
@@ -249,7 +263,7 @@ namespace jet
 					GLenum target = pTex->getTarget();
 					assert(target == GL_TEXTURE_2D || target == GL_TEXTURE_CUBE_MAP || target == GL_TEXTURE_RECTANGLE || 
 						   target == GL_TEXTURE_2D_MULTISAMPLE);
-					if (!info.attached || info.textureTarget != pTex->getTarget || info.textureId != pTex->getTexture() || info.level != desc.Level)
+					if (!info.attached || info.textureTarget != pTex->getTarget() || info.textureId != pTex->getTexture() || info.level != desc.Level)
 					{
 						if (target == GL_TEXTURE_CUBE_MAP)
 						{
@@ -364,13 +378,12 @@ namespace jet
 
 		void RenderTargets::setRenderTextures(unsigned int count, const TextureGL** pTextures, const TextureAttachDesc* descs)
 		{
-			enable();
-
 			bool depthHandled = false;
 			bool depthStencilHandled = false;
 			bool stencilHandled = false;
-			bool colorHandled[8] = {false};
+			bool colorHandled[8] = { false };
 
+			enable();
 			for (unsigned int i = 0; i < count; i++)
 			{
 				const TextureGL* pTex = pTextures[i];

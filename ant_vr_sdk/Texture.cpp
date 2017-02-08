@@ -19,7 +19,7 @@ namespace jet
 
 		void TextureGL::applySamplerDesc(const SamplerDesc& desc, bool force)
 		{
-			static const GLCapabilities* pCap = GLCapabilities::getGLCapabilities();
+			static const GLCapabilities* pCap = GLCapabilities::get();
 
 			if (m_Target == GL_TEXTURE_2D_MULTISAMPLE || m_Target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY)
 			{
@@ -100,7 +100,7 @@ namespace jet
 			}
 			else
 			{
-				static GLStates& states = GLStates::getGLStates();
+				static GLStates& states = GLStates::get();
 				const TextureGL* texture[] = { this };
 				states.bindTextures(1, &texture[0], nullptr);
 
@@ -179,7 +179,7 @@ namespace jet
 		void TextureGL::setFilter(TextureFilter minFilter, TextureFilter magFilter)
 		{
 			const bool force = false;
-			static const GLCapabilities* pCap = GLCapabilities::getGLCapabilities();
+			static const GLCapabilities* pCap = GLCapabilities::get();
 
 			if (m_Target == GL_TEXTURE_2D_MULTISAMPLE || m_Target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY)
 			{
@@ -204,7 +204,7 @@ namespace jet
 			}
 			else
 			{
-				static GLStates& states = GLStates::getGLStates();
+				static GLStates& states = GLStates::get();
 				const TextureGL* texture[] = { this };
 				states.bindTextures(1, texture);
 
@@ -226,7 +226,7 @@ namespace jet
 		void TextureGL::setWrap(TextureWrap wrapS, TextureWrap wrapT, TextureWrap wrapR)
 		{
 			const bool force = false;
-			static const GLCapabilities* pCap = GLCapabilities::getGLCapabilities();
+			static const GLCapabilities* pCap = GLCapabilities::get();
 
 			if (m_Target == GL_TEXTURE_2D_MULTISAMPLE || m_Target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY)
 			{
@@ -258,7 +258,7 @@ namespace jet
 			}
 			else
 			{
-				static GLStates& states = GLStates::getGLStates();
+				static GLStates& states = GLStates::get();
 				const TextureGL* texture[] = { this };
 				states.bindTextures(1, texture);
 
@@ -287,7 +287,7 @@ namespace jet
 
 		void TextureGL::setTexelSwizzle(ColorSwizzle red, ColorSwizzle green, ColorSwizzle blue, ColorSwizzle alpha)
 		{
-			static const GLCapabilities* pCap = GLCapabilities::getGLCapabilities();
+			static const GLCapabilities* pCap = GLCapabilities::get();
 
 			if (m_Target == GL_TEXTURE_2D_MULTISAMPLE || m_Target == GL_TEXTURE_2D_MULTISAMPLE_ARRAY)
 			{
@@ -308,7 +308,7 @@ namespace jet
 			}
 			else
 			{
-				static GLStates& states = GLStates::getGLStates();
+				static GLStates& states = GLStates::get();
 				const TextureGL* texture[] = { this };
 				states.bindTextures(1, texture);
 				glTexParameteriv(m_Target, GL_TEXTURE_SWIZZLE_RGBA, swizzleValues);

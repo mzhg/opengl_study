@@ -497,7 +497,7 @@ namespace jet
 		}
 
 		static GLCapabilities* g_GLCaps = nullptr;
-		GLCapabilities* GLCapabilities::getGLCapabilities()
+		GLCapabilities* GLCapabilities::get()
 		{
 			if (g_GLCaps == nullptr)
 			{

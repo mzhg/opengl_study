@@ -281,7 +281,7 @@ namespace jet
 			GLuint m_Samples;
 		};
 
-		// GL_TEXTURE_2D, GL_TEXTURE_2D_ARRAY, GL_TEXTURE_2D_MULTISAMPLE and GL_TEXTURE_2D_MULTISAMPLE_ARRAY.
+		// GL_TEXTURE_3D.
 		class Texture3D : public TextureGL
 		{
 

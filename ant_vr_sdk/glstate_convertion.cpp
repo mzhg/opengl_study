@@ -1,6 +1,8 @@
 #include "GLStates.h"
 #include "GLUtil.h"
 
+#pragma warning(disable:4715)
+
 namespace jet
 {
 	namespace util
@@ -553,6 +555,48 @@ namespace jet
 				{
 				case GL_LOWER_LEFT: return SpriteCoordOrigin::LOWER_LEFT;
 				case GL_UPPER_LEFT: return SpriteCoordOrigin::UPPER_LEFT;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			GLenum ConvertTextureTargetToGLenum(TextureTarget enumValue)
+			{
+				switch (enumValue)
+				{
+				case TextureTarget::TEXTURE1D: return GL_TEXTURE_1D;
+				case TextureTarget::TEXTURE2D: return GL_TEXTURE_2D;
+				case TextureTarget::TEXTURE3D: return GL_TEXTURE_3D;
+				case TextureTarget::TEXTURE1D_ARRAY: return GL_TEXTURE_1D_ARRAY;
+				case TextureTarget::TEXTURE2D_ARRAY: return GL_TEXTURE_2D_ARRAY;
+				case TextureTarget::RECTANGLE: return GL_TEXTURE_RECTANGLE;
+				case TextureTarget::CUBE_MAP: return GL_TEXTURE_CUBE_MAP;
+				case TextureTarget::CUBE_MAP_ARRAY: return GL_TEXTURE_CUBE_MAP_ARRAY;
+				case TextureTarget::TEXTURE2D_MULTISAMPLE: return GL_TEXTURE_2D_MULTISAMPLE;
+				case TextureTarget::TEXTURE2D_MULTISAMPLE_ARRAY: return GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			TextureTarget ConvertGLenumToTextureTarget(GLenum enumValue)
+			{
+				switch (enumValue)
+				{
+				case GL_TEXTURE_1D: return TextureTarget::TEXTURE1D;
+				case GL_TEXTURE_2D: return TextureTarget::TEXTURE2D;
+				case GL_TEXTURE_3D: return TextureTarget::TEXTURE3D;
+				case GL_TEXTURE_1D_ARRAY: return TextureTarget::TEXTURE1D_ARRAY;
+				case GL_TEXTURE_2D_ARRAY: return TextureTarget::TEXTURE2D_ARRAY;
+				case GL_TEXTURE_RECTANGLE: return TextureTarget::RECTANGLE;
+				case GL_TEXTURE_CUBE_MAP: return TextureTarget::CUBE_MAP;
+				case GL_TEXTURE_CUBE_MAP_ARRAY: return TextureTarget::CUBE_MAP_ARRAY;
+				case GL_TEXTURE_2D_MULTISAMPLE: return TextureTarget::TEXTURE2D_MULTISAMPLE;
+				case GL_TEXTURE_2D_MULTISAMPLE_ARRAY: return TextureTarget::TEXTURE2D_MULTISAMPLE_ARRAY;
 
 				default:
 					assert(false);

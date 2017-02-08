@@ -2,6 +2,10 @@
 #include <GLCapabilities.h>
 #include "Numeric.h"
 
+#pragma warning(disable:4800)
+#pragma warning(disable:4018)
+#pragma warning(disable:4244)
+
 namespace jet
 {
 	namespace util
@@ -13,7 +17,7 @@ namespace jet
 
 //		static const GLCapabilities* g_Caps = GLCapabilities::getGLCapabilities();
 
-		GLStates& GLStates::getGLStates()
+		GLStates& GLStates::get()
 		{
 			static GLStates instance;
 			return instance;
@@ -81,7 +85,21 @@ namespace jet
 			}
 
 			{
-				m_BlendState.AlphaToCoverageEnable = glIsEnabled(GL_SAMPLE_ALPHA_TO_COVERAGE);
+				m_BlendState.Multisample.AlphaToCoverageEnable = glIsEnabled(GL_SAMPLE_ALPHA_TO_COVERAGE);
+				m_BlendState.Multisample.AlphaToOneEnable = glIsEnabled(GL_SAMPLE_ALPHA_TO_ONE);
+				m_BlendState.Multisample.CoverageEnable = glIsEnabled(GL_SAMPLE_COVERAGE);
+				m_BlendState.Multisample.MultisampleEanble = glIsEnabled(GL_MULTISAMPLE);
+				GLboolean value;
+				glGetBooleanv(GL_SAMPLE_COVERAGE_INVERT, &value);
+				m_BlendState.Multisample.SampleConverageInvert = value != 0;
+
+				glGetFloatv(GL_SAMPLE_COVERAGE_VALUE, &m_BlendState.Multisample.SampleCoverageValue);
+			}
+
+			{
+				m_BlendState.AntialiasedLineEnable = glIsEnabled(GL_LINE_SMOOTH);
+				m_BlendState.AntialiasedPointEnable = glIsEnabled(GL_POINT_SMOOTH);
+				m_BlendState.AntialiasedPolygonEnable = glIsEnabled(GL_POLYGON_SMOOTH);
 			}
 		}
 
@@ -93,20 +111,57 @@ namespace jet
 				glBlendFunc(GL_ONE, GL_ZERO);
 				glBlendEquation(GL_FUNC_ADD);
 				glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
+				glDisable(GL_SAMPLE_ALPHA_TO_ONE);
+				glDisable(GL_SAMPLE_COVERAGE);
+				glDisable(GL_MULTISAMPLE);
+				glDisable(GL_LINE_SMOOTH);
+				glDisable(GL_POINT_SMOOTH);
+				glDisable(GL_POLYGON_SMOOTH);
 
-				m_BlendState.AlphaToCoverageEnable = false;
-				m_BlendState.IndependentBlendEnable = false;
-				for (int i = 0; i < 8; i++)
-				{
-					m_BlendState.RenderTargets[i] = RenderTargetBlendDesc();
-				}
+				m_BlendState = g_BlendDefault;
 			}
 			else
 			{
-				if (m_BlendState.AlphaToCoverageEnable)
+				if (m_BlendState.Multisample.AlphaToCoverageEnable)
 				{
 					glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
-					m_BlendState.AlphaToCoverageEnable = false;
+					m_BlendState.Multisample.AlphaToCoverageEnable = false;
+				}
+
+				if (m_BlendState.Multisample.AlphaToOneEnable)
+				{
+					glDisable(GL_SAMPLE_ALPHA_TO_ONE);
+					m_BlendState.Multisample.AlphaToOneEnable = false;
+				}
+
+				if (m_BlendState.Multisample.CoverageEnable)
+				{
+					glDisable(GL_SAMPLE_COVERAGE);
+					m_BlendState.Multisample.CoverageEnable = false;
+				}
+
+				if (m_BlendState.Multisample.MultisampleEanble)
+				{
+					glDisable(GL_MULTISAMPLE);
+					m_BlendState.Multisample.MultisampleEanble = false;
+				}
+
+				if (m_BlendState.AntialiasedLineEnable)
+				{
+					glDisable(GL_LINE_SMOOTH);
+					m_BlendState.AntialiasedLineEnable = false;
+				}
+
+				if (m_BlendState.AntialiasedPointEnable)
+				{
+					glDisable(GL_POINT_SMOOTH);
+					m_BlendState.AntialiasedPointEnable = false;
+				}
+
+				if (m_BlendState.AntialiasedPolygonEnable)
+				{
+					glDisable(GL_POLYGON_SMOOTH);
+					m_BlendState.AntialiasedPolygonEnable = false;
 				}
 
 				if (m_BlendState.IndependentBlendEnable)
@@ -304,22 +359,6 @@ namespace jet
 			}
 
 			{
-				glGetIntegerv(GL_SCISSOR_BOX, (GLint*)&m_RasterizerState.ScissorBox);
-			}
-
-			{
-				m_RasterizerState.MultisampleEanble = glIsEnabled(GL_MULTISAMPLE);
-			}
-
-			{
-				m_RasterizerState.AntialiasedLineEnable = glIsEnabled(GL_LINE_SMOOTH);
-			}
-
-			{
-				m_RasterizerState.AntialiasedPolygonEnable = glIsEnabled(GL_POLYGON_SMOOTH);
-			}
-
-			{
 				m_RasterizerState.Dither = glIsEnabled(GL_DITHER);
 				m_RasterizerState.SRGB = glIsEnabled(GL_FRAMEBUFFER_SRGB);
 				m_RasterizerState.PolygonOffsetEnable = glIsEnabled(GL_DITHER);
@@ -465,46 +504,81 @@ namespace jet
 
 		void GLStates::bindTextures(unsigned int count, const TextureGL** pTextures, const unsigned int* units)
 		{
-			static GLuint textureNames[80];
-			assert(count <= 80);
+			GLint const maxTextureUnits = getMaxCombinedTextureImageUnits();
+#if defined(_DEBUG)
+			if (count > maxTextureUnits)
+			{
+				printf("Binding texture units beyong the limits: count = %d, limits = %d.\n", count, maxTextureUnits);
+			}
+#endif
+			count = Numeric::min(count, static_cast<unsigned>(maxTextureUnits));
+			m_TextureCount = 0;
+			bool ordered = true;
+			bool tag = (units == nullptr) && glBindTextures;
+
 			for (unsigned int i = 0; i < count; i++)
 			{
-				textureNames[i] = pTextures && pTextures[i] ? pTextures[i]->getTexture() : 0;
-				m_TextureStates[i].Target = pTextures && pTextures[i] ? pTextures[i]->getTarget() : 0;
-				m_TextureStates[i].TextureID = textureNames[i];
-				m_TextureStates[i].Unit = units ? units[i] : i;
-			}
+				GLenum target = pTextures && pTextures[i] ? pTextures[i]->getTarget() : 0;
+				GLuint texture = pTextures && pTextures[i] ? pTextures[i]->getTexture() : 0;
+				int unit = units ? units[i] : i;
 
-			if (units == nullptr)
-			{
-				if (glBindTextures)
+				if (tag)
 				{
-					glBindTextures(0, count, textureNames);
-				}
-				else
-				{
-					for (unsigned int i = 0; i < count; i++)
+					m_TextureNames[m_TextureCount] = texture;
+					m_TextureStates[unit].target = target;
+					m_TextureStates[unit].textureID = texture;
+					m_TextureUnits[m_TextureCount] = unit;
+
+					if (m_TextureStates[unit].textureID != texture)
 					{
-						glActiveTexture(GL_TEXTURE0 + i);
-						glBindTexture(m_TextureStates[i].Target, m_TextureStates[i].TextureID);
+						m_TextureCount++;
 					}
 				}
+				else if (m_TextureStates[unit].textureID != texture)
+				{
+					m_TextureNames[m_TextureCount] = texture;
+					m_TextureStates[unit].target = target;
+					m_TextureStates[unit].textureID = texture;
+					m_TextureUnits[m_TextureCount] = unit;
+
+					if (m_TextureCount == 0 && unit != 0)
+					{
+						ordered = false;
+					}
+
+					if (m_TextureCount && unit - m_TextureUnits[m_TextureCount - 1] != 1)
+					{
+						ordered = false;
+					}
+
+					m_TextureCount++;
+				}
+			}
+
+			if (!m_TextureCount)
+			{
+				return;
+			}
+
+			if (ordered && glBindTextures)
+			{
+				glBindTextures(0, m_TextureCount, m_TextureNames);
 			}
 			else
 			{
 				if (glBindTextureUnit)
 				{
-					for (unsigned int i = 0; i < count; i++)
+					for (unsigned int i = 0; i < m_TextureCount; i++)
 					{
-						glBindTextureUnit(m_TextureStates[i].Unit, m_TextureStates[i].TextureID);
+						glBindTextureUnit(m_TextureUnits[i], m_TextureStates[m_TextureUnits[i]].textureID);
 					}
 				}
 				else
 				{
-					for (unsigned int i = 0; i < count; i++)
+					for (unsigned int i = 0; i < m_TextureCount; i++)
 					{
-						glActiveTexture(GL_TEXTURE0 + units[i]);
-						glBindTexture(m_TextureStates[i].Target, m_TextureStates[i].TextureID);
+						setActiveTexture(m_TextureUnits[i]);
+						glBindTexture(m_TextureStates[m_TextureUnits[i]].target, m_TextureStates[m_TextureUnits[i]].textureID);
 					}
 				}
 			}
@@ -512,41 +586,180 @@ namespace jet
 
 		void GLStates::restoreTextures()
 		{
-			// TODO
-		}
-		void GLStates::resetTextures(bool force)
-		{
-			// TODO
+			GLint count = getMaxCombinedTextureImageUnits();
+			const GLenum TEXTURE_TARGETS_BINDING[] =
+			{
+				GL_TEXTURE_BINDING_1D,
+				GL_TEXTURE_BINDING_2D,
+				GL_TEXTURE_BINDING_3D,
+				GL_TEXTURE_BINDING_1D_ARRAY,
+				GL_TEXTURE_BINDING_2D_ARRAY,
+				GL_TEXTURE_BINDING_RECTANGLE,
+				GL_TEXTURE_BINDING_CUBE_MAP,
+				GL_TEXTURE_BINDING_CUBE_MAP_ARRAY,
+				GL_TEXTURE_BINDING_2D_MULTISAMPLE,
+				GL_TEXTURE_BINDING_2D_MULTISAMPLE_ARRAY
+			};
+
+			m_TextureCount = 0;
+			for (int i = 0; i < count; i++)
+			{
+				bool founded = false;
+				setActiveTexture(i);
+				for (int j = 0; j < _countof(TEXTURE_TARGETS_BINDING) && !founded; j++)
+				{
+					GLuint textureID;
+					glGetIntegerv(TEXTURE_TARGETS_BINDING[j], (GLint*)&textureID);
+
+					if (textureID && glIsTexture(textureID))
+					{
+						m_TextureUnits[m_TextureCount++] = i;
+						m_TextureStates[i].target = TEXTURE_TARGETS[j];
+						m_TextureStates[i].textureID = textureID;
+						founded = true;
+					}
+				}
+			}
 		}
 
-		void GLStates::setViewports(unsigned int count, const Rectangle2i* pViewports)
+		void GLStates::resetTextures(bool force)
 		{
-			if (count == 1)
+			if (force)
 			{
-				if (m_ViewportStates[0] != pViewports[0])
+				GLint count = getMaxCombinedTextureImageUnits();
+				if (glBindTextures)
 				{
-					glViewport(pViewports[0].X, pViewports[0].Y, pViewports[0].Width, pViewports[0].Height);
-					m_ViewportStates[0] = pViewports[0];
+					glBindTextures(0, count, nullptr);
+				}
+				else
+				{
+					for (int i = 0; i < count; i++)
+					{
+						if (glBindTextureUnit)
+						{
+							glBindTextureUnit(i, 0);
+						}
+						else
+						{
+							setActiveTexture(count - i - 1);
+							for (int i = 0; i < _countof(TEXTURE_TARGETS); i++)
+							{
+								glBindTexture(TEXTURE_TARGETS[i], 0);
+							}
+						}
+					}
+				}
+			}
+			else /*if (m_TextureCount)*/
+			{
+				GLint count = getMaxCombinedTextureImageUnits();
+				if (glBindTextures)
+				{
+					glBindTextures(0, count, nullptr);
+				}
+				else
+				{
+					for (int i = 0; i < count; i++)
+					{
+						if (!m_TextureStates[i].textureID)
+							continue;
+
+						if (glBindTextureUnit)
+						{
+							glBindTextureUnit(i, 0);
+						}
+						else
+						{
+							setActiveTexture(i);
+							glBindTexture(m_TextureStates[i].target, 0);
+						}
+					}
+				}
+			}
+		}
+
+		void GLStates::setViewports(unsigned int count, const ViewportDesc* pViewports)
+		{
+			if (count == 1 || !glViewportArrayv)
+			{
+				if (m_ViewportStates[0].Viewport != pViewports[0].Viewport)
+				{
+					glViewport(pViewports[0].Viewport.X, pViewports[0].Viewport.Y, pViewports[0].Viewport.Width, pViewports[0].Viewport.Height);
+					m_ViewportStates[0].Viewport = pViewports[0].Viewport;
+				}
+
+				if (m_ViewportStates[0].ScissorEnable != pViewports[0].ScissorEnable)
+				{
+					
+					if (pViewports[0].ScissorEnable)
+					{
+						m_ViewportStates[0].ScissorEnable = pViewports[0].ScissorEnable;
+						glEnable(GL_SCISSOR_TEST);
+
+						if (m_ViewportStates[0].ScissorBox != pViewports[0].ScissorBox)
+						{
+							glScissor(pViewports[0].ScissorBox.X, pViewports[0].ScissorBox.Y, pViewports[0].ScissorBox.Width, pViewports[0].ScissorBox.Height);
+							m_ViewportStates[0].ScissorBox = pViewports[0].ScissorBox;
+						}
+					}
+					else
+					{
+						glDisable(GL_SCISSOR_TEST);
+					}
 				}
 			}
 			else if (count)
 			{
-				count = Numeric::min(count, 16u);
-				if (glViewportArrayv)
+				count = Numeric::min(count, static_cast<unsigned>(getMaxViewports()));
+
+				for (unsigned i = 0; i < count; i++)
 				{
-					glViewportArrayv(0, count, (const GLfloat*)pViewports);
-					memcpy(m_ViewportStates, pViewports, sizeof(Rectangle2i) * count);
-				}
-				else
-				{
-					glViewport(pViewports[0].X, pViewports[0].Y, pViewports[0].Width, pViewports[0].Height);
-					m_ViewportStates[0] = pViewports[0];
+					if (m_ViewportStates[i].Viewport != pViewports[i].Viewport)
+					{
+						glViewportIndexedf(i, pViewports[i].Viewport.X, pViewports[i].Viewport.Y, pViewports[i].Viewport.Width, pViewports[i].Viewport.Height);
+						m_ViewportStates[i].Viewport = pViewports[i].Viewport;
+					}
+
+					if (m_ViewportStates[i].ScissorEnable != pViewports[i].ScissorEnable)
+					{
+
+						if (pViewports[i].ScissorEnable)
+						{
+							m_ViewportStates[i].ScissorEnable = pViewports[i].ScissorEnable;
+							glEnablei(GL_SCISSOR_TEST, i);
+
+							if (m_ViewportStates[i].ScissorBox != pViewports[i].ScissorBox)
+							{
+								glScissorIndexed(i, pViewports[i].ScissorBox.X, pViewports[i].ScissorBox.Y, pViewports[i].ScissorBox.Width, pViewports[i].ScissorBox.Height);
+								m_ViewportStates[i].ScissorBox = pViewports[i].ScissorBox;
+							}
+						}
+						else
+						{
+							glDisablei(GL_SCISSOR_TEST, i);
+						}
+					}
 				}
 			}
+
+			m_ViewportCount = count;
 		}
 		void GLStates::restoreViewport(unsigned int index)
 		{
-			glGetIntegeri_v(GL_VIEWPORT, index, (GLint *)&m_ViewportStates[index]);
+			if (GLCapabilities::get()->OpenGL40)
+			{
+				assert(index < getMaxViewports());
+				glGetIntegeri_v(GL_VIEWPORT, index, (GLint *)&m_ViewportStates[index].Viewport);
+				m_ViewportStates[index].ScissorEnable = glIsEnabledi(GL_SCISSOR_TEST, index);
+				glGetIntegeri_v(GL_SCISSOR_BOX, index, (GLint *)&m_ViewportStates[index].ScissorBox);
+			}
+			else
+			{
+				assert(index == 0);
+				glGetIntegerv(GL_VIEWPORT, (GLint *)&m_ViewportStates[index].Viewport);
+				m_ViewportStates[index].ScissorEnable = glIsEnabled(GL_SCISSOR_TEST);
+				glGetIntegerv(GL_SCISSOR_BOX, (GLint *)&m_ViewportStates[index].ScissorBox);
+			}
 		}
 
 		void GLStates::bindVAO(GLuint vao)
@@ -643,9 +856,9 @@ namespace jet
 
 		void GLStates::setBlendState(const BlendDesc& blend)
 		{
-			if (m_BlendState.AlphaToCoverageEnable != blend.AlphaToCoverageEnable)
+			if (m_BlendState.Multisample.AlphaToCoverageEnable != blend.Multisample.AlphaToCoverageEnable)
 			{
-				if (blend.AlphaToCoverageEnable)
+				if (blend.Multisample.AlphaToCoverageEnable)
 				{
 					glEnable(GL_SAMPLE_ALPHA_TO_COVERAGE);
 				}
@@ -654,7 +867,91 @@ namespace jet
 					glDisable(GL_SAMPLE_ALPHA_TO_COVERAGE);
 				}
 
-				m_BlendState.AlphaToCoverageEnable = blend.AlphaToCoverageEnable;
+				m_BlendState.Multisample.AlphaToCoverageEnable = blend.Multisample.AlphaToCoverageEnable;
+			}
+
+			if (m_BlendState.Multisample.AlphaToOneEnable != blend.Multisample.AlphaToOneEnable)
+			{
+				if (blend.Multisample.AlphaToOneEnable)
+				{
+					glEnable(GL_SAMPLE_ALPHA_TO_ONE);
+				}
+				else
+				{
+					glDisable(GL_SAMPLE_ALPHA_TO_ONE);
+				}
+
+				m_BlendState.Multisample.AlphaToOneEnable = blend.Multisample.AlphaToOneEnable;
+			}
+
+			if (m_BlendState.Multisample.CoverageEnable != blend.Multisample.CoverageEnable)
+			{
+				if (blend.Multisample.CoverageEnable)
+				{
+					glEnable(GL_SAMPLE_COVERAGE);
+				}
+				else
+				{
+					glDisable(GL_SAMPLE_COVERAGE);
+				}
+
+				m_BlendState.Multisample.CoverageEnable = blend.Multisample.CoverageEnable;
+			}
+
+			if (m_BlendState.Multisample.MultisampleEanble != blend.Multisample.MultisampleEanble)
+			{
+				if (blend.Multisample.MultisampleEanble)
+				{
+					glEnable(GL_MULTISAMPLE);
+				}
+				else
+				{
+					glDisable(GL_MULTISAMPLE);
+				}
+
+				m_BlendState.Multisample.MultisampleEanble = blend.Multisample.MultisampleEanble;
+			}
+
+			if (m_BlendState.AntialiasedLineEnable != blend.AntialiasedLineEnable)
+			{
+				if (blend.AntialiasedLineEnable)
+				{
+					glEnable(GL_LINE_SMOOTH);
+				}
+				else
+				{
+					glDisable(GL_LINE_SMOOTH);
+				}
+
+				m_BlendState.AntialiasedLineEnable = blend.AntialiasedLineEnable;
+			}
+
+			if (m_BlendState.AntialiasedPointEnable != blend.AntialiasedPointEnable)
+			{
+				if (blend.AntialiasedPointEnable)
+				{
+					glEnable(GL_POINT_SMOOTH);
+				}
+				else
+				{
+					glDisable(GL_POINT_SMOOTH);
+				}
+
+				m_BlendState.AntialiasedPointEnable = blend.AntialiasedPointEnable;
+			}
+
+			if (m_BlendState.AntialiasedPolygonEnable != blend.AntialiasedPolygonEnable)
+			{
+				if (blend.AntialiasedPolygonEnable)
+				{
+					glEnable(GL_POLYGON_SMOOTH);
+				}
+				else
+				{
+					glDisable(GL_POLYGON_SMOOTH);
+				}
+
+				m_BlendState.AntialiasedPolygonEnable = blend.AntialiasedPolygonEnable;
 			}
 
 			if (blend.IndependentBlendEnable)
@@ -849,28 +1146,6 @@ namespace jet
 					glDisable(GL_DEPTH_CLAMP);
 				}
 			}
-
-			if (m_RasterizerState.ScissorEnable != raster.ScissorEnable)
-			{
-				m_RasterizerState.ScissorEnable = raster.ScissorEnable;
-				if (raster.ScissorEnable)
-				{
-					glEnable(GL_SCISSOR_TEST);
-					if (m_RasterizerState.ScissorBox != raster.ScissorBox)
-					{
-						glScissor(raster.ScissorBox.X, raster.ScissorBox.Y, raster.ScissorBox.Width, raster.ScissorBox.Height);
-						m_RasterizerState.ScissorBox = raster.ScissorBox;
-					}
-				}
-				else
-				{
-					glDisable(GL_SCISSOR_TEST);
-				}
-			}
-
-			GEN_CAP_CODE(MultisampleEanble, GL_MULTISAMPLE);
-			GEN_CAP_CODE(AntialiasedLineEnable, GL_LINE_SMOOTH);
-			GEN_CAP_CODE(AntialiasedPolygonEnable, GL_POLYGON_SMOOTH);
 			GEN_CAP_CODE(Dither, GL_DITHER);
 			GEN_CAP_CODE(SRGB, GL_FRAMEBUFFER_SRGB);
 			GEN_CAP_CODE(RasterizedDiscardEnable, GL_RASTERIZER_DISCARD);
@@ -1368,11 +1643,888 @@ namespace jet
 			m_PrimitiveRestartIndex(0),
 			m_RenderbufferState(0),
 			m_ProvokeState(ProvokeMode::FIRST)
-		{}
+		{
+			GLint maxTextureUnits = getMaxCombinedTextureImageUnits();
+			assert(maxTextureUnits >= 8);
+			m_TextureStates = new BindTexture[maxTextureUnits];
+			m_TextureUnits = new GLuint[maxTextureUnits];
+			m_TextureNames = new GLuint[maxTextureUnits];
 
+			GLint maxViewports = getMaxViewports();
+			m_ViewportStates = new ViewportDesc[maxViewports];
+		}
 
 		GLStates::~GLStates()
 		{
+			delete[] m_TextureStates;
+			delete[] m_TextureUnits;
+
+			delete[] m_ViewportStates;
+			delete[] m_TextureNames;
+		}
+
+		GLint GLStates::getMaxComputeShaderStorageBlocks()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxCombinedShaderStorageBlocks()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxComputeUniformBlocks()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COMPUTE_UNIFORM_BLOCKS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxComputeTextureImageUnits()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COMPUTE_TEXTURE_IMAGE_UNITS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxComputeUniformComponents()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COMPUTE_UNIFORM_COMPONENTS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxComputeAtomicCounters()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COMPUTE_ATOMIC_COUNTERS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxComputeAtomicCounterBuffers()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COMPUTE_ATOMIC_COUNTER_BUFFERS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxCombinedComputeUniformComponents()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COMBINED_COMPUTE_UNIFORM_COMPONENTS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxComputeWorkGroupInvocations()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxComputeWorkGroupCount(int index)
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, index, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxComputeWorkGroupSize(int index)
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, index, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxDebugGroupStackDepth()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_DEBUG_GROUP_STACK_DEPTH, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getDebugGroupStackDepth()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_DEBUG_GROUP_STACK_DEPTH, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getContextFlags()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_CONTEXT_FLAGS, &out);
+			}
+			return out;
+		}
+
+		GLboolean GLStates::getDoublebuffer()
+		{
+			static GLboolean out = 2;
+			if (out == 2){
+				glGetBooleanv(GL_DOUBLEBUFFER, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMax3dTextureSize()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_3D_TEXTURE_SIZE, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxArrayTextureLayers()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_ARRAY_TEXTURE_LAYERS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxClipDistances()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_CLIP_DISTANCES, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxColorTextureSamples()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COLOR_TEXTURE_SAMPLES, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxCombinedAtomicCounters()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COMBINED_ATOMIC_COUNTERS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxCombinedFragmentUniformComponents()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxCombinedGeometryUniformComponents()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COMBINED_GEOMETRY_UNIFORM_COMPONENTS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxCombinedTextureImageUnits()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxCombinedUniformBlocks()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COMBINED_UNIFORM_BLOCKS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxCombinedVertexUniformComponents()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxCubeMapTextureSize()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_CUBE_MAP_TEXTURE_SIZE, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxDepthTextureSamples()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_DEPTH_TEXTURE_SAMPLES, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxDrawBuffers()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_DRAW_BUFFERS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxDualSourceDrawBuffers()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_DUAL_SOURCE_DRAW_BUFFERS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxElementsIndices()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_ELEMENTS_INDICES, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxElementsVertices()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxFragmentAtomicCounters()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_FRAGMENT_ATOMIC_COUNTERS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxFragmentShaderStorageBlocks()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxFragmentInputComponents()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_FRAGMENT_INPUT_COMPONENTS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxFragmentUniformComponents()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxFragmentUniformVectors()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_VECTORS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxFragmentUniformBlocks()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_BLOCKS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxFramebufferWidth()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_FRAMEBUFFER_WIDTH, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxFramebufferHeight()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_FRAMEBUFFER_HEIGHT, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxFramebufferLayers()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_FRAMEBUFFER_LAYERS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxFramebufferSamples()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_FRAMEBUFFER_SAMPLES, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxGeometryAtomicCounters()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_GEOMETRY_ATOMIC_COUNTERS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxGeometryShaderStorageBlocks()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_GEOMETRY_SHADER_STORAGE_BLOCKS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxGeometryInputComponents()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_GEOMETRY_INPUT_COMPONENTS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxGeometryOutputComponents()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_GEOMETRY_OUTPUT_COMPONENTS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxGeometryTextureImageUnits()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_GEOMETRY_TEXTURE_IMAGE_UNITS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxGeometryUniformBlocks()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_GEOMETRY_UNIFORM_BLOCKS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxGeometryUniformComponents()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_GEOMETRY_UNIFORM_COMPONENTS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxIntegerSamples()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_INTEGER_SAMPLES, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMinMapBufferAlignment()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MIN_MAP_BUFFER_ALIGNMENT, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxLabelLength()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_LABEL_LENGTH, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxProgramTexelOffset()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_PROGRAM_TEXEL_OFFSET, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMinProgramTexelOffset()
+		{
+			static GLint out = 0x7fffffff;
+			if (out == 0x7fffffff){
+				glGetIntegerv(GL_MIN_PROGRAM_TEXEL_OFFSET, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxRectangleTextureSize()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_RECTANGLE_TEXTURE_SIZE, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxRenderbufferSize()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxSampleMaskWords()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_SAMPLE_MASK_WORDS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxServerWaitTimeout()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_SERVER_WAIT_TIMEOUT, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxShaderStorageBufferBindings()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxTessControlAtomicCounters()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_TESS_CONTROL_ATOMIC_COUNTERS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxTessEvaluationAtomicCounters()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_TESS_EVALUATION_ATOMIC_COUNTERS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxTessControlShaderStorageBlocks()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_TESS_CONTROL_SHADER_STORAGE_BLOCKS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxTessEvaluationShaderStorageBlocks()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_TESS_EVALUATION_SHADER_STORAGE_BLOCKS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxTextureBufferSize()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_TEXTURE_BUFFER_SIZE, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxTextureImageUnits()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &out);
+			}
+			return out;
+		}
+
+		GLfloat GLStates::getMaxTextureLodBias()
+		{
+			static GLfloat out = -1;
+			if (out == -1){
+				glGetFloatv(GL_MAX_TEXTURE_LOD_BIAS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxTextureSize()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_TEXTURE_SIZE, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxUniformBufferBindings()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxUniformBlockSize()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxUniformLocations()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_UNIFORM_LOCATIONS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxVaryingComponents()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_VARYING_COMPONENTS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxVaryingVectors()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_VARYING_VECTORS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxVaryingFloats()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_VARYING_FLOATS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxVertexAtomicCounters()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_VERTEX_ATOMIC_COUNTERS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxVertexAttribs()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxVertexShaderStorageBlocks()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxVertexTextureImageUnits()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxVertexUniformComponents()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_VERTEX_UNIFORM_COMPONENTS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxVertexUniformVectors()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxVertexOutputComponents()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_VERTEX_OUTPUT_COMPONENTS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxVertexUniformBlocks()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_VERTEX_UNIFORM_BLOCKS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxViewportDims()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_VIEWPORT_DIMS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxViewports()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_VIEWPORTS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getNumCompressedTextureFormats()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getNumExtensions()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_NUM_EXTENSIONS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getNumProgramBinaryFormats()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_NUM_PROGRAM_BINARY_FORMATS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getNumShaderBinaryFormats()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_NUM_SHADER_BINARY_FORMATS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getSmoothLineWidthGranularity()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_SMOOTH_LINE_WIDTH_GRANULARITY, &out);
+			}
+			return out;
+		}
+
+		GLboolean GLStates::getStereo()
+		{
+			static GLboolean out = 2;
+			if (out == 2){
+				glGetBooleanv(GL_STEREO, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getSubpixelBits()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_SUBPIXEL_BITS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getViewportSubpixelBits()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_VIEWPORT_SUBPIXEL_BITS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxElementIndex()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_ELEMENT_INDEX, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getSampleBuffers()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_SAMPLE_BUFFERS, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getSamples()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_SAMPLES, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getShaderStorageBufferOffsetAlignment()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getTextureBufferOffsetAlignment()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_TEXTURE_BUFFER_OFFSET_ALIGNMENT, &out);
+			}
+			return out;
+		}
+
+		GLint GLStates::getMaxVertexAttribRelativeOffset()
+		{
+			static GLint out = -1;
+			if (out == -1){
+				glGetIntegerv(GL_MAX_VERTEX_ATTRIB_RELATIVE_OFFSET, &out);
+			}
+			return out;
 		}
 	}
 }

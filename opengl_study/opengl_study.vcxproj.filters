@@ -21,12 +21,21 @@
     <ClCompile Include="simple_sdk.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="simple_sdk_common.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="simple_sdk_billbaord.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="heightmap.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="simple_sdk.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="simple_sdk_common.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

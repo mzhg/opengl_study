@@ -54,15 +54,40 @@ namespace jet
 			{}
 		}RenderTargetBlendDesc;
 
+		typedef struct MultisampleDesc
+		{
+			bool MultisampleEanble;
+			bool AlphaToCoverageEnable;
+			bool AlphaToOneEnable;
+			bool CoverageEnable;
+			float SampleCoverageValue;
+			bool SampleConverageInvert;
+
+			MultisampleDesc() :
+				MultisampleEanble(false),
+				AlphaToCoverageEnable(false),
+				AlphaToOneEnable(false),
+				CoverageEnable(false),
+				SampleCoverageValue(1.0f),
+				SampleConverageInvert(false)
+			{}
+		}MultisampleDesc;
+
 		typedef struct BlendDesc
 		{
-			bool AlphaToCoverageEnable;
+			MultisampleDesc Multisample;
 			bool IndependentBlendEnable;
+			bool AntialiasedLineEnable;
+			bool AntialiasedPolygonEnable;
+			bool AntialiasedPointEnable;
 
 			RenderTargetBlendDesc RenderTargets[8];
 			BlendDesc() :
-				AlphaToCoverageEnable(false),
-				IndependentBlendEnable(false)
+				Multisample(),
+				IndependentBlendEnable(false),
+				AntialiasedLineEnable(false),
+				AntialiasedPolygonEnable(false),
+				AntialiasedPointEnable(false)
 			{
 				/*
 				for (int i = 0; i < 8; i++)
@@ -203,18 +228,8 @@ namespace jet
 				factor(0.0f), units(0.0f){}
 		}PolygonOffsetDesc;
 
-		typedef struct ClipPlaneDesc
-		{
-			double NormX, NormY, NormZ, W;
-			bool ClipPlaneEnable;
-
-			ClipPlaneDesc() :
-				NormX(0), NormY(0), NormZ(0), W(0),
-				ClipPlaneEnable(false){}
-		}ClipPlaneDesc;
-
 		typedef struct ColorMask
-		{
+		{		
 			bool RedWriteMask;
 			bool GreenWriteMask;
 			bool BlueWriteMask;
@@ -254,24 +269,15 @@ namespace jet
 			{}
 		}PointSpriteDesc;
 
-		typedef struct MultisampleDesc
+		typedef struct ViewportDesc
 		{
-			bool MultisampleEanble;
-			bool AlphaToCoverageEnable;
-			bool AlphaToOneEnable;
-			bool CoverageEnable;
-			float SampleCoverageValue;
-			bool SampleConverageInvert;
+			Rectangle2i Viewport;
+			Rectangle2i ScissorBox;
+			bool ScissorEnable;
 
-			MultisampleDesc() :
-				MultisampleEanble(false),
-				AlphaToCoverageEnable(false),
-				AlphaToOneEnable(false),
-				CoverageEnable(false),
-				SampleCoverageValue(1.0f),
-				SampleConverageInvert(false)
-			{}
-		}MultisampleDesc;
+			ViewportDesc() :
+				ScissorEnable(false){}
+		}ViewportDesc;
 
 		typedef struct RasterizerDesc
 		{
@@ -279,25 +285,19 @@ namespace jet
 			FaceMode CullMode;
 			bool FrontCounterClockwise;
 			bool CullFaceEnable;
-			//			float DepthBias;
-			//			float depthBiasClamp;
-			//			float slopeScaledDepthBias;
 			bool DepthClampEnable;
 			DepthRangeDesc DepthRange;
 			bool ScissorEnable;
-			bool MultisampleEanble;
-			bool AntialiasedLineEnable;
-			bool AntialiasedPolygonEnable;
 			bool Dither;
 			bool SRGB;
 			bool PolygonOffsetEnable;
 			bool RasterizedDiscardEnable;
 			bool ProgramPointSizeEnable;
 			bool PrimitiveRestartEnable;
-			//			ClipPlaneDesc ClipPlanes[6];
+			GLuint PrimitiveRestartIndex;
 			PolygonOffsetDesc PolygonOffset;
 			LogicDesc LogicMode;
-			Rectangle2i ScissorBox;
+			
 			ColorMask ColorWriteMask;
 			PointSpriteDesc PointSprite;
 
@@ -306,21 +306,18 @@ namespace jet
 				CullMode(FaceMode::BACK),
 				FrontCounterClockwise(false),  // ccw
 				CullFaceEnable(false),
-				//				DepthBias(0.0f),
 				DepthClampEnable(false),
 				DepthRange(),
 				Dither(false),
 				ScissorEnable(false),
 				SRGB(false),
-				MultisampleEanble(false),
-				AntialiasedLineEnable(false),
 				LogicMode(),
 				PolygonOffsetEnable(false),
 				PolygonOffset(),
 				RasterizedDiscardEnable(false),
 				ProgramPointSizeEnable(false),
 				PrimitiveRestartEnable(false),
-				ScissorBox(),
+				PrimitiveRestartIndex(0),
 				ColorWriteMask(),
 				PointSprite()
 			{}
@@ -415,11 +412,11 @@ namespace jet
 			GLuint PackAlignment;
 			GLuint PackImageHeight;
 			/*
-			GLuint UnpackSkipImages;
-			GLuint UnpackCompressedBlockWidth;
-			GLuint UnpackCompressedBlockHeight;
-			GLuint UnpackCompressedBlockDepth;
-			GLuint UnpackCompressedBlockSize;
+			GLuint PackSkipImages;
+			GLuint PackCompressedBlockWidth;
+			GLuint PackCompressedBlockHeight;
+			GLuint PackCompressedBlockDepth;
+			GLuint PackCompressedBlockSize;
 			*/
 
 			PackPixelStoreDesc() :
@@ -523,5 +520,35 @@ namespace jet
 				BorderColor()
 			{}
 		}SamplerDesc;
+
+		enum class TextureTarget
+		{
+			TEXTURE1D,
+			TEXTURE2D,
+			TEXTURE3D,
+			TEXTURE1D_ARRAY,
+			TEXTURE2D_ARRAY,
+			RECTANGLE,
+			CUBE_MAP,
+			CUBE_MAP_ARRAY,
+			TEXTURE2D_MULTISAMPLE,
+			TEXTURE2D_MULTISAMPLE_ARRAY,
+		};
+		extern "C" GLenum ConvertTextureTargetToGLenum(TextureTarget func);
+		extern "C" TextureTarget ConvertGLenumToTextureTarget(GLenum func);
+
+		static const GLenum TEXTURE_TARGETS[] =
+		{
+			GL_TEXTURE_1D,
+			GL_TEXTURE_2D,
+			GL_TEXTURE_3D,
+			GL_TEXTURE_1D_ARRAY,
+			GL_TEXTURE_2D_ARRAY,
+			GL_TEXTURE_RECTANGLE,
+			GL_TEXTURE_CUBE_MAP,
+			GL_TEXTURE_CUBE_MAP_ARRAY,
+			GL_TEXTURE_2D_MULTISAMPLE,
+			GL_TEXTURE_2D_MULTISAMPLE_ARRAY
+		};
 	}
 }

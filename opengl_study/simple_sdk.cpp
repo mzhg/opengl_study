@@ -1,33 +1,4 @@
-#include "simple_sdk.h"
-#include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
-#if 1
-#include <GL\glew.h>
-#else
-#include <GLES2/gl2.h>
-#endif
-
-#define INIT_ONCE 1
-
-#define OGL_DEBUG 1
-#if OGL_DEBUG
-#define AND_LOG(...)  printf(__VA_ARGS__)
-#define _s_l_(x) #x
-#define _str_line_(x) _s_l_(x)
-#define __STR_LINE__ _str_line_(__LINE__)
-#define __STR_FILE__ _str_line_(__FILE__)
-#define GL(x) x; check_gl_error( __STR_FILE__, __STR_LINE__)
-
-#define OBJ_CHECK(name, func)  if(name == 0 || !func(name)) {AND_LOG(#name" is not valid!\n");}
-
-#else
-#define AND_LOG(...)
-#define GL(x) x
-#define OBJ_CHECK(name, func)
-#endif
+#include "simple_sdk_common.h"
 
 #ifdef __cplusplus
 extern "C"{
@@ -56,95 +27,6 @@ extern "C"{
 		"	gl_FragColor = texture2D(sparrow, vTextureCoord);\n"
 		"}\n";
 
-	static void check_gl_error(const char* file, const char* line)
-	{
-		char errorMsg[40];
-		GLenum error = glGetError();
-		switch (error)
-		{
-		case GL_NO_ERROR:
-			return;
-			break;
-		case GL_INVALID_ENUM:
-			strcpy_s(errorMsg, "GL_INVALID_ENUM");
-			break;
-		case GL_INVALID_VALUE:
-			strcpy_s(errorMsg, "GL_INVALID_VALUE");
-			break;
-		case GL_INVALID_OPERATION:
-			strcpy_s(errorMsg, "GL_INVALID_OPERATION");
-			break;
-		case GL_INVALID_FRAMEBUFFER_OPERATION:
-			strcpy_s(errorMsg, "GL_INVALID_FRAMEBUFFER_OPERATION");
-			break;
-		case GL_OUT_OF_MEMORY:
-			strcpy_s(errorMsg, "GL_OUT_OF_MEMORY");
-			break;
-		case GL_STACK_UNDERFLOW:
-			strcpy_s(errorMsg, "GL_STACK_UNDERFLOW");
-			break;
-		case GL_STACK_OVERFLOW:
-			strcpy_s(errorMsg, "GL_STACK_OVERFLOW");
-			break;
-		default:
-			sprintf_s(errorMsg, "Other: %d", error);
-			break;
-		}
-
-		AND_LOG("Error msg occured at line %s in the file %s: %s\n", line, file, errorMsg);
-	}
-
-#define POSITION 0
-#define TEXCOORD 1
-
-	typedef struct Rect
-	{
-		int x, y;
-		int width, height;
-	}Rect;
-
-	typedef struct Size
-	{
-		int width, height;
-	}Size;
-
-	typedef struct Projection
-	{
-		float fov;
-		float near;
-		float far;
-	}Projection;
-
-	typedef struct TextureGL
-	{
-		int width;
-		int height;
-		unsigned int textureId;
-		int owend;
-	}TextureGL;
-
-	static TextureGL empty_texture()
-	{
-		TextureGL tex;
-		tex.width = 0;
-		tex.height = 0;
-		tex.textureId = 0;
-		tex.owend = false;
-
-		return tex;
-	}
-
-	static void release_texture(TextureGL& tex)
-	{
-		if (tex.owend)
-		{
-			GL(glDeleteTextures(1, &tex.textureId));
-			tex.textureId = 0;
-		}
-	}
-
-	static const float PI = 3.1415926f;
-
 	static GLuint g_program = 0;
 	static TextureGL g_background_tex_id;
 	static TextureGL g_rect_texture_id;
@@ -154,77 +36,31 @@ extern "C"{
 	static GLuint g_sphere_indices_count = 0;
 	static GLuint g_rect_vbo = 0;
 	static GLuint g_rect_ibo = 0;
+	static GLuint g_billboard_vbo = 0;
 
 	static GLint g_mat_loc = -1;
 
 	static Rect g_rect_bound;
+	static Billboard g_billboard_info;
 	static Size g_window_size;
 	static Projection g_projection;
-
-	typedef struct Vertex2
-	{
-		float x, y;
-	}Vertex2;
-
-	typedef struct Vertex3
-	{
-		float x, y, z;
-	}Vertex3;
-
-	static Vertex3 g_background_rotate;
-
-	typedef struct Vertex
-	{
-		Vertex3 position;
-		Vertex2 texcoord;
-	}Vertex;
-
-	typedef struct Matrix4
-	{
-		union 
-		{
-			struct 
-			{
-				float m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33;
-			};
-
-			float m[16];
-		};
-	}Matrix4;
+	static SimpleFBO* g_fbo = NULL;
+	static TextureGL  g_fbo_tex;
 
 	static Matrix4 g_background_rotate2;
 
 	static void create_sphere_vertexs(int, int);
-	static void create_rect_vertices();
+	static void create_rect_vertices(GLuint& buffer, GLenum usage);
 	static void create_program();
 	static Vertex3 setVertex(float, float, float);
 
-	static Matrix4 identity()
-	{
-		Matrix4 mat;
-		int idx;
-		for (int i = 0; i < 4; i++)
-		{
-			for (int j = 0; j < 4; j++)
-			{
-				idx = j * 4 + i;
-				if (i == j)
-				{
-					mat.m[idx] = 1.0f;
-				}
-				else
-				{
-					mat.m[idx] = 0.0f;
-				}
-			}
-		}
-		return mat;
-	}
+	extern "C" void update_billboard_buffer(Vertex* pData, Matrix4& rotate, const Billboard& info, int width, int height);
 
 	void ogl_init()
 	{
 		create_sphere_vertexs(50,20);
-		create_rect_vertices();
+		create_rect_vertices(g_rect_vbo, GL_STATIC_DRAW);
+		create_rect_vertices(g_billboard_vbo, GL_DYNAMIC_DRAW);
 		create_program();
 
 		g_background_rotate = setVertex(0, 0, 0);
@@ -236,6 +72,12 @@ extern "C"{
 		g_rect_texture_id = empty_texture();
 
 		g_background_rotate2 = identity();
+
+		g_billboard_info.depth = 50.0f;
+		g_billboard_info.pitch = 0.0f;
+		g_billboard_info.roll = 0.0f;
+		g_billboard_info.scale = 0.1f;
+		g_billboard_info.yaw = 0.0f;
 	}
 
 	void ogl_resize(int width, int height)
@@ -249,114 +91,6 @@ extern "C"{
 		g_projection.far = far;
 		g_projection.near = near;
 		g_projection.fov = fov;
-	}
-
-	static Matrix4 perspective(float fov, float aspect, float zNear, float zFar) {
-		float r = PI / 360.0f * fov;
-//		float r = (float) Math.toRadians(fov / 2);
-		float deltaZ = zFar - zNear;
-		float s = sinf(r);
-		float cotangent = 0;
-
-		Matrix4 out = identity();
-
-		// cos(r) / sin(r) = cot(r)
-		cotangent = cosf(r) / s;
-		out.m00 = cotangent / aspect;
-		out.m11 = cotangent;
-		out.m22 = -(zFar + zNear) / deltaZ;
-		out.m23 = -1;
-		out.m32 = -2 * zNear * zFar / deltaZ;
-		out.m33 = 0;
-
-		return out;
-	}
-
-	static Matrix4 ortho(float left, float right, float bottom, float top, float near, float far) {
-		float tx = -((right + left) / (right - left));
-		float ty = -((top + bottom) / (top - bottom));
-		float tz = -((far + near) / (far - near));
-
-		Matrix4 out = identity();
-
-		out.m00 = 2 / (right - left);
-		out.m11 = 2 / (top - bottom);
-		out.m22 = -2 / (far - near);
-		out.m30 = tx;
-		out.m31 = ty;
-		out.m32 = tz;
-
-		return out;
-	}
-
-	/**
-	* Rotation matrix creation. From euler angles:<ol>
-	* <li> Yaw around Y axis in radians
-	* <li> Pitch around X axis in radians
-	* <li> Roll around Z axis in radians
-	* </ol>
-	* return the rotation matrix [R] = [Roll].[Pitch].[Yaw]
-	*/
-	static Matrix4 rotationYawPitchRoll(float yaw, float pitch, float roll){
-		Matrix4 result;
-
-		float cx = cos(pitch);
-		float sx = sin(pitch);
-		float cy = cos(yaw);
-		float sy = sin(yaw);
-		float cz = cos(roll);
-		float sz = sin(roll);
-
-		float cxsy = cx * sy;
-		float sxsy = sx * sy;
-
-		result.m00 = (cy * cz);
-		result.m10 = (-cy * sz);
-		result.m20 = -sy;
-		result.m01 = (-sxsy * cz + cx * sz);
-		result.m11 = (sxsy * sz + cx * cz);
-		result.m21 = (-sx * cy);
-		result.m02 = (cxsy * cz + sx * sz);
-		result.m12 = (-cxsy * sz + sx * cz);
-		result.m22 = (cx * cy);
-		result.m30 = 0.0f;
-		result.m31 = 0.0f;
-		result.m32 = 0.0f;
-		result.m33 = 1.0f;
-		result.m03 = 0.0f;
-		result.m13 = 0.0f;
-		result.m23 = 0.0f;
-
-		return result;
-	}
-
-	/**
-	* Multiply the right matrix by the left and place the result in a third matrix.
-	* @param left The left source matrix
-	* @param right The right source matrix
-	* @return the destination matrix
-	*/
-	static Matrix4 mulMat(const Matrix4& left, const Matrix4& right) {
-		Matrix4 dest;
-
-		dest.m00 = left.m00 * right.m00 + left.m10 * right.m01 + left.m20 * right.m02 + left.m30 * right.m03;
-		dest.m01 = left.m01 * right.m00 + left.m11 * right.m01 + left.m21 * right.m02 + left.m31 * right.m03;
-		dest.m02 = left.m02 * right.m00 + left.m12 * right.m01 + left.m22 * right.m02 + left.m32 * right.m03;
-		dest.m03 = left.m03 * right.m00 + left.m13 * right.m01 + left.m23 * right.m02 + left.m33 * right.m03;
-		dest.m10 = left.m00 * right.m10 + left.m10 * right.m11 + left.m20 * right.m12 + left.m30 * right.m13;
-		dest.m11 = left.m01 * right.m10 + left.m11 * right.m11 + left.m21 * right.m12 + left.m31 * right.m13;
-		dest.m12 = left.m02 * right.m10 + left.m12 * right.m11 + left.m22 * right.m12 + left.m32 * right.m13;
-		dest.m13 = left.m03 * right.m10 + left.m13 * right.m11 + left.m23 * right.m12 + left.m33 * right.m13;
-		dest.m20 = left.m00 * right.m20 + left.m10 * right.m21 + left.m20 * right.m22 + left.m30 * right.m23;
-		dest.m21 = left.m01 * right.m20 + left.m11 * right.m21 + left.m21 * right.m22 + left.m31 * right.m23;
-		dest.m22 = left.m02 * right.m20 + left.m12 * right.m21 + left.m22 * right.m22 + left.m32 * right.m23;
-		dest.m23 = left.m03 * right.m20 + left.m13 * right.m21 + left.m23 * right.m22 + left.m33 * right.m23;
-		dest.m30 = left.m00 * right.m30 + left.m10 * right.m31 + left.m20 * right.m32 + left.m30 * right.m33;
-		dest.m31 = left.m01 * right.m30 + left.m11 * right.m31 + left.m21 * right.m32 + left.m31 * right.m33;
-		dest.m32 = left.m02 * right.m30 + left.m12 * right.m31 + left.m22 * right.m32 + left.m32 * right.m33;
-		dest.m33 = left.m03 * right.m30 + left.m13 * right.m31 + left.m23 * right.m32 + left.m33 * right.m33;
-
-		return dest;
 	}
 
 	static void measure_internal_format(GLenum* internalFormat, GLenum* pixelFormat, int format)
@@ -563,6 +297,11 @@ extern "C"{
 		AND_LOG("set rect bound[x = %d, y = %d, width = %d, height = %d].\n", x,y,width, height);
 	}
 
+	void ogl_set_rect_location(float scale, float depth, float yaw, float pitch, float roll)
+	{
+
+	}
+
 	typedef struct AttribDesc
 	{
 		GLint enabled;
@@ -615,10 +354,154 @@ extern "C"{
 		glGetVertexAttribPointerv(index, GL_VERTEX_ATTRIB_ARRAY_POINTER, &out.pointer);
 	}
 
+	static void render_to_framebuffer()
+	{
+		const int window_width = g_window_size.width;
+		const int window_height = g_window_size.height;
+
+		GL(glViewport(0, 0, window_width, window_height));
+		if (g_fbo == NULL)
+		{
+			g_fbo_tex = empty_texture();
+			create_texture_internal(g_fbo_tex, window_width, window_height, GL_RGBA, NULL);
+			g_fbo = new SimpleFBO(&g_fbo_tex);
+		}
+
+		Matrix4 proj = perspective(g_projection.fov, (float)window_width / (float)window_height, g_projection.near, g_projection.far);
+		Matrix4 rotation = rotationYawPitchRoll(g_background_rotate.y, g_background_rotate.x, g_background_rotate.z);
+		rotation = mulMat(rotation, g_background_rotate2);
+		Matrix4 mvp = mulMat(proj, rotation);
+
+		g_fbo->Begin();
+		GL(glUseProgram(g_program));
+		{
+			// render the sphere
+			
+
+			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&mvp));
+
+			GL(glActiveTexture(GL_TEXTURE0));
+			GL(glBindTexture(GL_TEXTURE_2D, g_background_tex_id.textureId));
+
+			GL(glBindBuffer(GL_ARRAY_BUFFER, g_sphere_vbo));
+			GL(glEnableVertexAttribArray(0));
+			GL(glEnableVertexAttribArray(1));
+
+			GL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0));
+			GL(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)sizeof(Vertex3)));
+
+			GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_sphere_ibo));
+			GL(glDrawElements(GL_TRIANGLES, g_sphere_indices_count, GL_UNSIGNED_SHORT, 0));
+		}
+
+		{
+			// render the rect
+			//			glEnable(GL_BLEND);
+			//			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			Matrix4 orthMat = ortho(0, +window_width, 0, +window_height,
+				-1.0f, 1.0f);
+#if 0
+			Matrix4 viewMat0 = identity();
+			viewMat0.m00 = 0.5f;
+			viewMat0.m11 = 0.5f;
+			viewMat0.m30 = 0.5f;
+			viewMat0.m31 = 0.5f;
+
+			Matrix4 viewMat1 = identity();
+			viewMat1.m00 = g_rect_bound.width;
+			viewMat1.m11 = g_rect_bound.height;
+			viewMat1.m30 = g_rect_bound.x;
+			viewMat1.m31 = g_rect_bound.y;
+
+			Matrix4 viewMat = mulMat(viewMat1, viewMat0);
+#else
+			Matrix4 viewMat = identity();
+			viewMat.m00 = g_rect_bound.width * 0.5f;
+			viewMat.m11 = g_rect_bound.height * 0.5f;
+			viewMat.m30 = g_rect_bound.x + viewMat.m00;
+			viewMat.m31 = g_rect_bound.y + viewMat.m11;
+#endif
+			Matrix4 billboard_rot_mat;
+			Vertex billboard_data[4];
+			update_billboard_buffer(billboard_data, billboard_rot_mat, g_billboard_info, window_width * 0.3f, window_height * 0.3f);
+			Matrix4 _mvp = mulMat(mvp, billboard_rot_mat);
+			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&_mvp));
+
+			GL(glActiveTexture(GL_TEXTURE0));
+			GL(glBindTexture(GL_TEXTURE_2D, g_rect_texture_id.textureId));
+			GL(glBindBuffer(GL_ARRAY_BUFFER, g_billboard_vbo));
+			GL(glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * sizeof(Vertex), billboard_data));
+			GL(glEnableVertexAttribArray(0));
+			GL(glEnableVertexAttribArray(1));
+
+			GL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0));
+			GL(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)sizeof(Vertex3)));
+
+			GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+			GL(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+
+			GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+			GL(glDisableVertexAttribArray(0));
+			GL(glDisableVertexAttribArray(1));
+			GL(glDisable(GL_BLEND));
+		}
+
+		g_fbo->End();
+	}
+
+	static void render_fbo_to_split_screen()
+	{
+		const int window_width = g_window_size.width;
+		const int window_height = g_window_size.height;
+		Matrix4 orthMat = ortho(0, +window_width, 0, +window_height, -1.0f, 1.0f);
+		GL(glViewport(0, 0, window_width, window_height));
+		GL(glUseProgram(g_program));
+		{
+			// render the fbo to left screen
+
+			Rect left_region = { 0, window_height/4, window_width / 2, window_height/2 };
+			Matrix4 viewMat = identity();
+			viewMat.m00 = left_region.width * 0.5f;
+			viewMat.m11 = left_region.height * 0.5f;
+			viewMat.m30 = left_region.x + viewMat.m00;
+			viewMat.m31 = left_region.y + viewMat.m11;
+
+			Matrix4 mvp = mulMat(orthMat, viewMat);
+			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&mvp));
+
+			GL(glActiveTexture(GL_TEXTURE0));
+			GL(glBindTexture(GL_TEXTURE_2D, g_fbo_tex.textureId));
+			GL(glBindBuffer(GL_ARRAY_BUFFER, g_rect_vbo));
+			GL(glEnableVertexAttribArray(0));
+			GL(glEnableVertexAttribArray(1));
+
+			GL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0));
+			GL(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)sizeof(Vertex3)));
+
+			GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+			GL(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));		
+		}
+
+		{
+			// render the fbo to right screen
+			Rect right_region = { window_width / 2, window_height / 4, window_width / 2, window_height/2 };
+			Matrix4 viewMat = identity();
+			viewMat.m00 = right_region.width * 0.5f;
+			viewMat.m11 = right_region.height * 0.5f;
+			viewMat.m30 = right_region.x + viewMat.m00;
+			viewMat.m31 = right_region.y + viewMat.m11;
+
+			Matrix4 mvp = mulMat(orthMat, viewMat);
+			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&mvp));
+			GL(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+			GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+			GL(glDisableVertexAttribArray(0));
+			GL(glDisableVertexAttribArray(1));
+		}
+	}
+
 	void ogl_render(float elpsedTime)
 	{
-
-		
 		/*
 		GL(glEnable(GL_DEPTH_TEST));
 		GL(glDepthFunc(GL_ALWAYS));
@@ -672,80 +555,9 @@ extern "C"{
 
 #endif
 
-		GL(glViewport(0, 0, g_window_size.width, g_window_size.height));
-		GL(glUseProgram(g_program));
-
-		{
-			// render the sphere
-			Matrix4 proj = perspective(g_projection.fov, (float)g_window_size.width / (float)g_window_size.height, g_projection.near, g_projection.far);
-			Matrix4 rotation = rotationYawPitchRoll(g_background_rotate.y, g_background_rotate.x, g_background_rotate.z);
-			rotation = mulMat(rotation, g_background_rotate2);
-			Matrix4 mvp = mulMat(proj, rotation);
-
-			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&mvp));
-
-			GL(glActiveTexture(GL_TEXTURE0));
-			GL(glBindTexture(GL_TEXTURE_2D, g_background_tex_id.textureId));
-
-			GL(glBindBuffer(GL_ARRAY_BUFFER, g_sphere_vbo));
-			GL(glEnableVertexAttribArray(0));
-			GL(glEnableVertexAttribArray(1));
-
-			GL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0));
-			GL(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)sizeof(Vertex3)));
-
-			GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_sphere_ibo));
-			GL(glDrawElements(GL_TRIANGLES, g_sphere_indices_count, GL_UNSIGNED_SHORT, 0));
-		}
-
-		{
-			// render the rect
-//			glEnable(GL_BLEND);
-//			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			Matrix4 orthMat = ortho(0, +g_window_size.width, 0, +g_window_size.height,
-				-1.0f, 1.0f);
-#if 0
-			Matrix4 viewMat0 = identity();
-			viewMat0.m00 = 0.5f;
-			viewMat0.m11 = 0.5f;
-			viewMat0.m30 = 0.5f;
-			viewMat0.m31 = 0.5f;
-
-			Matrix4 viewMat1 = identity();
-			viewMat1.m00 = g_rect_bound.width;
-			viewMat1.m11 = g_rect_bound.height;
-			viewMat1.m30 = g_rect_bound.x;
-			viewMat1.m31 = g_rect_bound.y;
-
-			Matrix4 viewMat = mulMat(viewMat1, viewMat0);
-#else
-			Matrix4 viewMat = identity();
-			viewMat.m00 = g_rect_bound.width * 0.5f;
-			viewMat.m11 = g_rect_bound.height * 0.5f;
-			viewMat.m30 = g_rect_bound.x + viewMat.m00;
-			viewMat.m31 = g_rect_bound.y + viewMat.m11;
-#endif
-
-			Matrix4 mvp = mulMat(orthMat, viewMat);
-			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&mvp));
-
-			GL(glActiveTexture(GL_TEXTURE0));
-			GL(glBindTexture(GL_TEXTURE_2D, g_rect_texture_id.textureId));
-			GL(glBindBuffer(GL_ARRAY_BUFFER, g_rect_vbo));
-			GL(glEnableVertexAttribArray(0));
-			GL(glEnableVertexAttribArray(1));
-
-			GL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0));
-			GL(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)sizeof(Vertex3)));
-
-			GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
-			GL(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
-
-			GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
-			GL(glDisableVertexAttribArray(0));
-			GL(glDisableVertexAttribArray(1));
-			GL(glDisable(GL_BLEND));
-		}
+		// render to framebuffer
+		render_to_framebuffer();
+		render_fbo_to_split_screen();
 
 //		GL(glDisable(GL_DEPTH_TEST));
 //		GL(glDepthFunc(GL_LESS));
@@ -901,10 +713,10 @@ extern "C"{
 		return v;
 	}
 
-	static void create_rect_vertices()
+	static void create_rect_vertices(GLuint& buffer, GLenum usage)
 	{
 #if INIT_ONCE
-		if (g_rect_vbo != 0 && glIsBuffer(g_rect_vbo))
+		if (buffer != 0 && glIsBuffer(buffer))
 			return;
 #endif
 		Vertex pVertices[4];
@@ -919,9 +731,9 @@ extern "C"{
 			pVertices[i].texcoord.y = 0.5f * pVertices[i].position.y + 0.5f;
 		}
 
-		GL(glGenBuffers(1, &g_rect_vbo));
-		GL(glBindBuffer(GL_ARRAY_BUFFER, g_rect_vbo));
-		GL(glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), pVertices, GL_STATIC_DRAW));
+		GL(glGenBuffers(1, &buffer));
+		GL(glBindBuffer(GL_ARRAY_BUFFER, buffer));
+		GL(glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Vertex), pVertices, usage));
 		GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
 	}
 
