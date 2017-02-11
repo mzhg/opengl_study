@@ -15,7 +15,7 @@
 
 #define INIT_ONCE 1
 
-#define OGL_DEBUG 1
+#define OGL_DEBUG 0
 #if OGL_DEBUG
 #define AND_LOG(...)  printf(__VA_ARGS__)
 #define _s_l_(x) #x
@@ -108,6 +108,17 @@ typedef struct Vertex2
 typedef struct Vertex3
 {
 	float x, y, z;
+
+	void set(float _x, float _y, float _z)
+	{
+		x = _x;
+		y = _y;
+		z = _z;
+	}
+
+	inline float getX() const{ return x; }
+	inline float getY() const{ return y; }
+	inline float getZ() const{ return z; }
 }Vertex3;
 
 static Vertex3 g_background_rotate;
@@ -117,6 +128,20 @@ typedef struct Vertex
 	Vertex3 position;
 	Vertex2 texcoord;
 }Vertex;
+
+Vertex3 operator- (const Vertex3& a, const Vertex3& b);
+Vertex3 operator+ (const Vertex3& a, const Vertex3& b);
+Vertex3 cross(const Vertex3& a, const Vertex3& b);
+float   dot(const Vertex3& a, const Vertex3& b);
+
+//--------------------------------------------------------------------------------------
+// Given a ray origin (orig) and direction (dir), and three vertices of a triangle, this
+// function returns TRUE and the interpolated texture coordinates if the ray intersects 
+// the triangle
+//--------------------------------------------------------------------------------------
+extern "C" bool ogl_intersect_triangle(const Vertex3& orig, const Vertex3& dir,
+	const Vertex3& v0, const Vertex3& v1, const Vertex3& v2,
+	float* t, float* u, float* v);
 
 typedef struct Matrix4
 {
@@ -132,10 +157,9 @@ typedef struct Matrix4
 }Matrix4;
 
 extern "C" Matrix4 identity();
-
 extern "C" Matrix4 perspective(float fov, float aspect, float zNear, float zFar);
-
 extern "C" Matrix4 ortho(float left, float right, float bottom, float top, float near, float far);
+extern "C" void decompseRigidMatrix(const Matrix4& src, Vertex3& origin, Vertex3& xAxis, Vertex3& yAxis, Vertex3& zAxis);
 
 /**
 * Rotation matrix creation. From euler angles:<ol>
@@ -185,5 +209,34 @@ typedef struct Billboard
 	float pitch;
 	float roll;
 }Billboard;
+
+template<typename T>
+T ogl_min(T a, T b)
+{
+	return a < b ? a : b;
+}
+
+template<typename T>
+T ogl_max(T a, T b)
+{
+	return a > b ? a : b;
+}
+
+extern "C" void create_texture_internal(TextureGL& tex, int width, int height, int format, const char* pData);
+
+typedef struct RenderParams
+{
+	Matrix4 sceneMVP;
+	Matrix4 billboardMVP;
+	Matrix4 tagMVP;
+	Matrix4 leftSplitMVP;
+	Matrix4 rightSplitMVP;
+
+	Vertex  billBoardData[4];
+	ScreenResult result;
+}RenderParams;
+
+extern "C" void update_billboard(RenderParams& render, ScreenResult& screen,
+	const Size& window, const Projection& proj, const Matrix4& sceneRotation, const Billboard& billboard);
 
 #endif

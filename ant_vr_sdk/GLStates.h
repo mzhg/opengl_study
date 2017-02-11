@@ -52,6 +52,7 @@ namespace jet
 			void bindVAO(GLuint vao);
 			void restoreVAO();
 			void resetVAO(bool force = false);
+			GLuint getBindingVAO() const { return m_VertexArrayState; }
 
 			BlendDesc getBlendState() const { return m_BlendState; }
 			DepthStencilDesc getDepthStencilState() const { return m_DepthStencilState; }

@@ -46,8 +46,11 @@ extern "C"{
 	static Projection g_projection;
 	static SimpleFBO* g_fbo = NULL;
 	static TextureGL  g_fbo_tex;
+	static TextureGL  g_tag_normal_tex;
+	static TextureGL  g_tag_focus_tex;
 
 	static Matrix4 g_background_rotate2;
+	static RenderParams g_render_params;
 
 	static void create_sphere_vertexs(int, int);
 	static void create_rect_vertices(GLuint& buffer, GLenum usage);
@@ -55,6 +58,7 @@ extern "C"{
 	static Vertex3 setVertex(float, float, float);
 
 	extern "C" void update_billboard_buffer(Vertex* pData, Matrix4& rotate, const Billboard& info, int width, int height);
+	extern "C" void create_tag_image(TextureGL& tex, const Vertex3& color, unsigned size, float t);
 
 	void ogl_init()
 	{
@@ -71,12 +75,18 @@ extern "C"{
 		g_background_tex_id = empty_texture();
 		g_rect_texture_id = empty_texture();
 
+		g_tag_normal_tex = empty_texture();
+		g_tag_focus_tex = empty_texture();
+
+		create_tag_image(g_tag_normal_tex, setVertex(1.0f, 1.0f, 1.0f), TAG_TEX_SIZE, 0.5f);
+		create_tag_image(g_tag_focus_tex,  setVertex(1.0f, 0.2f, 0.1f), TAG_TEX_SIZE, 0.1f);
+
 		g_background_rotate2 = identity();
 
 		g_billboard_info.depth = 50.0f;
 		g_billboard_info.pitch = 0.0f;
 		g_billboard_info.roll = 0.0f;
-		g_billboard_info.scale = 0.1f;
+		g_billboard_info.scale = 0.03f;
 		g_billboard_info.yaw = 0.0f;
 	}
 
@@ -91,81 +101,6 @@ extern "C"{
 		g_projection.far = far;
 		g_projection.near = near;
 		g_projection.fov = fov;
-	}
-
-	static void measure_internal_format(GLenum* internalFormat, GLenum* pixelFormat, int format)
-	{
-		switch (format)
-		{
-		case GL_RGB:
-			*internalFormat = GL_RGB;
-			*pixelFormat = GL_RGB;
-			break;
-		case GL_RGBA:
-			*internalFormat = GL_RGBA;
-			*pixelFormat = GL_RGBA;
-			break;
-#if 0
-		case GL_BGR:
-			*internalFormat = GL_RGB;
-			*pixelFormat = GL_BGR;
-			break;
-		case GL_BGRA:
-			*internalFormat = GL_RGBA;
-			*pixelFormat = GL_BGRA;
-			break;
-#endif
-		default:
-			assert(0);
-			break;
-		}
-	}
-
-	static void create_texture_internal(TextureGL& tex, int width, int height, int format, const char* pData)
-	{
-		int allocated = 0;
-		int tex_width = 0;
-		int tex_height = 0;
-
-		GLenum internalFormat;
-		GLenum pixelFormat;
-
-		unsigned int& textureID = tex.textureId;
-		if (textureID == 0 || !glIsTexture(textureID) || !tex.owend)
-		{
-			GL(glGenTextures(1, &textureID));
-			GL(glBindTexture(GL_TEXTURE_2D, textureID));
-			tex.owend = 1;
-		}
-		else
-		{
-			GL(glBindTexture(GL_TEXTURE_2D, textureID));
-			allocated = 1;
-//			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &tex_width);
-//			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &tex_height);
-
-			tex_width = tex.width;
-			tex_height = tex.height;
-		}
-		
-		measure_internal_format(&internalFormat, &pixelFormat, format);
-		if (!allocated || tex_width != width || tex_height != height)
-		{
-			GL(glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, pixelFormat, GL_UNSIGNED_BYTE, pData));
-			GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-			GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-			GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-			GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-
-			tex.width = width;
-			tex.height = height;
-		}
-		else
-		{
-			GL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, pixelFormat, GL_UNSIGNED_BYTE, pData));
-		}
-
-		GL(glBindTexture(GL_TEXTURE_2D, 0));
 	}
 
 	void ogl_read_texels_from_renderbuffer()
@@ -193,9 +128,15 @@ extern "C"{
 		g_background_rotate = setVertex(pitch, yaw, roll);
 	}
 
-	void ogl_set_background_rotation_mat(float mat[16])
+	void ogl_update(ScreenResult& out, float* mat)
 	{
 		memcpy(&g_background_rotate2, mat, sizeof(Matrix4));
+		Matrix4 rotation = rotationYawPitchRoll(g_background_rotate.y, g_background_rotate.x, g_background_rotate.z);
+		rotation = mulMat(rotation, g_background_rotate2);
+
+		g_billboard_info.depth = ogl_max(g_billboard_info.depth, g_projection.near + 1.0f);
+		g_billboard_info.depth = ogl_min(g_billboard_info.depth, g_projection.far - 1.0f);
+		update_billboard(g_render_params, out, g_window_size, g_projection, rotation, g_billboard_info);
 	}
 
 	void ogl_set_rect_texture(int width, int height, int format, const char* pData)
@@ -223,21 +164,7 @@ extern "C"{
 		if (!isValid)
 		{
 			AND_LOG("ogl_set_rect_texture_id::Invalid texture id. \n");
-			return;
 		}
-		GL(glBindTexture(GL_TEXTURE_2D, id));
-		GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-		GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-		GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
-		GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-#if 0
-		GLint width, height, internalFormat;
-		GL(glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &width));
-		GL(glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &height));
-
-		AND_LOG("Texture dimension = [%d, %d].\n", width, height);
-#endif
-		GL(glBindTexture(GL_TEXTURE_2D, 0));
 		AND_LOG("Create rect texture with the given texture id.\n");
 	}
 
@@ -253,14 +180,14 @@ extern "C"{
 		return dest;
 	}
 
-	void ogl_create_rect_default_texture(int width, int height)
+	void ogl_create_background_default_texture(int width, int height)
 	{
 		struct RGB
 		{
 			unsigned char r, g, b;
 		};
 
-		release_texture(g_rect_texture_id);
+		release_texture(g_background_tex_id);
 		RGB* pData = (RGB*)malloc(sizeof(RGB) * width * height);
 
 		Vertex3 red = setVertex(1, 0, 0);
@@ -283,7 +210,7 @@ extern "C"{
 			}
 		}
 
-		ogl_set_rect_texture(width, height, GL_RGB, (const char*)pData);
+		ogl_set_background_texture(width, height, GL_RGB, (const char*)pData);
 		free(pData);
 	}
 
@@ -299,7 +226,11 @@ extern "C"{
 
 	void ogl_set_rect_location(float scale, float depth, float yaw, float pitch, float roll)
 	{
-
+		g_billboard_info.depth = depth;
+		g_billboard_info.scale = scale;
+		g_billboard_info.yaw = yaw;
+		g_billboard_info.pitch = pitch;
+		g_billboard_info.roll = roll;
 	}
 
 	typedef struct AttribDesc
@@ -366,19 +297,17 @@ extern "C"{
 			create_texture_internal(g_fbo_tex, window_width, window_height, GL_RGBA, NULL);
 			g_fbo = new SimpleFBO(&g_fbo_tex);
 		}
-
+#if 0
 		Matrix4 proj = perspective(g_projection.fov, (float)window_width / (float)window_height, g_projection.near, g_projection.far);
 		Matrix4 rotation = rotationYawPitchRoll(g_background_rotate.y, g_background_rotate.x, g_background_rotate.z);
 		rotation = mulMat(rotation, g_background_rotate2);
 		Matrix4 mvp = mulMat(proj, rotation);
-
+#endif
 		g_fbo->Begin();
 		GL(glUseProgram(g_program));
 		{
 			// render the sphere
-			
-
-			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&mvp));
+			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&g_render_params.sceneMVP));
 
 			GL(glActiveTexture(GL_TEXTURE0));
 			GL(glBindTexture(GL_TEXTURE_2D, g_background_tex_id.textureId));
@@ -395,42 +324,20 @@ extern "C"{
 		}
 
 		{
-			// render the rect
-			//			glEnable(GL_BLEND);
-			//			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			Matrix4 orthMat = ortho(0, +window_width, 0, +window_height,
-				-1.0f, 1.0f);
 #if 0
-			Matrix4 viewMat0 = identity();
-			viewMat0.m00 = 0.5f;
-			viewMat0.m11 = 0.5f;
-			viewMat0.m30 = 0.5f;
-			viewMat0.m31 = 0.5f;
-
-			Matrix4 viewMat1 = identity();
-			viewMat1.m00 = g_rect_bound.width;
-			viewMat1.m11 = g_rect_bound.height;
-			viewMat1.m30 = g_rect_bound.x;
-			viewMat1.m31 = g_rect_bound.y;
-
-			Matrix4 viewMat = mulMat(viewMat1, viewMat0);
-#else
-			Matrix4 viewMat = identity();
-			viewMat.m00 = g_rect_bound.width * 0.5f;
-			viewMat.m11 = g_rect_bound.height * 0.5f;
-			viewMat.m30 = g_rect_bound.x + viewMat.m00;
-			viewMat.m31 = g_rect_bound.y + viewMat.m11;
-#endif
 			Matrix4 billboard_rot_mat;
 			Vertex billboard_data[4];
+
+			
 			update_billboard_buffer(billboard_data, billboard_rot_mat, g_billboard_info, window_width * 0.3f, window_height * 0.3f);
 			Matrix4 _mvp = mulMat(mvp, billboard_rot_mat);
-			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&_mvp));
+#endif
+			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&g_render_params.billboardMVP));
 
 			GL(glActiveTexture(GL_TEXTURE0));
 			GL(glBindTexture(GL_TEXTURE_2D, g_rect_texture_id.textureId));
 			GL(glBindBuffer(GL_ARRAY_BUFFER, g_billboard_vbo));
-			GL(glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * sizeof(Vertex), billboard_data));
+			GL(glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * sizeof(Vertex), g_render_params.billBoardData));
 			GL(glEnableVertexAttribArray(0));
 			GL(glEnableVertexAttribArray(1));
 
@@ -438,6 +345,71 @@ extern "C"{
 			GL(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)sizeof(Vertex3)));
 
 			GL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
+			GL(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
+
+			// render the tag image to screen center
+			// render the rect
+			GL(glEnable(GL_BLEND));
+			GL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+#if 0
+			Matrix4 orthMat = ortho(0, +window_width, 0, +window_height,
+				-1.0f, 1.0f);
+
+			float img_x = (window_width - TAG_TEX_SIZE) / 2;
+			float img_y = (window_height - TAG_TEX_SIZE) / 2;
+
+			Matrix4 viewMat = identity();
+			viewMat.m00 = TAG_TEX_SIZE * 0.5f;
+			viewMat.m11 = TAG_TEX_SIZE * 0.5f;
+			viewMat.m30 = img_x + viewMat.m00;
+			viewMat.m31 = img_y + viewMat.m11;
+
+			bool intersect;
+			Vertex3 camera_pos;
+			Vertex3 xAxis;
+			Vertex3 yAxis;
+			Vertex3 zAxis;
+			Matrix4 modelView = mulMat(rotation, billboard_rot_mat);
+			decompseRigidMatrix(modelView, camera_pos, xAxis, yAxis, zAxis);
+			zAxis.x *= -1.0f;
+			zAxis.y *= -1.0f;
+			zAxis.z *= -1.0f;
+
+			float t, u, v;
+			intersect = ogl_intersect_triangle(camera_pos, zAxis, billboard_data[0].position, billboard_data[1].position, billboard_data[2].position, &t, &u, &v);
+			if (!intersect)
+			{
+				intersect = ogl_intersect_triangle(camera_pos, zAxis, billboard_data[1].position, billboard_data[2].position, billboard_data[3].position, &t, &u, &v);
+			}
+
+			intersect &= (t > 0.0f);
+			if (intersect)
+			{
+//				AND_LOG("camera_pos = (%f, %f, %f), dir = (%f, %f, %f), t = %f.\n", camera_pos.x, camera_pos.y, camera_pos.z, zAxis.x, zAxis.y, zAxis.z, t);
+				Vertex3 point;
+				point.x = camera_pos.x + zAxis.x * t;
+				point.y = camera_pos.y + zAxis.y * t;
+				point.z = camera_pos.z + zAxis.z * t;
+				Vertex3 diff = point - billboard_data[0].position;
+				float hw = window_width * 0.3f * g_billboard_info.scale;
+				float hh = window_height * 0.3f * g_billboard_info.scale;
+				float screenX = diff.x / hw *  window_width;
+				float screenY = window_height - diff.y / hh * window_height;
+
+				printf("ScreenPos = (%f, %f).\n", screenX, screenY);
+			}
+
+			mvp = mulMat(orthMat, viewMat);
+#endif
+			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&g_render_params.tagMVP));
+			GL(glBindTexture(GL_TEXTURE_2D, g_render_params.result.intersected ? g_tag_focus_tex.textureId : g_tag_normal_tex.textureId));
+			GL(glBindBuffer(GL_ARRAY_BUFFER, g_rect_vbo));
+			GL(glEnableVertexAttribArray(0));
+			GL(glEnableVertexAttribArray(1));
+
+			GL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), 0));
+			GL(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (const void*)sizeof(Vertex3)));
+
 			GL(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 
 			GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
@@ -458,7 +430,7 @@ extern "C"{
 		GL(glUseProgram(g_program));
 		{
 			// render the fbo to left screen
-
+#if 0
 			Rect left_region = { 0, window_height/4, window_width / 2, window_height/2 };
 			Matrix4 viewMat = identity();
 			viewMat.m00 = left_region.width * 0.5f;
@@ -467,7 +439,8 @@ extern "C"{
 			viewMat.m31 = left_region.y + viewMat.m11;
 
 			Matrix4 mvp = mulMat(orthMat, viewMat);
-			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&mvp));
+#endif
+			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&g_render_params.leftSplitMVP));
 
 			GL(glActiveTexture(GL_TEXTURE0));
 			GL(glBindTexture(GL_TEXTURE_2D, g_fbo_tex.textureId));
@@ -484,6 +457,7 @@ extern "C"{
 
 		{
 			// render the fbo to right screen
+#if 0
 			Rect right_region = { window_width / 2, window_height / 4, window_width / 2, window_height/2 };
 			Matrix4 viewMat = identity();
 			viewMat.m00 = right_region.width * 0.5f;
@@ -492,7 +466,9 @@ extern "C"{
 			viewMat.m31 = right_region.y + viewMat.m11;
 
 			Matrix4 mvp = mulMat(orthMat, viewMat);
-			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&mvp));
+
+#endif
+			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&g_render_params.rightSplitMVP));
 			GL(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 			GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
 			GL(glDisableVertexAttribArray(0));
@@ -594,12 +570,21 @@ extern "C"{
 
 		release_texture(g_background_tex_id);
 		release_texture(g_rect_texture_id);
+		release_texture(g_fbo_tex);
+		release_texture(g_tag_focus_tex);
+		release_texture(g_tag_normal_tex);
 
+		if (g_fbo)
+		{
+			delete g_fbo;
+			g_fbo = NULL;
+		}
 #define DELETE_BUF(x) if(x) {GL(glDeleteBuffers(1, &x)); x = 0;}
 		DELETE_BUF(g_sphere_ibo);
 		DELETE_BUF(g_sphere_vbo);
 		DELETE_BUF(g_rect_vbo);
-		DELETE_BUF(g_rect_ibo)
+		DELETE_BUF(g_rect_ibo);
+		DELETE_BUF(g_billboard_vbo);
 #undef DELETE_BUF
 	}
 

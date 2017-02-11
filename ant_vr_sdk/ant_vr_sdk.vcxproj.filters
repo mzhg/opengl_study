@@ -32,17 +32,14 @@
     <Filter Include="Util">
       <UniqueIdentifier>{e1ba0c03-d6c0-4490-9a0e-0a1a14af107a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Math\Models">
-      <UniqueIdentifier>{d1750eb5-feda-477f-be7c-f8d56b8263df}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ShaderResources">
       <UniqueIdentifier>{5dc9d967-2a00-4689-86c5-d08740e9b61f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Samples">
       <UniqueIdentifier>{d47fa0d7-afcf-4e19-9afa-0bc3742579c5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Math\Util">
-      <UniqueIdentifier>{6e082032-e025-4d0a-b6bc-0bc3f16ad75d}</UniqueIdentifier>
+    <Filter Include="Renderer\Scene">
+      <UniqueIdentifier>{1b10947d-699d-48e7-993b-b7e5e8ad2e7d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -121,11 +118,29 @@
     <ClCompile Include="GLStates.cpp">
       <Filter>Renderer\Util</Filter>
     </ClCompile>
-    <ClCompile Include="geometry2d.cpp">
-      <Filter>Math\Util</Filter>
-    </ClCompile>
     <ClCompile Include="glstate_convertion.cpp">
       <Filter>Renderer\Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Uniforms.cpp">
+      <Filter>Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderContext.cpp">
+      <Filter>Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="BufferGL.cpp">
+      <Filter>Renderer\Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="geometry2d.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Node.cpp">
+      <Filter>Renderer\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Shape3D.cpp">
+      <Filter>Renderer\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshManager.cpp">
+      <Filter>Renderer\Buffer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -207,14 +222,32 @@
     <ClInclude Include="GLStates.h">
       <Filter>Renderer\Util</Filter>
     </ClInclude>
-    <ClInclude Include="geometry2d.h">
-      <Filter>Math\Util</Filter>
-    </ClInclude>
-    <ClInclude Include="geometry3d.h">
-      <Filter>Math\Util</Filter>
-    </ClInclude>
     <ClInclude Include="gl_state_define.h">
       <Filter>Renderer\Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Uniforms.h">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderContext.h">
+      <Filter>Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="BufferGL.h">
+      <Filter>Renderer\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry3d.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="geometry2d.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Node.h">
+      <Filter>Renderer\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Shape3D.h">
+      <Filter>Renderer\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshManager.h">
+      <Filter>Renderer\Buffer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

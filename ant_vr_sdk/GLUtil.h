@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-
+#include <GL\glew.h>
 #if defined(_DEBUG) || defined(DEBUG)
 #include <assert.h>
 #define _s_l_(x) #x

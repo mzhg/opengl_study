@@ -139,6 +139,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BufferGL.cpp" />
     <ClCompile Include="glstate_convertion.cpp" />
     <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="FramebufferGL.cpp" />
@@ -147,6 +148,8 @@
     <ClCompile Include="AssetLoaderAndroid.cpp" />
     <ClCompile Include="GLStates.cpp" />
     <ClCompile Include="GLUtil.cpp" />
+    <ClCompile Include="MeshManager.cpp" />
+    <ClCompile Include="Node.cpp" />
     <ClCompile Include="Numeric.cpp" />
     <ClCompile Include="NvAssetLoaderWin.cpp" />
     <ClCompile Include="NvInputTransformer.cpp" />
@@ -159,15 +162,19 @@
     <ClCompile Include="PostProcessing.cpp" />
     <ClCompile Include="PostProcessingFramework.cpp" />
     <ClCompile Include="PostProcessingStaticMotionBlur.cpp" />
+    <ClCompile Include="RenderContext.cpp" />
     <ClCompile Include="SampleApp.cpp" />
     <ClCompile Include="SampleColorTriangle.cpp" />
     <ClCompile Include="SampleTunnel.cpp" />
     <ClCompile Include="ShaderLoader.cpp" />
+    <ClCompile Include="Shape3D.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureUtil.cpp" />
+    <ClCompile Include="Uniforms.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssetLoader.h" />
+    <ClInclude Include="BufferGL.h" />
     <ClInclude Include="Disposeable.h" />
     <ClInclude Include="FileUtil.h" />
     <ClInclude Include="FramebufferGL.h" />
@@ -178,6 +185,8 @@
     <ClInclude Include="GLStates.h" />
     <ClInclude Include="GLUtil.h" />
     <ClInclude Include="gl_state_define.h" />
+    <ClInclude Include="MeshManager.h" />
+    <ClInclude Include="Node.h" />
     <ClInclude Include="Numeric.h" />
     <ClInclude Include="NvInputTransformer.h" />
     <ClInclude Include="NvStopWatch.h" />
@@ -189,12 +198,15 @@
     <ClInclude Include="PostProcessing.h" />
     <ClInclude Include="PostProcessingFramework.h" />
     <ClInclude Include="PostProcessingStaticMotionBlur.h" />
+    <ClInclude Include="RenderContext.h" />
     <ClInclude Include="SampleApp.h" />
     <ClInclude Include="SampleColorTriangle.h" />
     <ClInclude Include="SampleTunnel.h" />
     <ClInclude Include="ShaderLoader.h" />
+    <ClInclude Include="Shape3D.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureUtil.h" />
+    <ClInclude Include="Uniforms.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>

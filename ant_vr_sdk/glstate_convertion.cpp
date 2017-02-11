@@ -603,6 +603,134 @@ namespace jet
 					break;
 				}
 			}
+
+			GLenum ConvertBufferUsageToGLenum(BufferUsage enumValue)
+			{
+				switch (enumValue)
+				{
+				case BufferUsage::STREAM_DRAW: return GL_STREAM_DRAW;
+				case BufferUsage::STREAM_READ: return GL_STREAM_READ;
+				case BufferUsage::STREAM_COPY: return GL_STREAM_COPY;
+				case BufferUsage::STATIC_DRAW: return GL_STATIC_DRAW;
+				case BufferUsage::STATIC_READ: return GL_STATIC_READ;
+				case BufferUsage::STATIC_COPY: return GL_STATIC_COPY;
+				case BufferUsage::DYNAMIC_DRAW: return GL_DYNAMIC_DRAW;
+				case BufferUsage::DYNAMIC_READ: return GL_DYNAMIC_READ;
+				case BufferUsage::DYNAMIC_COPY: return GL_DYNAMIC_COPY;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			BufferUsage ConvertGLenumToBufferUsage(GLenum enumValue)
+			{
+				switch (enumValue)
+				{
+				case GL_STREAM_DRAW: return BufferUsage::STREAM_DRAW;
+				case GL_STREAM_READ: return BufferUsage::STREAM_READ;
+				case GL_STREAM_COPY: return BufferUsage::STREAM_COPY;
+				case GL_STATIC_DRAW: return BufferUsage::STATIC_DRAW;
+				case GL_STATIC_READ: return BufferUsage::STATIC_READ;
+				case GL_STATIC_COPY: return BufferUsage::STATIC_COPY;
+				case GL_DYNAMIC_DRAW: return BufferUsage::DYNAMIC_DRAW;
+				case GL_DYNAMIC_READ: return BufferUsage::DYNAMIC_READ;
+				case GL_DYNAMIC_COPY: return BufferUsage::DYNAMIC_COPY;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			GLenum ConvertDataTypeToGLenum(DataType enumValue)
+			{
+				switch (enumValue)
+				{
+				case DataType::INT8: return GL_BYTE;
+				case DataType::UINT8: return GL_UNSIGNED_BYTE;
+				case DataType::INT16: return GL_SHORT;
+				case DataType::UINT16: return GL_UNSIGNED_SHORT;
+				case DataType::INT32: return GL_INT;
+				case DataType::UINT32: return GL_UNSIGNED_INT;
+				case DataType::HALF: return GL_HALF_FLOAT;
+				case DataType::FLOAT: return GL_FLOAT;
+				case DataType::DOUBLE: return GL_DOUBLE;
+				case DataType::UNKOWN: return GL_NONE;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			DataType ConvertGLenumToDataType(GLenum enumValue)
+			{
+				switch (enumValue)
+				{
+				case GL_BYTE: return DataType::INT8;
+				case GL_UNSIGNED_BYTE: return DataType::UINT8;
+				case GL_SHORT: return DataType::INT16;
+				case GL_UNSIGNED_SHORT: return DataType::UINT16;
+				case GL_INT: return DataType::INT32;
+				case GL_UNSIGNED_INT: return DataType::UINT32;
+				case GL_HALF_FLOAT: return DataType::HALF;
+				case GL_FLOAT: return DataType::FLOAT;
+				case GL_DOUBLE: return DataType::DOUBLE;
+				case GL_NONE: return DataType::UNKOWN;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			GLenum ConvertPrimitivesToGLenum(Primitives enumValue)
+			{
+				switch (enumValue)
+				{
+				case Primitives::POINTS: return GL_POINTS;
+				case Primitives::LINE_STRIP: return GL_LINE_STRIP;
+				case Primitives::LINE_LOOP: return GL_LINE_LOOP;
+				case Primitives::LINES: return GL_LINES;
+				case Primitives::LINE_STRIP_ADJACENCY: return GL_LINE_STRIP_ADJACENCY;
+				case Primitives::LINES_ADJACENCY: return GL_LINES_ADJACENCY;
+				case Primitives::TRIANGLE_STRIP: return GL_TRIANGLE_STRIP;
+				case Primitives::TRIANGLE_FAN: return GL_TRIANGLE_FAN;
+				case Primitives::TRIANGLES: return GL_TRIANGLES;
+				case Primitives::TRIANGLE_STRIP_ADJACENCY: return GL_TRIANGLE_STRIP_ADJACENCY;
+				case Primitives::TRIANGLES_ADJACENCY: return GL_TRIANGLES_ADJACENCY;
+				case Primitives::PATCHES: return GL_PATCHES;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
+
+			Primitives ConvertGLenumToPrimitives(GLenum enumValue)
+			{
+				switch (enumValue)
+				{
+				case GL_POINTS: return Primitives::POINTS;
+				case GL_LINE_STRIP: return Primitives::LINE_STRIP;
+				case GL_LINE_LOOP: return Primitives::LINE_LOOP;
+				case GL_LINES: return Primitives::LINES;
+				case GL_LINE_STRIP_ADJACENCY: return Primitives::LINE_STRIP_ADJACENCY;
+				case GL_LINES_ADJACENCY: return Primitives::LINES_ADJACENCY;
+				case GL_TRIANGLE_STRIP: return Primitives::TRIANGLE_STRIP;
+				case GL_TRIANGLE_FAN: return Primitives::TRIANGLE_FAN;
+				case GL_TRIANGLES: return Primitives::TRIANGLES;
+				case GL_TRIANGLE_STRIP_ADJACENCY: return Primitives::TRIANGLE_STRIP_ADJACENCY;
+				case GL_TRIANGLES_ADJACENCY: return Primitives::TRIANGLES_ADJACENCY;
+				case GL_PATCHES: return Primitives::PATCHES;
+
+				default:
+					assert(false);
+					break;
+				}
+			}
 		}
 	}
 }

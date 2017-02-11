@@ -77,6 +77,24 @@ namespace jet
 				return true;
 			}
 
+			// The type must implement the 'operator bool ()' function.
+			template<typename T>
+			static unsigned arraySize(T* a)
+			{
+				if (a == nullptr)
+					return 0;
+
+				T* c = a;
+				unsigned count = 0;
+				while (*c)
+				{
+					count++;
+					c++;
+				}
+
+				return count;
+			}
+
 		private:
 			Numeric(Numeric&) = delete;
 		};

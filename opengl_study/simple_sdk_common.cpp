@@ -154,6 +154,161 @@ Matrix4 mulMat(const Matrix4& left, const Matrix4& right) {
 	return dest;
 }
 
+void decompseRigidMatrix(const Matrix4& src, Vertex3& origin, Vertex3& xAxis, Vertex3& yAxis, Vertex3& zAxis)
+{
+	float m00 = src.m00;
+	float m01 = src.m10;
+	float m02 = src.m20;
+	float m10 = src.m01;
+	float m11 = src.m11;
+	float m12 = src.m21;
+	float m20 = src.m02;
+	float m21 = src.m12;
+	float m22 = src.m22;
+	float m30 = -(src.m30 * src.m00) - (src.m31 * src.m01) - (src.m32 * src.m02);
+	float m31 = -(src.m30 * src.m10) - (src.m31 * src.m11) - (src.m32 * src.m12);
+	float m32 = -(src.m30 * src.m20) - (src.m31 * src.m21) - (src.m32 * src.m22);
+
+	origin.set(m30, m31, m32);
+	xAxis.set(m00, m01, m02);
+	yAxis.set(m10, m11, m12);
+	zAxis.set(m20, m21, m22);
+}
+
+static void measure_internal_format(GLenum* internalFormat, GLenum* pixelFormat, int format)
+{
+	switch (format)
+	{
+	case GL_RGB:
+		*internalFormat = GL_RGB;
+		*pixelFormat = GL_RGB;
+		break;
+	case GL_RGBA:
+		*internalFormat = GL_RGBA;
+		*pixelFormat = GL_RGBA;
+		break;
+#if 0
+	case GL_BGR:
+		*internalFormat = GL_RGB;
+		*pixelFormat = GL_BGR;
+		break;
+	case GL_BGRA:
+		*internalFormat = GL_RGBA;
+		*pixelFormat = GL_BGRA;
+		break;
+#endif
+	default:
+		assert(0);
+		break;
+	}
+}
+
+void create_texture_internal(TextureGL& tex, int width, int height, int format, const char* pData)
+{
+	int allocated = 0;
+	int tex_width = 0;
+	int tex_height = 0;
+
+	GLenum internalFormat;
+	GLenum pixelFormat;
+
+	unsigned int& textureID = tex.textureId;
+	if (textureID == 0 || !glIsTexture(textureID) || !tex.owend)
+	{
+		GL(glGenTextures(1, &textureID));
+		GL(glBindTexture(GL_TEXTURE_2D, textureID));
+		tex.owend = 1;
+	}
+	else
+	{
+		GL(glBindTexture(GL_TEXTURE_2D, textureID));
+		allocated = 1;
+		//			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &tex_width);
+		//			glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &tex_height);
+
+		tex_width = tex.width;
+		tex_height = tex.height;
+	}
+
+	measure_internal_format(&internalFormat, &pixelFormat, format);
+	if (!allocated || tex_width != width || tex_height != height)
+	{
+		GL(glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, pixelFormat, GL_UNSIGNED_BYTE, pData));
+		GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+		GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+		GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+		GL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+
+		tex.width = width;
+		tex.height = height;
+	}
+	else
+	{
+		GL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, pixelFormat, GL_UNSIGNED_BYTE, pData));
+	}
+
+	GL(glBindTexture(GL_TEXTURE_2D, 0));
+}
+
+//--------------------------------------------------------------------------------------
+// Given a ray origin (orig) and direction (dir), and three vertices of a triangle, this
+// function returns TRUE and the interpolated texture coordinates if the ray intersects 
+// the triangle
+//--------------------------------------------------------------------------------------
+bool ogl_intersect_triangle(const Vertex3& orig, const Vertex3& dir,
+	const Vertex3& v0, const Vertex3& v1, const Vertex3& v2,
+	float* t, float* u, float* v)
+{
+	// Find vectors for two edges sharing vert0
+	Vertex3 edge1 = v1 - v0;
+	Vertex3 edge2 = v2 - v0;
+
+	// Begin calculating determinant - also used to calculate U parameter
+	Vertex3 pvec = cross(dir, edge2);
+//	D3DXVec3Cross(&pvec, &dir, &edge2);
+
+	// If determinant is near zero, ray lies in plane of triangle
+	float det = dot(edge1, pvec);
+
+	Vertex3 tvec;
+	if (det > 0)
+	{
+		tvec = orig - v0;
+	}
+	else
+	{
+		tvec = v0 - orig;
+		det = -det;
+	}
+
+	if (det < 0.0001f)
+		return false;
+
+	// Calculate U parameter and test bounds
+	*u = dot(tvec, pvec);
+	if (*u < 0.0f || *u > det)
+		return false;
+
+	// Prepare to test V parameter
+	Vertex3 qvec = cross(tvec, edge1);
+//	D3DXVec3Cross(&qvec, &tvec, &edge1);
+
+	// Calculate V parameter and test bounds
+	*v = dot(dir, qvec);
+	if (*v < 0.0f || *u + *v > det)
+		return false;
+
+	// Calculate t, scale parameters, ray intersects triangle
+	*t = dot(edge2, qvec);
+	float fInvDet = 1.0f / det;
+	*t *= fInvDet;
+	*u *= fInvDet;
+	*v *= fInvDet;
+
+	return true;
+}
+
+
 #ifdef __cplusplus
 }
 #endif
@@ -181,4 +336,38 @@ void SimpleFBO::End()
 SimpleFBO::~SimpleFBO()
 {
 	GL(glDeleteFramebuffers(1, &m_Framebuffer));
+}
+
+Vertex3 operator- (const Vertex3& a, const Vertex3& b)
+{
+	Vertex3 out;
+	out.x = a.x - b.x;
+	out.y = a.y - b.y;
+	out.z = a.z - b.z;
+	return out;
+}
+Vertex3 operator+ (const Vertex3& a, const Vertex3& b)
+{
+	Vertex3 out;
+	out.x = a.x + b.x;
+	out.y = a.y + b.y;
+	out.z = a.z + b.z;
+
+	return out;
+}
+Vertex3 cross(const Vertex3& left, const Vertex3& right)
+{
+	Vertex3 out;
+	out.set(
+		left.getY() * right.getZ() - left.getZ() * right.getY(),
+		right.getX() * left.getZ() - right.getZ() * left.getX(),
+		left.getX() * right.getY() - left.getY() * right.getX()
+		);
+
+	return out;
+}
+
+float   dot(const Vertex3& a, const Vertex3& b)
+{
+	return a.x * b.x + a.y * b.y + a.z * b.z;
 }

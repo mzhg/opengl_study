@@ -454,13 +454,61 @@ namespace jet
 			{}
 		}UnPackPixelStoreDesc;
 
+		enum class DataType
+		{
+			UNKOWN,
+			INT8,
+			UINT8,
+			INT16,
+			UINT16,
+			INT32,
+			UINT32,
+			HALF,
+			FLOAT,
+			DOUBLE,
+		};
+		extern "C" GLenum ConvertDataTypeToGLenum(DataType func);
+		extern "C" DataType ConvertGLenumToDataType(GLenum func);
 
 		typedef	struct AttribDesc
 		{
 			bool Enable;
 			GLuint Index;
+			GLuint Size;
+			DataType Type;
+			bool Normalized;
+			GLuint Stride;
+			GLuint Divisor;
+			GLvoid* Pointer;
 
+			AttribDesc() :
+				Enable(false),
+				Index(0),
+				Size(4),
+				Type(DataType::FLOAT),
+				Normalized(false),
+				Stride(0),
+				Divisor(0),
+				Pointer(nullptr){}
 		}AttribDesc;
+
+		enum class Primitives
+		{
+			POINTS,
+			LINE_STRIP,
+			LINE_LOOP,
+			LINES,
+			LINE_STRIP_ADJACENCY,
+			LINES_ADJACENCY,
+			TRIANGLE_STRIP,
+			TRIANGLE_FAN,
+			TRIANGLES,
+			TRIANGLE_STRIP_ADJACENCY,
+			TRIANGLES_ADJACENCY,
+			PATCHES,
+		};
+		extern "C" GLenum ConvertPrimitivesToGLenum(Primitives func);
+		extern "C" Primitives ConvertGLenumToPrimitives(GLenum func);
 
 		enum class TextureFilter
 		{
@@ -550,5 +598,20 @@ namespace jet
 			GL_TEXTURE_2D_MULTISAMPLE,
 			GL_TEXTURE_2D_MULTISAMPLE_ARRAY
 		};
+
+		enum class BufferUsage
+		{
+			STREAM_DRAW,
+			STREAM_READ,
+			STREAM_COPY,
+			STATIC_DRAW,
+			STATIC_READ,
+			STATIC_COPY,
+			DYNAMIC_DRAW,
+			DYNAMIC_READ,
+			DYNAMIC_COPY,
+		};
+		extern "C" GLenum ConvertBufferUsageToGLenum(BufferUsage func);
+		extern "C" BufferUsage ConvertGLenumToBufferUsage(GLenum func);
 	}
 }

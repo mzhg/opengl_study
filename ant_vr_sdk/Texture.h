@@ -2,8 +2,6 @@
 #define _JET_UTIL_TEXTURE_H
 
 #include <stdint.h>
-#include <string>
-#include <GL\glew.h>
 #include "Disposeable.h"
 #include "GLUtil.h"
 #include "gl_state_define.h"

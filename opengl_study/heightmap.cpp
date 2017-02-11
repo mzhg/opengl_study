@@ -10,29 +10,6 @@ struct Rect
 	int right, top;
 };
 
-static const char* g_pVertStr =
-"uniform mat4 g_Mat;\n"
-"attribute vec4  g_Position;\n"
-"attribute vec2  g_TextureCoord;\n"
-"varying   vec2  vTextureCoord;\n"
-
-"void main(){\n"
-"vTextureCoord = g_TextureCoord;\n"
-"gl_Position = g_Mat*g_Position;\n"
-"}\n";
-
-static const char* g_pFragStr =
-"#if GL_ES\n"
-"precision mediump float;\n"
-"#endif\n"
-
-"varying vec2  vTextureCoord;\n"
-"uniform sampler2D sparrow;\n"
-
-"void main(){\n"
-"	gl_FragColor = texture2D(sparrow, vTextureCoord);\n"
-"}\n";
-
 static bool g_test_sdk = true;
 
 void HeightmapDemo::onCreate()
@@ -43,7 +20,29 @@ void HeightmapDemo::onCreate()
 
 //	m_Sample = new SampleTunnel();
 
-	GLSLProgram* program_debug = GLSLProgram::createFromStrings(g_pVertStr, g_pFragStr, true);
+	struct MyStruct
+	{
+		bool b : 1;
+		int  a : 6;
+
+		operator bool ()
+		{
+			return b || a;
+		}
+	};
+
+	printf("sizeof(MyStruct) = %d.\n", sizeof(MyStruct));
+
+	MyStruct array[] =
+	{
+		{ true, 1 },
+		{ false, 2 },
+		{ false, 3 },
+		{0}
+	};
+
+	printf("array size = %d.\n", Numeric::arraySize(array));
+	
 	if (g_test_sdk)
 	{
 		const char* search_path = "../ant_vr_sdk/";
@@ -54,10 +53,10 @@ void HeightmapDemo::onCreate()
 		jet::util::TextureUtil::loadTextureDataFromFile(texpath.c_str(), &texData, &width, &height);
 
 		ogl_init();
-		ogl_set_background_texture(width, height, texData.Format, (const char*)texData.pData[0]);
+		ogl_set_rect_texture(width, height, texData.Format, (const char*)texData.pData[0]);
 //		ogl_set_rect_texture(width, height, texData.Format, (const char*)texData.pData);
 		ogl_set_rect_size((1280 - 600)/2, (720 - 200)/2, 600, 200);
-		ogl_create_rect_default_texture(512, 512);
+		ogl_create_background_default_texture(1024, 1024);
 		/*
 		Texture2D* tex2d = new Texture2D();
 		Texture2DDesc  desc = Texture2DDesc(1280, 720, GL_RGB8);
@@ -164,6 +163,12 @@ void HeightmapDemo::onRender()
 	{
 		ogl_set_background_rotation(g_iFrameCount * 0.01f, 0.0f, 0.0f);
 //		ogl_read_texels_from_renderbuffer();
+
+		float mat[16];
+		memset(mat, 0, 16 * sizeof(float));
+		mat[0] = mat[5] = mat[10] = mat[15] = 1.0f;
+		ScreenResult out;
+		ogl_update(out, mat);
 		ogl_render(0.0f);
 		return;
 	}

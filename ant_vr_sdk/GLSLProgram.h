@@ -7,6 +7,7 @@
 #include <string>
 #include <GL\glew.h>
 #include "Disposeable.h"
+#include "Uniforms.h"
 
 namespace jet
 {
@@ -18,6 +19,8 @@ namespace jet
 			virtual GLuint getProgram() = 0;
 			virtual void enable() = 0;
 			virtual void disable() = 0;
+
+			virtual UniformManager* getUniformManager(){ return nullptr; }
 		};
 
 		template<GLenum Target>
