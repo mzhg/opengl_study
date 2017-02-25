@@ -287,7 +287,6 @@ namespace jet
 			bool CullFaceEnable;
 			bool DepthClampEnable;
 			DepthRangeDesc DepthRange;
-			bool ScissorEnable;
 			bool Dither;
 			bool SRGB;
 			bool PolygonOffsetEnable;
@@ -309,7 +308,6 @@ namespace jet
 				DepthClampEnable(false),
 				DepthRange(),
 				Dither(false),
-				ScissorEnable(false),
 				SRGB(false),
 				LogicMode(),
 				PolygonOffsetEnable(false),
@@ -469,6 +467,7 @@ namespace jet
 		};
 		extern "C" GLenum ConvertDataTypeToGLenum(DataType func);
 		extern "C" DataType ConvertGLenumToDataType(GLenum func);
+		extern "C" GLuint MeasureDataTypeSize(DataType func);
 
 		typedef	struct AttribDesc
 		{
@@ -613,5 +612,34 @@ namespace jet
 		};
 		extern "C" GLenum ConvertBufferUsageToGLenum(BufferUsage func);
 		extern "C" BufferUsage ConvertGLenumToBufferUsage(GLenum func);
+
+#define GEN_VERTEX_VNT_DATA(v, n, t) \
+	typedef struct MeshDataV##v##N##n##T##t\
+			{\
+		glm::vec##v f##v##Position; \
+		glm::vec##n f##n##Normal;    \
+		glm::vec##t f##t##Texcoord; \
+			}MeshDataV##v##N##n##T##t; 
+
+#define GEN_VERTEX_VT_DATA(v, t) \
+	typedef struct MeshDataV##v##T##t\
+			{\
+		glm::vec##v f##v##Position; \
+		glm::vec##t f##t##Texcoord; \
+			}MeshDataV##v##T##t; 
+
+		GEN_VERTEX_VNT_DATA(3, 3, 2);
+		GEN_VERTEX_VNT_DATA(4, 3, 2);
+		GEN_VERTEX_VT_DATA(2, 2);
+
+		template<typename VertexType>
+		struct VertexData
+		{
+			unsigned uiVertexCount;
+			const VertexType* pVertexData;
+			unsigned uiElementCount;
+			DataType ElementType;
+			const unsigned char* pElementData;
+		};
 	}
 }

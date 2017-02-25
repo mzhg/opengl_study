@@ -40,6 +40,15 @@ namespace jet
 
 		extern "C"
 		{
+			void Assert(bool condiation, const char* msg)
+			{
+				if (!condiation)
+				{
+					fprintf(stderr, "Assertion Failed: %s.", msg);
+					assert(false);
+				}
+			}
+
 			void ToLowercase(char* pDst, const char* pIn, int length = -1)
 			{
 				if (length < 0)

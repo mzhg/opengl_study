@@ -250,6 +250,46 @@ void create_texture_internal(TextureGL& tex, int width, int height, int format, 
 	GL(glBindTexture(GL_TEXTURE_2D, 0));
 }
 
+void check_gl_error(const char* file, const char* line)
+{
+	char errorMsg[40];
+	GLenum error = glGetError();
+	switch (error)
+	{
+	case GL_NO_ERROR:
+		return;
+		break;
+	case GL_INVALID_ENUM:
+		strcpy(errorMsg, "GL_INVALID_ENUM");
+		break;
+	case GL_INVALID_VALUE:
+		strcpy(errorMsg, "GL_INVALID_VALUE");
+		break;
+	case GL_INVALID_OPERATION:
+		strcpy(errorMsg, "GL_INVALID_OPERATION");
+		break;
+	case GL_INVALID_FRAMEBUFFER_OPERATION:
+		strcpy(errorMsg, "GL_INVALID_FRAMEBUFFER_OPERATION");
+		break;
+#if 0
+	case GL_OUT_OF_MEMORY:
+		strcpy(errorMsg, "GL_OUT_OF_MEMORY");
+		break;
+	case GL_STACK_UNDERFLOW:
+		strcpy(errorMsg, "GL_STACK_UNDERFLOW");
+		break;
+	case GL_STACK_OVERFLOW:
+		strcpy(errorMsg, "GL_STACK_OVERFLOW");
+		break;
+#endif
+	default:
+		sprintf(errorMsg, "Other: %d", error);
+		break;
+	}
+
+	AND_LOG("Error msg occured at line %s in the file %s: %s\n", line, file, errorMsg);
+}
+
 //--------------------------------------------------------------------------------------
 // Given a ray origin (orig) and direction (dir), and three vertices of a triangle, this
 // function returns TRUE and the interpolated texture coordinates if the ray intersects 

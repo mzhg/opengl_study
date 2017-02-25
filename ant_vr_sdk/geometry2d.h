@@ -1,4 +1,5 @@
 #pragma once
+#include "Numeric.h"
 
 namespace jet
 {
@@ -39,9 +40,12 @@ namespace jet
 		struct Range
 		{
 			Type Min, Max;
+
+			Type length() const { return Max - Min; }
 		};
 
-		typedef Range<int> Rangei;
+		typedef Range<int32_t> Rangei;
+		typedef Range<uint32_t> Rangeui;
 		typedef Range<float> Rangef;
 		typedef Range<double> Ranged;
 
@@ -55,6 +59,16 @@ namespace jet
 		bool operator != (const Range<Type>& a, const Range<Type>& b)
 		{
 			return a.Min != b.Min || a.Max != b.Max;
+		}
+
+		template<typename Type>
+		Range<Type> and(const Range<Type>& a, const Range<Type>& b)
+		{
+			Range<Type> out;
+			out.Min = Numeric::min<Type>(a.Min, b.Min);
+			out.Max = Numeric::max<Type>(a.Max, b.Max);
+
+			return out;
 		}
 	}
 }

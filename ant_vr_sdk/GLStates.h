@@ -111,6 +111,9 @@ namespace jet
 			}
 
 			void restoreClearStencil();
+			void resetClearColor(bool force = false);
+			void resetClearDepth(bool force = false);
+			void resetClearStencil(bool force = false);
 
 			void setLineWidth(GLfloat width);
 			GLfloat getLineWidth()const { return m_LineWidth; }
@@ -392,6 +395,7 @@ namespace jet
 
 			GLuint m_ActiveTextureUnit;
 			GLuint m_BufferStates[static_cast<int>(BufferTarget::COUNT)];
+			bool   m_bPolygonSmoothStates[3];
 
 			GLfloat m_ClearColor[4];
 			GLfloat m_ClearDepth;

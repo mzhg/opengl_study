@@ -22,6 +22,7 @@
     <ProjectGuid>{7F059785-FCBF-4A90-876F-56C4133E1F6C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>ant_vr_sdk</RootNamespace>
+    <ProjectName>ant_vr_sdk</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -131,6 +132,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <Text Include="CommonVS.vert" />
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -139,7 +141,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BoundingVolume.cpp" />
     <ClCompile Include="BufferGL.cpp" />
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Geometry.cpp" />
+    <ClCompile Include="GeometryGroupNode.cpp" />
     <ClCompile Include="glstate_convertion.cpp" />
     <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="FramebufferGL.cpp" />
@@ -148,6 +154,9 @@
     <ClCompile Include="AssetLoaderAndroid.cpp" />
     <ClCompile Include="GLStates.cpp" />
     <ClCompile Include="GLUtil.cpp" />
+    <ClCompile Include="LegacyApplication.cpp" />
+    <ClCompile Include="LightList.cpp" />
+    <ClCompile Include="Material.cpp" />
     <ClCompile Include="MeshManager.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="Numeric.cpp" />
@@ -163,28 +172,42 @@
     <ClCompile Include="PostProcessingFramework.cpp" />
     <ClCompile Include="PostProcessingStaticMotionBlur.cpp" />
     <ClCompile Include="RenderContext.cpp" />
+    <ClCompile Include="RenderQueue.cpp" />
     <ClCompile Include="SampleApp.cpp" />
     <ClCompile Include="SampleColorTriangle.cpp" />
     <ClCompile Include="SampleTunnel.cpp" />
+    <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="ShaderLoader.cpp" />
     <ClCompile Include="Shape3D.cpp" />
+    <ClCompile Include="SimpleScene.cpp" />
+    <ClCompile Include="Spatial.cpp" />
+    <ClCompile Include="Stage.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TextureUtil.cpp" />
+    <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Uniforms.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssetLoader.h" />
+    <ClInclude Include="BoundingVolume.h" />
     <ClInclude Include="BufferGL.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="Disposeable.h" />
     <ClInclude Include="FileUtil.h" />
     <ClInclude Include="FramebufferGL.h" />
     <ClInclude Include="GaussianBlur.h" />
+    <ClInclude Include="Geometry.h" />
     <ClInclude Include="geometry2d.h" />
     <ClInclude Include="geometry3d.h" />
+    <ClInclude Include="GeometryGroupNode.h" />
     <ClInclude Include="GLSLProgram.h" />
     <ClInclude Include="GLStates.h" />
     <ClInclude Include="GLUtil.h" />
     <ClInclude Include="gl_state_define.h" />
+    <ClInclude Include="LegacyApplication.h" />
+    <ClInclude Include="LightList.h" />
+    <ClInclude Include="Material.h" />
     <ClInclude Include="MeshManager.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="Numeric.h" />
@@ -199,13 +222,20 @@
     <ClInclude Include="PostProcessingFramework.h" />
     <ClInclude Include="PostProcessingStaticMotionBlur.h" />
     <ClInclude Include="RenderContext.h" />
+    <ClInclude Include="RenderQueue.h" />
     <ClInclude Include="SampleApp.h" />
     <ClInclude Include="SampleColorTriangle.h" />
     <ClInclude Include="SampleTunnel.h" />
+    <ClInclude Include="Scene.h" />
+    <ClInclude Include="SceneManager.h" />
     <ClInclude Include="ShaderLoader.h" />
     <ClInclude Include="Shape3D.h" />
+    <ClInclude Include="SimpleScene.h" />
+    <ClInclude Include="Spatial.h" />
+    <ClInclude Include="Stage.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureUtil.h" />
+    <ClInclude Include="Transform.h" />
     <ClInclude Include="Uniforms.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>
@@ -221,6 +251,7 @@
     <None Include="assets\DynamicMotionblurES2.frag" />
     <None Include="assets\DynamicMotionblurES2.vert" />
     <None Include="assets\StaticSceneMotionBlur.frag" />
+    <None Include="CommonPS.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

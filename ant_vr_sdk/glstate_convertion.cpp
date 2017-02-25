@@ -665,6 +665,25 @@ namespace jet
 				}
 			}
 
+			GLuint MeasureDataTypeSize(DataType func)
+			{
+				switch (func)
+				{
+					case jet::util::DataType::INT8:  
+					case jet::util::DataType::UINT8: return 1;
+					case jet::util::DataType::HALF:
+					case jet::util::DataType::INT16:
+					case jet::util::DataType::UINT16:return 2;
+					case jet::util::DataType::INT32:
+					case jet::util::DataType::UINT32: 
+					case jet::util::DataType::FLOAT:return 4;
+					case jet::util::DataType::DOUBLE: return 8;
+					default:
+					case jet::util::DataType::UNKOWN:  return 0;
+						break;
+				}
+			}
+
 			DataType ConvertGLenumToDataType(GLenum enumValue)
 			{
 				switch (enumValue)

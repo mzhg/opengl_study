@@ -15,7 +15,7 @@
 
 #define INIT_ONCE 1
 
-#define OGL_DEBUG 0
+#define OGL_DEBUG 1
 #if OGL_DEBUG
 #define AND_LOG(...)  printf(__VA_ARGS__)
 #define _s_l_(x) #x
@@ -32,44 +32,7 @@
 #define OBJ_CHECK(name, func)
 #endif
 
-
-static void check_gl_error(const char* file, const char* line)
-{
-	char errorMsg[40];
-	GLenum error = glGetError();
-	switch (error)
-	{
-	case GL_NO_ERROR:
-		return;
-		break;
-	case GL_INVALID_ENUM:
-		strcpy_s(errorMsg, "GL_INVALID_ENUM");
-		break;
-	case GL_INVALID_VALUE:
-		strcpy_s(errorMsg, "GL_INVALID_VALUE");
-		break;
-	case GL_INVALID_OPERATION:
-		strcpy_s(errorMsg, "GL_INVALID_OPERATION");
-		break;
-	case GL_INVALID_FRAMEBUFFER_OPERATION:
-		strcpy_s(errorMsg, "GL_INVALID_FRAMEBUFFER_OPERATION");
-		break;
-	case GL_OUT_OF_MEMORY:
-		strcpy_s(errorMsg, "GL_OUT_OF_MEMORY");
-		break;
-	case GL_STACK_UNDERFLOW:
-		strcpy_s(errorMsg, "GL_STACK_UNDERFLOW");
-		break;
-	case GL_STACK_OVERFLOW:
-		strcpy_s(errorMsg, "GL_STACK_OVERFLOW");
-		break;
-	default:
-		sprintf_s(errorMsg, "Other: %d", error);
-		break;
-	}
-
-	AND_LOG("Error msg occured at line %s in the file %s: %s\n", line, file, errorMsg);
-}
+extern "C" void check_gl_error(const char* file, const char* line);
 
 #define POSITION 0
 #define TEXCOORD 1
@@ -237,6 +200,6 @@ typedef struct RenderParams
 }RenderParams;
 
 extern "C" void update_billboard(RenderParams& render, ScreenResult& screen,
-	const Size& window, const Projection& proj, const Matrix4& sceneRotation, const Billboard& billboard);
+	const Size& window, float ratio, const Projection& proj, const Matrix4& sceneRotation, const Billboard& billboard);
 
 #endif

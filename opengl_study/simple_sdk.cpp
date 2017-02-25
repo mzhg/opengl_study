@@ -28,7 +28,8 @@ extern "C"{
 		"}\n";
 
 	static GLuint g_program = 0;
-	static TextureGL g_background_tex_id;
+	static TextureGL g_background_left_tex_id;
+	static TextureGL g_background_right_tex_id;
 	static TextureGL g_rect_texture_id;
 
 	static GLuint g_sphere_vbo = 0;  // sphere vertex buffer
@@ -44,8 +45,10 @@ extern "C"{
 	static Billboard g_billboard_info;
 	static Size g_window_size;
 	static Projection g_projection;
-	static SimpleFBO* g_fbo = NULL;
-	static TextureGL  g_fbo_tex;
+	static SimpleFBO* g_fbo_left = NULL;
+	static SimpleFBO* g_fbo_right = NULL;
+	static TextureGL  g_fbo_left_tex;
+	static TextureGL  g_fbo_right_tex;
 	static TextureGL  g_tag_normal_tex;
 	static TextureGL  g_tag_focus_tex;
 
@@ -72,7 +75,8 @@ extern "C"{
 		g_projection.near = 0.1f;
 		g_projection.fov = 60.0f;
 
-		g_background_tex_id = empty_texture();
+		g_background_left_tex_id = empty_texture();
+		g_background_right_tex_id = empty_texture();
 		g_rect_texture_id = empty_texture();
 
 		g_tag_normal_tex = empty_texture();
@@ -117,8 +121,9 @@ extern "C"{
 		GL(glBindTexture(GL_TEXTURE_2D, 0));
 	}
 
-	void ogl_set_background_texture(int width, int height, int format, const char* pData)
+	void ogl_set_background_texture(int width, int height, int format, const char* pData, bool left)
 	{
+		TextureGL& g_background_tex_id = left ? g_background_left_tex_id : g_background_right_tex_id;
 		create_texture_internal(g_background_tex_id, width, height, format, pData);
 		AND_LOG("Create background texture from pixel data.");
 	}
@@ -136,7 +141,20 @@ extern "C"{
 
 		g_billboard_info.depth = ogl_max(g_billboard_info.depth, g_projection.near + 1.0f);
 		g_billboard_info.depth = ogl_min(g_billboard_info.depth, g_projection.far - 1.0f);
-		update_billboard(g_render_params, out, g_window_size, g_projection, rotation, g_billboard_info);
+
+		Size window_size;
+		if (g_window_size.height > g_window_size.width)
+		{
+			window_size.width = g_window_size.width;
+			window_size.height = g_window_size.height / 2;
+		}
+		else
+		{
+			window_size.width = g_window_size.width/2;
+			window_size.height = g_window_size.height ;
+		}
+		update_billboard(g_render_params, out, window_size, (float)g_window_size.width / (float)g_window_size.height,
+			g_projection, rotation, g_billboard_info);
 	}
 
 	void ogl_set_rect_texture(int width, int height, int format, const char* pData)
@@ -145,8 +163,9 @@ extern "C"{
 		AND_LOG("Create rect texture from pixel data.");
 	}
 
-	void ogl_set_background_texture_id(unsigned int id)
+	void ogl_set_background_texture_id(unsigned int id, bool left)
 	{
+		TextureGL& g_background_tex_id = left ? g_background_left_tex_id : g_background_right_tex_id;
 		release_texture(g_background_tex_id);
 		g_background_tex_id.textureId = id;
 		g_background_tex_id.owend = 0;
@@ -180,20 +199,49 @@ extern "C"{
 		return dest;
 	}
 
-	void ogl_create_background_default_texture(int width, int height)
+	void ogl_create_background_default_texture(int width, int height, bool left)
 	{
 		struct RGB
 		{
 			unsigned char r, g, b;
 		};
 
+		TextureGL& g_background_tex_id = left ? g_background_left_tex_id : g_background_right_tex_id;
 		release_texture(g_background_tex_id);
 		RGB* pData = (RGB*)malloc(sizeof(RGB) * width * height);
 
-		Vertex3 red = setVertex(1, 0, 0);
-		Vertex3 green = setVertex(0, 1, 0);
-		Vertex3 blue = setVertex(0, 0, 1);
-		Vertex3 white = setVertex(1, 1, 1);
+		const Vertex3 left_colors[] =
+		{
+			{1,0,0},
+			{0,1,0},
+			{0,0,1},
+			{1,1,1}
+		};
+
+		const Vertex3 right_colors[] =
+		{
+			{ 1, 1, 0 },
+			{ 0, 1, 1 },
+			{ 1, 0, 1 },
+			{ 1, 1, 1 }
+		};
+
+		Vertex3 red, green, blue, white;
+		if (left)
+		{
+			red = left_colors[0];
+			green = left_colors[1];
+			blue = left_colors[2];
+			white = left_colors[3];
+		}
+		else
+		{
+			red = right_colors[0];
+			green = right_colors[1];
+			blue = right_colors[2];
+			white = right_colors[3];
+		}
+		
 		for (int i = 0; i < width; i++)
 		{
 			for (int j = 0; j < height; j++)
@@ -210,7 +258,7 @@ extern "C"{
 			}
 		}
 
-		ogl_set_background_texture(width, height, GL_RGB, (const char*)pData);
+		ogl_set_background_texture(width, height, GL_RGB, (const char*)pData, left);
 		free(pData);
 	}
 
@@ -243,6 +291,7 @@ extern "C"{
 		GLvoid* pointer;
 	}AttribDesc;
 
+#if OGL_DEBUG
 	static void ogl_print_attrib_info(int index, const AttribDesc& info)
 	{
 		char* type_str = "Unkown";
@@ -274,7 +323,7 @@ extern "C"{
 			(info.normalized ? "true" : "false"), (GLint)(info.pointer)
 			);
 	}
-
+#endif
 	static void ogl_get_attrib_info(int index, AttribDesc& out)
 	{
 		glGetVertexAttribiv(index, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &out.enabled);
@@ -285,18 +334,22 @@ extern "C"{
 		glGetVertexAttribPointerv(index, GL_VERTEX_ATTRIB_ARRAY_POINTER, &out.pointer);
 	}
 
-	static void render_to_framebuffer()
+	static void render_to_framebuffer_impl(bool left)
 	{
-		const int window_width = g_window_size.width;
-		const int window_height = g_window_size.height;
+		SimpleFBO* g_fbo;
+		TextureGL  g_background_tex_id;
 
-		GL(glViewport(0, 0, window_width, window_height));
-		if (g_fbo == NULL)
+		if (left)
 		{
-			g_fbo_tex = empty_texture();
-			create_texture_internal(g_fbo_tex, window_width, window_height, GL_RGBA, NULL);
-			g_fbo = new SimpleFBO(&g_fbo_tex);
+			g_fbo = g_fbo_left;
+			g_background_tex_id = g_background_left_tex_id;
 		}
+		else
+		{
+			g_fbo = g_fbo_right;
+			g_background_tex_id = g_background_right_tex_id;
+		}
+
 #if 0
 		Matrix4 proj = perspective(g_projection.fov, (float)window_width / (float)window_height, g_projection.near, g_projection.far);
 		Matrix4 rotation = rotationYawPitchRoll(g_background_rotate.y, g_background_rotate.x, g_background_rotate.z);
@@ -304,6 +357,16 @@ extern "C"{
 		Matrix4 mvp = mulMat(proj, rotation);
 #endif
 		g_fbo->Begin();
+		if (left)
+		{
+			glClearColor(0.7f, 0.1f, 0.12f, 1.0f);
+		}
+		else
+		{
+			glClearColor(0.1f, 0.7f, 0.12f, 1.0f);
+		}
+		glClear(GL_COLOR_BUFFER_BIT);
+
 		GL(glUseProgram(g_program));
 		{
 			// render the sphere
@@ -328,7 +391,7 @@ extern "C"{
 			Matrix4 billboard_rot_mat;
 			Vertex billboard_data[4];
 
-			
+
 			update_billboard_buffer(billboard_data, billboard_rot_mat, g_billboard_info, window_width * 0.3f, window_height * 0.3f);
 			Matrix4 _mvp = mulMat(mvp, billboard_rot_mat);
 #endif
@@ -385,7 +448,7 @@ extern "C"{
 			intersect &= (t > 0.0f);
 			if (intersect)
 			{
-//				AND_LOG("camera_pos = (%f, %f, %f), dir = (%f, %f, %f), t = %f.\n", camera_pos.x, camera_pos.y, camera_pos.z, zAxis.x, zAxis.y, zAxis.z, t);
+				//				AND_LOG("camera_pos = (%f, %f, %f), dir = (%f, %f, %f), t = %f.\n", camera_pos.x, camera_pos.y, camera_pos.z, zAxis.x, zAxis.y, zAxis.z, t);
 				Vertex3 point;
 				point.x = camera_pos.x + zAxis.x * t;
 				point.y = camera_pos.y + zAxis.y * t;
@@ -421,12 +484,60 @@ extern "C"{
 		g_fbo->End();
 	}
 
+	static void render_to_framebuffer()
+	{
+//		const int window_width = ogl_max(g_window_size.width, g_window_size.height)/2;
+//		const int window_height = ogl_min(g_window_size.width, g_window_size.height);
+
+		int window_width, window_height;
+		if (g_window_size.height > g_window_size.width)
+		{
+			window_width = g_window_size.width;
+			window_height = g_window_size.height / 2;
+		}
+		else
+		{
+			window_width = g_window_size.width / 2;
+			window_height = g_window_size.height;
+		}
+
+		if (g_fbo_left == NULL)
+		{
+			g_fbo_left_tex = empty_texture();
+			create_texture_internal(g_fbo_left_tex, window_width, window_height, GL_RGBA, NULL);
+			g_fbo_left = new SimpleFBO(&g_fbo_left_tex);
+		}
+
+		if (g_fbo_right == NULL)
+		{
+			g_fbo_right_tex = empty_texture();
+			create_texture_internal(g_fbo_right_tex, window_width, window_height, GL_RGBA, NULL);
+			g_fbo_right = new SimpleFBO(&g_fbo_right_tex);
+		}
+
+		GL(glViewport(0, 0, window_width, window_height));
+		render_to_framebuffer_impl(true);
+		render_to_framebuffer_impl(false);
+	}
+
 	static void render_fbo_to_split_screen()
 	{
-		const int window_width = g_window_size.width;
-		const int window_height = g_window_size.height;
+//		const int window_width = ogl_max(g_window_size.width, g_window_size.height) / 2;
+//		const int window_height = ogl_min(g_window_size.width, g_window_size.height);
+
+		int window_width, window_height;
+		if (g_window_size.height > g_window_size.width)
+		{
+			window_width = g_window_size.width;
+			window_height = g_window_size.height / 2;
+		}
+		else
+		{
+			window_width = g_window_size.width / 2;
+			window_height = g_window_size.height;
+		}
+
 		Matrix4 orthMat = ortho(0, +window_width, 0, +window_height, -1.0f, 1.0f);
-		GL(glViewport(0, 0, window_width, window_height));
 		GL(glUseProgram(g_program));
 		{
 			// render the fbo to left screen
@@ -440,10 +551,22 @@ extern "C"{
 
 			Matrix4 mvp = mulMat(orthMat, viewMat);
 #endif
+			if (g_window_size.width > g_window_size.height)
+			{
+				GL(glViewport(0, 0, window_width, window_height));
+			}
+			else
+			{
+				GL(glViewport(0, 0, window_height, window_width));
+			}
+			GL(glViewport(0, 0, window_width, window_height));
+			glClearColor(0.7f, 0.1f, 0.12f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT);
+			
 			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&g_render_params.leftSplitMVP));
 
 			GL(glActiveTexture(GL_TEXTURE0));
-			GL(glBindTexture(GL_TEXTURE_2D, g_fbo_tex.textureId));
+			GL(glBindTexture(GL_TEXTURE_2D, g_fbo_left_tex.textureId));
 			GL(glBindBuffer(GL_ARRAY_BUFFER, g_rect_vbo));
 			GL(glEnableVertexAttribArray(0));
 			GL(glEnableVertexAttribArray(1));
@@ -468,6 +591,18 @@ extern "C"{
 			Matrix4 mvp = mulMat(orthMat, viewMat);
 
 #endif
+			if (g_window_size.width > g_window_size.height)
+			{
+				GL(glViewport(window_width, 0, window_width, window_height));
+			}
+			else
+			{
+				GL(glViewport(0, window_height, window_width, window_height));
+			}
+
+//			glClearColor(0.1f, 0.7f, 0.12f, 1.0f);
+//			glClear(GL_COLOR_BUFFER_BIT);
+			GL(glBindTexture(GL_TEXTURE_2D, g_fbo_right_tex.textureId));
 			GL(glUniformMatrix4fv(g_mat_loc, 1, GL_FALSE, (const GLfloat*)&g_render_params.rightSplitMVP));
 			GL(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
 			GL(glBindBuffer(GL_ARRAY_BUFFER, 0));
@@ -523,7 +658,8 @@ extern "C"{
 		AND_LOG("The current   state is = %s.\n", (blend ? "true":"false"));
 
 		OBJ_CHECK(g_program, glIsProgram);
-		OBJ_CHECK(g_background_tex_id.textureId, glIsTexture);
+		OBJ_CHECK(g_background_left_tex_id.textureId, glIsTexture);
+		OBJ_CHECK(g_background_right_tex_id.textureId, glIsTexture);
 		OBJ_CHECK(g_rect_texture_id.textureId, glIsTexture);
 		OBJ_CHECK(g_sphere_vbo, glIsBuffer);
 		OBJ_CHECK(g_sphere_ibo, glIsBuffer);
@@ -558,6 +694,7 @@ extern "C"{
 
 		GL(glUseProgram(program));
 		GL(glActiveTexture(activeTexture));
+		GL(glViewport(0, 0, g_window_size.width, g_window_size.height));
 	}
 
 	void ogl_destroy()
@@ -568,16 +705,21 @@ extern "C"{
 			g_program = 0;
 		}
 
-		release_texture(g_background_tex_id);
+		release_texture(g_background_left_tex_id);
+		release_texture(g_background_right_tex_id);
 		release_texture(g_rect_texture_id);
-		release_texture(g_fbo_tex);
+		release_texture(g_fbo_left_tex);
+		release_texture(g_fbo_right_tex);
 		release_texture(g_tag_focus_tex);
 		release_texture(g_tag_normal_tex);
 
-		if (g_fbo)
+		if (g_fbo_left)
 		{
-			delete g_fbo;
-			g_fbo = NULL;
+			delete g_fbo_left;
+			delete g_fbo_right;
+
+			g_fbo_left = NULL;
+			g_fbo_right = NULL;
 		}
 #define DELETE_BUF(x) if(x) {GL(glDeleteBuffers(1, &x)); x = 0;}
 		DELETE_BUF(g_sphere_ibo);

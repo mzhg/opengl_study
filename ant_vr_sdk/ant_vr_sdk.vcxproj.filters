@@ -38,12 +38,21 @@
     <Filter Include="Samples">
       <UniqueIdentifier>{d47fa0d7-afcf-4e19-9afa-0bc3742579c5}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Renderer\Scene">
+    <Filter Include="Scene">
       <UniqueIdentifier>{1b10947d-699d-48e7-993b-b7e5e8ad2e7d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Renderer\Materials">
+      <UniqueIdentifier>{24afd040-0592-4962-a7dc-ac8772ac2f09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="app">
+      <UniqueIdentifier>{be9104b4-cf05-4548-aafc-ba09f1601108}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
+    <Text Include="CommonVS.vert">
+      <Filter>ShaderResources</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GLSLProgram.cpp">
@@ -124,9 +133,6 @@
     <ClCompile Include="Uniforms.cpp">
       <Filter>Shaders</Filter>
     </ClCompile>
-    <ClCompile Include="RenderContext.cpp">
-      <Filter>Renderer</Filter>
-    </ClCompile>
     <ClCompile Include="BufferGL.cpp">
       <Filter>Renderer\Buffer</Filter>
     </ClCompile>
@@ -134,13 +140,58 @@
       <Filter>Math</Filter>
     </ClCompile>
     <ClCompile Include="Node.cpp">
-      <Filter>Renderer\Scene</Filter>
+      <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="Shape3D.cpp">
-      <Filter>Renderer\Scene</Filter>
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="Spatial.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="BoundingVolume.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="LightList.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Renderer\Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderQueue.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Geometry.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryGroupNode.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="LegacyApplication.cpp">
+      <Filter>app</Filter>
+    </ClCompile>
+    <ClCompile Include="SimpleScene.cpp">
+      <Filter>Samples</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderContext.cpp">
+      <Filter>app</Filter>
     </ClCompile>
     <ClCompile Include="MeshManager.cpp">
-      <Filter>Renderer\Buffer</Filter>
+      <Filter>app</Filter>
+    </ClCompile>
+    <ClCompile Include="Stage.cpp">
+      <Filter>app</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneManager.cpp">
+      <Filter>Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -228,9 +279,6 @@
     <ClInclude Include="Uniforms.h">
       <Filter>Shaders</Filter>
     </ClInclude>
-    <ClInclude Include="RenderContext.h">
-      <Filter>Renderer</Filter>
-    </ClInclude>
     <ClInclude Include="BufferGL.h">
       <Filter>Renderer\Buffer</Filter>
     </ClInclude>
@@ -241,13 +289,58 @@
       <Filter>Math</Filter>
     </ClInclude>
     <ClInclude Include="Node.h">
-      <Filter>Renderer\Scene</Filter>
+      <Filter>Scene</Filter>
     </ClInclude>
     <ClInclude Include="Shape3D.h">
-      <Filter>Renderer\Scene</Filter>
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="Spatial.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="BoundingVolume.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="LightList.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>Renderer\Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderQueue.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Geometry.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryGroupNode.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="LegacyApplication.h">
+      <Filter>app</Filter>
+    </ClInclude>
+    <ClInclude Include="SimpleScene.h">
+      <Filter>Samples</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderContext.h">
+      <Filter>app</Filter>
     </ClInclude>
     <ClInclude Include="MeshManager.h">
-      <Filter>Renderer\Buffer</Filter>
+      <Filter>app</Filter>
+    </ClInclude>
+    <ClInclude Include="Stage.h">
+      <Filter>app</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneManager.h">
+      <Filter>Scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -282,6 +375,9 @@
       <Filter>ShaderResources</Filter>
     </None>
     <None Include="assets\DynamicMotionblurES2.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="CommonPS.frag">
       <Filter>ShaderResources</Filter>
     </None>
   </ItemGroup>

@@ -56,7 +56,8 @@ void HeightmapDemo::onCreate()
 		ogl_set_rect_texture(width, height, texData.Format, (const char*)texData.pData[0]);
 //		ogl_set_rect_texture(width, height, texData.Format, (const char*)texData.pData);
 		ogl_set_rect_size((1280 - 600)/2, (720 - 200)/2, 600, 200);
-		ogl_create_background_default_texture(1024, 1024);
+		ogl_create_background_default_texture(512, 512, false);
+		ogl_create_background_default_texture(512, 512, true);
 		/*
 		Texture2D* tex2d = new Texture2D();
 		Texture2DDesc  desc = Texture2DDesc(1280, 720, GL_RGB8);
@@ -237,10 +238,18 @@ void HeightmapDemo::onDispose()
 	delete m_PostProcessing;
 }
 
+
+#include <SimpleScene.h>
+
 int main(int argc, char** argv)
 {
+#if 1
 	HeightmapDemo demo;
 	demo.getConfig().IsOpenGLESContext = false;
-	jet::util::BaseApp::Run(&demo, "Triangles");
+	jet::util::BaseApp::Run(&demo, "Triangles", 1280,720);
+#else
+	SimpleScene scene;
+	scene.start();
+#endif
 	return 0;
 }

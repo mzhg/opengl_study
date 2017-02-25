@@ -1,14 +1,5 @@
-#include "simple_sdk.h"
+
 #include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
-#if 1
-#include <GL\glew.h>
-#else
-#include <GLES2/gl2.h>
-#endif
 
 #include "simple_sdk_common.h"
 
@@ -86,13 +77,13 @@ extern "C"{
 	}
 
 	void update_billboard(RenderParams& render, ScreenResult& screen,
-		const Size& window, const Projection& proj, const Matrix4& sceneRotation, const Billboard& billboard)
+		const Size& window, float ratio, const Projection& proj, const Matrix4& sceneRotation, const Billboard& billboard)
 	{
 		const Matrix4 projMat = perspective(proj.fov, (float)window.width / (float)window.height, proj.near, proj.far);
 		render.sceneMVP = mulMat(projMat, sceneRotation);
 		
 		Matrix4 billboard_rotation;
-		update_billboard_buffer(render.billBoardData, billboard_rotation, billboard, window.width, window.height);
+		update_billboard_buffer(render.billBoardData, billboard_rotation, billboard, window.width * (ratio > 1.0f ? 2.0f : 1.0f), window.height* (ratio > 1.0f ? 1.0f : 2.0f));
 		render.billboardMVP = mulMat(render.sceneMVP, billboard_rotation);
 
 		const Matrix4 orthMat = ortho(0, +window.width, 0, +window.height, -1.0f, 1.0f);
@@ -107,7 +98,7 @@ extern "C"{
 		viewMat.m31 = img_y + viewMat.m11;
 		render.tagMVP = mulMat(orthMat, viewMat);
 
-		Rect left_region = { 0, window.height / 4, window.width / 2, window.height / 2 };
+		Rect left_region = { 0, 0, window.width, window.height};
 		viewMat.m00 = left_region.width * 0.5f;
 		viewMat.m11 = left_region.height * 0.5f;
 		viewMat.m30 = left_region.x + viewMat.m00;
@@ -119,7 +110,7 @@ extern "C"{
 		viewMat.m11 = right_region.height * 0.5f;
 		viewMat.m30 = right_region.x + viewMat.m00;
 		viewMat.m31 = right_region.y + viewMat.m11;
-		render.rightSplitMVP = mulMat(orthMat, viewMat);
+		render.rightSplitMVP = render.leftSplitMVP; // mulMat(orthMat, viewMat);
 
 		bool intersect;
 		Vertex3 camera_pos;

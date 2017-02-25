@@ -70,6 +70,27 @@ int split(char dst[][80], char* str, const char* spl)
 	return n;
 }
 
+class Father
+{
+protected:
+	virtual void printSon()
+	{
+
+	}
+	int iBase;
+};
+
+class Son : public Father
+{
+protected:
+
+	void printSon() override
+	{
+		Father::printSon();
+		iBase++;
+	}
+};
+
 int main()
 {
 	Vec3 v = { 1, 2, 3 };

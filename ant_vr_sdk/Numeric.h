@@ -2,6 +2,8 @@
 
 #include <string>
 #include <set>
+#include <vector>
+
 namespace jet
 {
 	namespace util
@@ -11,6 +13,8 @@ namespace jet
 		public:
 			Numeric();
 			~Numeric();
+
+			static const unsigned ONE_MB = 1024 * 1024;
 
 			static int parseInt(const char* str);
 			static std::string toString(int i);
@@ -64,7 +68,7 @@ namespace jet
 			}
 
 			template<typename T, unsigned int Size>
-			static bool isEqual(const T a[Size], const T b[Size])
+			static bool isEqual(const T (&a)[Size], const T (&b)[Size])
 			{
 				for (unsigned i = 0; i < Size; i++)
 				{
@@ -93,6 +97,33 @@ namespace jet
 				}
 
 				return count;
+			}
+
+			template<typename T>
+			static int indexOf(const std::vector<T>& array, const T value)
+			{
+				for (int i = 0; i < array.size(); i++)
+				{
+					if (array[i] == value)
+					{
+						return i;
+					}
+				}
+
+				return -1;
+			}
+
+			template<typename T>
+			static bool remove(std::vector<T>& array, const T& value)
+			{
+				int index = indexOf(array, value);
+				if (index >= 0)
+				{
+					array.erase(array.begin() + index);
+					return true;
+				}
+
+				return false;
 			}
 
 		private:

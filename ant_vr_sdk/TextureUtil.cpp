@@ -583,6 +583,7 @@ namespace jet
 			bool isCompressed = false;
 			bool isDSA = false;
 			bool multiSample = false;
+			bool bImmutable = false;
 
 #if GL_ARB_direct_state_access  // TODO Need to valid
 			isDSA = true;  
@@ -655,6 +656,8 @@ namespace jet
 					break;
 				}
 
+				bImmutable = true;
+
 				//			System.out.println("Target = " + getTextureTargetName(target));
 				//			TextureDesc desc = getTexParameters(target, textureID);
 				//			try {
@@ -665,7 +668,8 @@ namespace jet
 				//			}
 
 				// 3. Fill the texture Data
-				if (pInitData != NULL && target != GL_TEXTURE_2D_MULTISAMPLE_ARRAY && target != GL_TEXTURE_2D_MULTISAMPLE){
+				if (pInitData != NULL && target != GL_TEXTURE_2D_MULTISAMPLE_ARRAY && target != GL_TEXTURE_2D_MULTISAMPLE)
+				{
 //					enablePixelStore(dataDesc);  TODO
 
 					int width = pDesc->Width;
@@ -729,10 +733,12 @@ namespace jet
 						if (textureStorageMSAA)
 						{
 							glTexStorage2DMultisample(target, pDesc->SampleCount, format, pDesc->Width, pDesc->Height, GL_FALSE);
+							bImmutable = true;
 						}
 						else
 						{
 							glTexImage2DMultisample(target, pDesc->SampleCount, format, pDesc->Width, pDesc->Height, GL_FALSE);
+							bImmutable = false;
 						}
 						mipLevels = 1;  // multisample_texture doesn't support mipmaps.
 						break;
@@ -740,16 +746,19 @@ namespace jet
 						if (textureStorageMSAA)
 						{
 							glTexStorage3DMultisample(target, pDesc->SampleCount, format, pDesc->Width, pDesc->Height, pDesc->ArraySize, GL_FALSE);
+							bImmutable = true;
 						}
 						else
 						{
 							glTexImage3DMultisample(target, pDesc->SampleCount, format, pDesc->Width, pDesc->Height, pDesc->ArraySize, GL_FALSE);
+							bImmutable = false;
 						}
 						mipLevels = 1;  // multisample_texture doesn't support mipmaps.
 						break;
 					case GL_TEXTURE_2D_ARRAY:
 					case GL_TEXTURE_2D:
-						if (textureStorage){
+						if (textureStorage)
+						{
 							allocateStorage = true;
 							if (target == GL_TEXTURE_2D)
 							{
@@ -759,6 +768,8 @@ namespace jet
 							{
 								glTexStorage3D(GL_TEXTURE_2D_ARRAY, mipLevels, format, pDesc->Width, pDesc->Height, pDesc->ArraySize);
 							}
+
+							bImmutable = true;
 						}
 
 						break;
@@ -784,7 +795,8 @@ namespace jet
 				}
 
 				// 3. Fill the texture Data£¬ Ignore the multisample symbol.
-				if (target != GL_TEXTURE_2D_MULTISAMPLE_ARRAY && target != GL_TEXTURE_2D_MULTISAMPLE){
+				if (target != GL_TEXTURE_2D_MULTISAMPLE_ARRAY && target != GL_TEXTURE_2D_MULTISAMPLE)
+				{
 					int width = pDesc->Width;
 					int height = pDesc->Height;
 					int depth = pDesc->ArraySize;
@@ -803,7 +815,8 @@ namespace jet
 							
 					for (GLuint i = 0; i < mipLevels; i++)
 					{
-						if (isCompressed){
+						if (isCompressed)
+						{
 							if (target == GL_TEXTURE_2D_ARRAY)
 							{
 //								compressedTexImage3D(target, width, height, depth, i, dataFormat, dataDesc.type, dataDesc.imageSize, mipmapData);
@@ -814,6 +827,8 @@ namespace jet
 //								compressedTexImage2D(target, width, height, i, dataFormat, dataDesc.type, dataDesc.imageSize, mipmapData);
 								glCompressedTexImage2DARB(target, i, dataFormat, width, height, 0, pInitData->pImageSize[i], pFirst[i]); // TODO unimplemented
 							}
+
+							bImmutable = false;
 						}
 						else if (target == GL_TEXTURE_2D_ARRAY)
 						{
@@ -880,6 +895,7 @@ namespace jet
 			pOut->m_Texture = textureID;
 			pOut->m_MipLevels = mipLevels;
 			pOut->m_Samples = pDesc->SampleCount;
+			pOut->m_Immutable = bImmutable;
 		}
 
 		bool TextureUtil::loadTextureDataFromFile(const char* filename, TextureData* pOut, int* pWidth, int* pHeight)
@@ -972,9 +988,9 @@ namespace jet
 			result.m_Samples = glGetTexLevelParameteri(target, 0, GL_TEXTURE_SAMPLES);
 			result.m_Target = target;
 			result.m_Texture = textureID;
+			result.m_Immutable = glGetTexParameteri(target, GL_TEXTURE_IMMUTABLE_FORMAT) != 0;
 
-			bool immutableFormat = glGetTexParameteri(target, GL_TEXTURE_IMMUTABLE_FORMAT) != 0;
-			if (immutableFormat)
+			if (result.m_Immutable)
 			{
 				result.m_MipLevels = glGetTexParameteri(target, GL_TEXTURE_VIEW_NUM_LEVELS);
 				result.m_ArraySize = glGetTexParameteri(target, GL_TEXTURE_VIEW_NUM_LAYERS);

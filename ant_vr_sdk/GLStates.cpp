@@ -1,6 +1,7 @@
 #include "GLStates.h"
 #include <GLCapabilities.h>
 #include "Numeric.h"
+#include <glm.hpp>
 
 #pragma warning(disable:4800)
 #pragma warning(disable:4018)
@@ -21,6 +22,84 @@ namespace jet
 		{
 			static GLStates instance;
 			return instance;
+		}
+
+		// Retrive all of the gl-states from the opengl context.
+		void GLStates::restoreAll()
+		{
+			restoreActiveTexture();
+			restoreBlendState();
+//			restoreBuffer();
+			restoreClearColor();
+			restoreClearDepth();
+			restoreClearStencil();
+			restoreDSState();
+			restoreFramebuffer();
+//			restoreHint();
+			restoreLineWidth();
+			restorePointSize();
+			restorePrimitiveRestartIndex();
+			restoreProgram();
+			restoreProgramPipeline();
+			restoreRenderbuffer();
+			restoreRSState();
+			restoreSampler();
+			restoreTextures();
+			restoreVAO();
+			restoreViewport();
+		}
+		// Reset all of the states to default setting.
+		void GLStates::resetAll(bool force)
+		{
+			resetActiveTexture(force);
+			resetBlendState(force);
+//			resetBuffer(, false);
+			resetClearColor(force);
+			resetClearDepth(force);
+			resetClearStencil(force);
+			resetDSState(force);
+			resetFramebuffer(FramebufferTarget::FRAMEBUFFER, force);
+//			resetHint(, force);
+			resetLineWidth(force);
+			resetPointSize(force);
+			resetPrimitiveRestartIndex(force);
+			resetProgram(force);
+			resetProgramPipeline(force);
+			resetRenderbuffer(force);
+			resetRSState(force);
+			resetSampler(0, force); // TODO
+			resetTextures(force);
+			resetVAO(force);
+//			resetViewport();
+		}
+
+		void GLStates::resetClearColor(bool force)
+		{
+//			const GLfloat defualt_colors[4] = { 0, 0, 0, 0 };
+			if (force || m_ClearColor[0] != 0.0f || m_ClearColor[1] != 0.0f || m_ClearColor[2] != 0.0f || m_ClearColor[3] != 0.0f)
+			{
+				glClearColor(0, 0, 0, 0);
+				for (int i = 0; i < 4; i++)
+					m_ClearColor[i] = 0.0f;
+			}
+		}
+
+		void GLStates::resetClearDepth(bool force)
+		{
+			if (force || m_ClearDepth != 1.0f)
+			{
+				glClearDepth(1.0f);
+				m_ClearDepth = 1.0f;
+			}
+		}
+
+		void GLStates::resetClearStencil(bool force)
+		{
+			if (force || m_ClearStencil != 0)
+			{
+				glClearStencil(0);
+				m_ClearStencil = 0; 
+			}
 		}
 
 		void GLStates::setBlendState(const BlendDesc* pBlend)
@@ -355,15 +434,12 @@ namespace jet
 			}
 
 			{
-				m_RasterizerState.ScissorEnable = glIsEnabled(GL_SCISSOR_TEST);
-			}
-
-			{
 				m_RasterizerState.Dither = glIsEnabled(GL_DITHER);
 				m_RasterizerState.SRGB = glIsEnabled(GL_FRAMEBUFFER_SRGB);
-				m_RasterizerState.PolygonOffsetEnable = glIsEnabled(GL_DITHER);
-				m_RasterizerState.Dither = glIsEnabled(GL_DITHER);
-				m_RasterizerState.PolygonOffsetEnable = glIsEnabled(GL_POLYGON_OFFSET_FILL) || glIsEnabled(GL_POLYGON_OFFSET_LINE) || glIsEnabled(GL_POLYGON_OFFSET_POINT);
+				m_bPolygonSmoothStates[static_cast<int>(PolygonMode::FILL)] = glIsEnabled(GL_POLYGON_OFFSET_FILL);
+				m_bPolygonSmoothStates[static_cast<int>(PolygonMode::LINE)] = glIsEnabled(GL_POLYGON_OFFSET_LINE);
+				m_bPolygonSmoothStates[static_cast<int>(PolygonMode::POINT)] = glIsEnabled(GL_POLYGON_OFFSET_POINT);
+				m_RasterizerState.PolygonOffsetEnable = m_bPolygonSmoothStates[static_cast<int>(m_RasterizerState.FillMode)];
 				m_RasterizerState.RasterizedDiscardEnable = glIsEnabled(GL_RASTERIZER_DISCARD);
 				m_RasterizerState.ProgramPointSizeEnable = glIsEnabled(GL_PROGRAM_POINT_SIZE);
 				m_RasterizerState.PrimitiveRestartEnable = glIsEnabled(GL_PRIMITIVE_RESTART);
@@ -409,10 +485,6 @@ namespace jet
 				glFrontFace(GL_CCW);
 				glDisable(GL_DEPTH_CLAMP);
 				glDepthRange(0.0, 1.0);
-				glDisable(GL_SCISSOR_TEST);
-				glDisable(GL_MULTISAMPLE);
-				glDisable(GL_LINE_SMOOTH);
-				glDisable(GL_POLYGON_SMOOTH);
 
 				glDisable(GL_DITHER);
 				glDisable(GL_FRAMEBUFFER_SRGB);
@@ -524,15 +596,15 @@ namespace jet
 
 				if (tag)
 				{
-					m_TextureNames[m_TextureCount] = texture;
-					m_TextureStates[unit].target = target;
-					m_TextureStates[unit].textureID = texture;
-					m_TextureUnits[m_TextureCount] = unit;
-
 					if (m_TextureStates[unit].textureID != texture)
 					{
 						m_TextureCount++;
 					}
+
+					m_TextureNames[m_TextureCount] = texture;
+					m_TextureStates[unit].target = target;
+					m_TextureStates[unit].textureID = texture;
+					m_TextureUnits[m_TextureCount] = unit;
 				}
 				else if (m_TextureStates[unit].textureID != texture)
 				{
@@ -649,38 +721,51 @@ namespace jet
 						}
 					}
 				}
+
+				m_TextureCount = 0;
+				memset(m_TextureStates, 0, sizeof(BindTexture) * count);
 			}
 			else /*if (m_TextureCount)*/
 			{
+				if (m_TextureCount == 0)
+				{
+					return;
+				}
+
 				GLint count = getMaxCombinedTextureImageUnits();
 				if (glBindTextures)
 				{
 					glBindTextures(0, count, nullptr);
+					for (unsigned i = 0; i < m_TextureCount; i++)
+					{
+						m_TextureStates[m_TextureUnits[i]].textureID = 0;
+					}
 				}
 				else
 				{
-					for (int i = 0; i < count; i++)
+					for (int i = 0; i < m_TextureCount; i++)
 					{
-						if (!m_TextureStates[i].textureID)
-							continue;
-
+						
 						if (glBindTextureUnit)
 						{
-							glBindTextureUnit(i, 0);
+							glBindTextureUnit(m_TextureUnits[i], 0);
 						}
 						else
 						{
 							setActiveTexture(i);
-							glBindTexture(m_TextureStates[i].target, 0);
+							glBindTexture(m_TextureStates[m_TextureUnits[i]].target, 0);
 						}
+						m_TextureStates[m_TextureUnits[i]].textureID = 0;
 					}
 				}
+
+				m_TextureCount = 0;
 			}
 		}
 
 		void GLStates::setViewports(unsigned int count, const ViewportDesc* pViewports)
 		{
-			if (count == 1 || !glViewportArrayv)
+			if (count && !glViewportIndexedf)  // TODO
 			{
 				if (m_ViewportStates[0].Viewport != pViewports[0].Viewport)
 				{
@@ -705,6 +790,14 @@ namespace jet
 					else
 					{
 						glDisable(GL_SCISSOR_TEST);
+					}
+				}
+				else if (pViewports[0].ScissorEnable)
+				{
+					if (m_ViewportStates[0].ScissorBox != pViewports[0].ScissorBox)
+					{
+						glScissor(pViewports[0].ScissorBox.X, pViewports[0].ScissorBox.Y, pViewports[0].ScissorBox.Width, pViewports[0].ScissorBox.Height);
+						m_ViewportStates[0].ScissorBox = pViewports[0].ScissorBox;
 					}
 				}
 			}
@@ -737,6 +830,14 @@ namespace jet
 						else
 						{
 							glDisablei(GL_SCISSOR_TEST, i);
+						}
+					}
+					else if (pViewports[i].ScissorEnable)
+					{
+						if (m_ViewportStates[i].ScissorBox != pViewports[i].ScissorBox)
+						{
+							glScissorIndexed(i, pViewports[i].ScissorBox.X, pViewports[i].ScissorBox.Y, pViewports[i].ScissorBox.Width, pViewports[i].ScissorBox.Height);
+							m_ViewportStates[i].ScissorBox = pViewports[i].ScissorBox;
 						}
 					}
 				}
@@ -1001,6 +1102,14 @@ namespace jet
 
 				m_DepthStencilState.DepthEnable = ds.DepthEnable;
 			}
+			else if (ds.DepthEnable)
+			{
+				if (m_DepthStencilState.DepthFunc != ds.DepthFunc)
+				{
+					glDepthFunc(ConvertCompareFuncToGLenum(ds.DepthFunc));
+					m_DepthStencilState.DepthFunc = ds.DepthFunc;
+				}
+			}
 
 			if (m_DepthStencilState.StencilEnable != ds.StencilEnable)
 			{
@@ -1127,6 +1236,14 @@ namespace jet
 					glDisable(GL_CULL_FACE);
 				}
 			}
+			else if (raster.CullFaceEnable)
+			{
+				if (m_RasterizerState.CullMode != raster.CullMode)
+				{
+					glCullFace(ConvertFaceModeToGLenum(raster.CullMode));
+					m_RasterizerState.CullMode = raster.CullMode;
+				}
+			}
 
 			if (m_RasterizerState.DepthClampEnable != raster.DepthClampEnable)
 			{
@@ -1146,6 +1263,15 @@ namespace jet
 					glDisable(GL_DEPTH_CLAMP);
 				}
 			}
+			else if (raster.DepthClampEnable)
+			{
+				if (m_RasterizerState.DepthRange.FarVal != raster.DepthRange.FarVal || m_RasterizerState.DepthRange.NearVal != raster.DepthRange.NearVal)
+				{
+					glDepthRange(raster.DepthRange.NearVal, raster.DepthRange.FarVal);
+					m_RasterizerState.DepthRange = raster.DepthRange;
+				}
+			}
+
 			GEN_CAP_CODE(Dither, GL_DITHER);
 			GEN_CAP_CODE(SRGB, GL_FRAMEBUFFER_SRGB);
 			GEN_CAP_CODE(RasterizedDiscardEnable, GL_RASTERIZER_DISCARD);
@@ -1153,57 +1279,64 @@ namespace jet
 			GEN_CAP_CODE(PrimitiveRestartEnable, GL_PRIMITIVE_RESTART);
 #undef GEN_CAP_CODE
 
-			if (m_RasterizerState.PolygonOffsetEnable != raster.PolygonOffsetEnable)
+			if (m_bPolygonSmoothStates[static_cast<int>(raster.FillMode)] != raster.PolygonOffsetEnable)
 			{
-				m_RasterizerState.PolygonOffsetEnable = raster.PolygonOffsetEnable;
+				GLenum cap;
+				switch (raster.FillMode)
+				{
+				case PolygonMode::FILL:
+					cap = GL_POLYGON_OFFSET_FILL;
+					break;
+				case PolygonMode::LINE:
+					cap = GL_POLYGON_OFFSET_LINE;
+					break;
+				case PolygonMode::POINT:
+					cap = GL_POLYGON_OFFSET_POINT;
+					break;
+				default:
+					assert(false);
+					break;
+				}
+
+				m_bPolygonSmoothStates[static_cast<int>(raster.FillMode)] = raster.PolygonOffsetEnable;
 				if (raster.PolygonOffsetEnable)
 				{
-					GLenum cap;
-					switch (raster.FillMode)
-					{
-					case PolygonMode::FILL:
-						cap = GL_POLYGON_OFFSET_FILL;
-						break;
-					case PolygonMode::LINE:
-						cap = GL_POLYGON_OFFSET_LINE;
-						break;
-					case PolygonMode::POINT:
-						cap = GL_POLYGON_OFFSET_POINT;
-						break;
-					default:
-						assert(false);
-						break;
-					}
-
 					glEnable(cap);
-
-					if (m_RasterizerState.PolygonOffset.factor != raster.PolygonOffset.factor || m_RasterizerState.PolygonOffset.units != raster.PolygonOffset.units)
-					{
-						glPolygonOffset(raster.PolygonOffset.factor, raster.PolygonOffset.units);
-						m_RasterizerState.PolygonOffset = raster.PolygonOffset;
-					}
 				}
 				else
 				{
-					glDisable(GL_SCISSOR_TEST);
+					glDisable(cap);
 				}
 			}
-
+			
+			if (m_bPolygonSmoothStates[static_cast<int>(raster.FillMode)])
+			{
+				if (m_RasterizerState.PolygonOffset.factor != raster.PolygonOffset.factor || m_RasterizerState.PolygonOffset.units != raster.PolygonOffset.units)
+				{
+					glPolygonOffset(raster.PolygonOffset.factor, raster.PolygonOffset.units);
+					m_RasterizerState.PolygonOffset = raster.PolygonOffset;
+				}
+			}
+			
 			if (m_RasterizerState.LogicMode.LogicEnable != raster.LogicMode.LogicEnable)
 			{
 				m_RasterizerState.LogicMode.LogicEnable = raster.LogicMode.LogicEnable;
 				if (raster.LogicMode.LogicEnable)
 				{
 					glEnable(GL_COLOR_LOGIC_OP);
-					if (m_RasterizerState.LogicMode.LogicOp != raster.LogicMode.LogicOp)
-					{
-						glLogicOp(ConvertLogicFuncToGLenum(raster.LogicMode.LogicOp));
-						m_RasterizerState.LogicMode.LogicOp = raster.LogicMode.LogicOp;
-					}
 				}
 				else
 				{
 					glDisable(GL_COLOR_LOGIC_OP);
+				}
+			}
+
+			if (raster.LogicMode.LogicEnable)
+			{
+				if (m_RasterizerState.LogicMode.LogicOp != raster.LogicMode.LogicOp)
+				{
+					glLogicOp(ConvertLogicFuncToGLenum(raster.LogicMode.LogicOp));
+					m_RasterizerState.LogicMode.LogicOp = raster.LogicMode.LogicOp;
 				}
 			}
 
@@ -1220,27 +1353,29 @@ namespace jet
 			{
 				if (raster.PointSprite.PointSpriteEnabled)
 				{
-					glEnable(GL_POINT_SPRITE);
-
-					if (raster.PointSprite.PointFadeThresholdSize != m_RasterizerState.PointSprite.PointFadeThresholdSize)
-					{
-						assert(raster.PointSprite.PointFadeThresholdSize >= 0.0);
-						m_RasterizerState.PointSprite.PointFadeThresholdSize = raster.PointSprite.PointFadeThresholdSize;
-						
-						glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, raster.PointSprite.PointFadeThresholdSize);
-					}
-
-					if (raster.PointSprite.PointSpriteCoordOrigin != m_RasterizerState.PointSprite.PointSpriteCoordOrigin)
-					{
-						m_RasterizerState.PointSprite.PointSpriteCoordOrigin = raster.PointSprite.PointSpriteCoordOrigin;
-
-						glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, ConvertSpriteCoordOriginToGLenum(raster.PointSprite.PointSpriteCoordOrigin));
-					}
-					
+					glEnable(GL_POINT_SPRITE);		
 				}
 				else
 				{
 					glDisable(GL_POINT_SPRITE);
+				}
+			}
+
+			if (raster.PointSprite.PointSpriteEnabled)
+			{
+				if (raster.PointSprite.PointFadeThresholdSize != m_RasterizerState.PointSprite.PointFadeThresholdSize)
+				{
+					assert(raster.PointSprite.PointFadeThresholdSize >= 0.0);
+					m_RasterizerState.PointSprite.PointFadeThresholdSize = raster.PointSprite.PointFadeThresholdSize;
+
+					glPointParameterf(GL_POINT_FADE_THRESHOLD_SIZE, raster.PointSprite.PointFadeThresholdSize);
+				}
+
+				if (raster.PointSprite.PointSpriteCoordOrigin != m_RasterizerState.PointSprite.PointSpriteCoordOrigin)
+				{
+					m_RasterizerState.PointSprite.PointSpriteCoordOrigin = raster.PointSprite.PointSpriteCoordOrigin;
+
+					glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN, ConvertSpriteCoordOriginToGLenum(raster.PointSprite.PointSpriteCoordOrigin));
 				}
 			}
 
@@ -1286,7 +1421,7 @@ namespace jet
 		Rangef GLStates::getAliasedLineWidthRange()
 		{
 			static Rangef out = {-1, -1};
-			if (out.Max == -1)
+			if (out.Max < 0.0f)
 			{
 				glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, (GLfloat*)&out);
 			}
@@ -1297,7 +1432,7 @@ namespace jet
 		Rangef GLStates::getAliasedPointSizeRange()
 		{
 			static Rangef out = { -1, -1 };
-			if (out.Max == -1)
+			if (out.Max < 0.0f)
 			{
 				glGetFloatv(GL_ALIASED_POINT_SIZE_RANGE, (GLfloat*)&out);
 			}
@@ -1418,7 +1553,7 @@ namespace jet
 			if (m_BufferStates[idx] != buffer)
 			{
 				m_BufferStates[idx] = buffer;
-				glBindBuffer(gl_target, buffer);
+				CHECK_GL(glBindBuffer(gl_target, buffer));
 			}
 		}
 		
@@ -1465,13 +1600,19 @@ namespace jet
 
 		void GLStates::setClearColor(GLfloat color[4])
 		{
-			if (!Numeric::isEqual<GLfloat, 4>(color, m_ClearColor))
+			bool bSame = true;
+			for (int i = 0; i < 4; i++)
 			{
-				glClearColor(color[0], color[1], color[2], color[3]);
-				for (int i = 0; i < 4; i++)
+				if (color[i] != m_ClearColor[i])
 				{
+					bSame = false;
 					m_ClearColor[i] = color[i];
 				}
+			}
+
+			if (!bSame)
+			{
+				glClearColor(color[0], color[1], color[2], color[3]);
 			}
 		}
 

@@ -64,6 +64,8 @@ namespace jet
 			// The count of the mipmaps. At least is 1.
 			GLuint m_MipLevels;
 
+			bool   m_Immutable;
+
 			SamplerDesc m_Samplers;
 
 			ColorSwizzle m_SwizzleRed;
@@ -136,6 +138,7 @@ namespace jet
 			NONE,
 			NEW,
 			MALLOC,
+			SHADOW
 		};
 
 		typedef struct TextureData
@@ -160,6 +163,18 @@ namespace jet
 					pData[i] = (GLubyte*)_pData[i];
 				}
 			}
+
+			// TODO This is operation is not safe. 
+			TextureData& operator=(const TextureData& data)
+			{
+				Mipmaps = data.Mipmaps;
+				pData = data.pData;
+				pImageSize = data.pImageSize;
+				Format = data.Format;
+				Type = data.Type;
+				UnpackAlignment = data.UnpackAlignment;
+				Owned = MemoryType::SHADOW;
+			}
 			
 			virtual ~TextureData()
 			{
@@ -172,6 +187,10 @@ namespace jet
 				{
 					for (GLuint i = 0; i < Mipmaps; i++)
 						free((void*)pData[i]);
+				}
+				else if (Owned == MemoryType::SHADOW)
+				{
+					return;
 				}
 
 				if (pData)
@@ -201,6 +220,7 @@ namespace jet
 
 			GLuint getArraySize() const  { return m_ArraySize; }
 			GLint  getWidth() const { return m_Width; }
+			
 
 			Texture1DDesc getDesc() const
 			{
