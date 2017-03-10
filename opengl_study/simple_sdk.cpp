@@ -49,6 +49,10 @@ extern "C"{
 	static SimpleFBO* g_fbo_right = NULL;
 	static TextureGL  g_fbo_left_tex;
 	static TextureGL  g_fbo_right_tex;
+
+	static SimpleFBO* g_fbo_screen = NULL;
+	static TextureGL  g_fbo_screen_tex;
+
 	static TextureGL  g_tag_normal_tex;
 	static TextureGL  g_tag_focus_tex;
 
@@ -98,6 +102,37 @@ extern "C"{
 	{
 		g_window_size.width = width;
 		g_window_size.height = height;
+	}
+
+	void ogl_begin_record()
+	{
+		if (g_fbo_screen == NULL)
+		{
+			g_fbo_screen_tex = empty_texture();
+			create_texture_internal(g_fbo_screen_tex, g_window_size.width, g_window_size.height, GL_RGBA, NULL);
+			g_fbo_screen = new SimpleFBO(&g_fbo_screen_tex);
+		}
+
+		g_fbo_screen->Begin();
+		glViewport(0, 0, g_window_size.width, g_window_size.height);
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+	}
+
+	void ogl_end_record()
+	{
+		g_fbo_screen->End();
+	}
+
+	void ogl_set_rect_from_screen_record()
+	{
+		if (g_fbo_screen == NULL)
+		{
+			AND_LOG("g_fbo_screen is NULL!");
+			return;
+		}
+
+		ogl_set_rect_texture_id(g_fbo_screen_tex.textureId);
 	}
 
 	void ogl_set_projection(float fov, float near, float far)
@@ -611,6 +646,57 @@ extern "C"{
 		}
 	}
 
+	void ogl_print_framebuffer()
+	{
+		int viewports[4];
+		glGetIntegerv(GL_VIEWPORT, viewports);
+
+		GLint framebuffer;
+		glGetIntegerv(0x8CA6, &framebuffer);
+
+		GLboolean blend;
+		glGetBooleanv(GL_BLEND, &blend);
+
+		GLint program;
+		glGetIntegerv(GL_CURRENT_PROGRAM, &program);
+
+		GLint activeTexture;
+		glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTexture);
+
+		GLint vertex_buffer, element_buffer;
+		glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &vertex_buffer);
+		glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &element_buffer);
+
+		AND_LOG("The current Viewport = [%d, %d, %d, %d].\n", viewports[0], viewports[1], viewports[2], viewports[3]);
+		AND_LOG("The current framebuffer name = %d.\n", framebuffer);
+		AND_LOG("The current program name = %d.\n", program);
+		AND_LOG("The current vertex_buffer name = %d.\n", vertex_buffer);
+		AND_LOG("The current element_buffer name = %d.\n", element_buffer);
+		AND_LOG("The current activeTexture name = GL_TEXTURE0 + (%d).\n", (activeTexture - GL_TEXTURE0));
+		AND_LOG("The current   state is = %s.\n", (blend ? "true" : "false"));
+
+		if (framebuffer != 0)
+		{
+			GLint textureTarget;
+			GLint textureName;
+			glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &textureName);
+			glGetFramebufferAttachmentParameteriv(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &textureName);
+
+			if (textureTarget == GL_TEXTURE)
+			{
+				AND_LOG("The target of COLOR_ATTACHMENT0 is Texture: %d. \n", textureName);
+			}
+			else if (textureTarget == GL_RENDERBUFFER)
+			{
+				AND_LOG("The target of COLOR_ATTACHMENT0 is Renderbuffer: %d.\n", textureName);
+			}
+			else
+			{
+				AND_LOG("The target of COLOR_ATTACHMENT0 is none.\n");
+			}
+		}
+	}
+
 	void ogl_render(float elpsedTime)
 	{
 		/*
@@ -637,25 +723,6 @@ extern "C"{
 		ogl_get_attrib_info(1, attrib_slot1);
 		
 #if OGL_DEBUG
-		int viewports[4];
-		glGetIntegerv(GL_VIEWPORT, viewports);
-
-		GLint framebuffer;
-		glGetIntegerv(0x8CA6, &framebuffer);
-
-		GLboolean blend;
-		glGetBooleanv(GL_BLEND, &blend);
-
-		ogl_print_attrib_info(0, attrib_slot0);
-		ogl_print_attrib_info(1, attrib_slot1);
-
-		AND_LOG("The current Viewport = [%d, %d, %d, %d].\n", viewports[0], viewports[1], viewports[2], viewports[3]);
-		AND_LOG("The current framebuffer name = %d.\n", framebuffer);
-		AND_LOG("The current program name = %d.\n", program);
-		AND_LOG("The current vertex_buffer name = %d.\n", vertex_buffer);
-		AND_LOG("The current element_buffer name = %d.\n", element_buffer);
-		AND_LOG("The current activeTexture name = GL_TEXTURE0 + (%d).\n", (activeTexture - GL_TEXTURE0));
-		AND_LOG("The current   state is = %s.\n", (blend ? "true":"false"));
 
 		OBJ_CHECK(g_program, glIsProgram);
 		OBJ_CHECK(g_background_left_tex_id.textureId, glIsTexture);

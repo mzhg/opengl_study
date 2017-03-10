@@ -944,7 +944,10 @@ namespace jet
 			stbi_set_flip_vertically_on_load(flip);
 
 			TextureData initData;
-			loadTextureDataFromFile(filename, &initData, &width, &height);
+			bool result = loadTextureDataFromFile(filename, &initData, &width, &height);
+			if (!result)
+				return false;
+
 			int cmp = measureCompCountPerPixel(initData.Format);
 			Texture2DDesc desc = Texture2DDesc( width, height, internal_formats[cmp - 1] );
 			createTexture2D(&desc, &initData, pOut);

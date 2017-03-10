@@ -3,6 +3,7 @@
 #include <glm.hpp>
 #include <memory>
 #include "Transform.h"
+#include "geometry3d.h"
 
 namespace jet
 {
@@ -67,6 +68,8 @@ namespace jet
 			*            the transform to affect the bound.
 			*/	
 			virtual void transform(const glm::mat4& trans) = 0;
+
+			virtual Planef::Side whichSide(Planef plane) = 0;
 
 			virtual BoundingVolume* clone(){ return this; }
 

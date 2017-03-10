@@ -91,6 +91,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;ENABLE_PROGRAM_PIPELINE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -132,7 +133,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <Text Include="CommonVS.vert" />
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -141,6 +141,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BatchNode.cpp" />
     <ClCompile Include="BoundingVolume.cpp" />
     <ClCompile Include="BufferGL.cpp" />
     <ClCompile Include="Camera.cpp" />
@@ -157,12 +158,15 @@
     <ClCompile Include="LegacyApplication.cpp" />
     <ClCompile Include="LightList.cpp" />
     <ClCompile Include="Material.cpp" />
+    <ClCompile Include="MaxRectsBinPack.cpp" />
     <ClCompile Include="MeshManager.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="Numeric.cpp" />
     <ClCompile Include="NvAssetLoaderWin.cpp" />
     <ClCompile Include="NvInputTransformer.cpp" />
     <ClCompile Include="NvWin32StopWatch.cpp" />
+    <ClCompile Include="SampleTexturePacker.cpp" />
+    <ClCompile Include="TexturePacker.cpp" />
     <ClCompile Include="PostProcessingBloomSetup.cpp" />
     <ClCompile Include="PostProcessingCombinePass.cpp" />
     <ClCompile Include="PostProcessingDownsample.cpp" />
@@ -184,12 +188,14 @@
     <ClCompile Include="Spatial.cpp" />
     <ClCompile Include="Stage.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="TexturePackerGL.cpp" />
     <ClCompile Include="TextureUtil.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Uniforms.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssetLoader.h" />
+    <ClInclude Include="BatchNode.h" />
     <ClInclude Include="BoundingVolume.h" />
     <ClInclude Include="BufferGL.h" />
     <ClInclude Include="Camera.h" />
@@ -208,11 +214,14 @@
     <ClInclude Include="LegacyApplication.h" />
     <ClInclude Include="LightList.h" />
     <ClInclude Include="Material.h" />
+    <ClInclude Include="MaxRectsBinPack.h" />
     <ClInclude Include="MeshManager.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="Numeric.h" />
     <ClInclude Include="NvInputTransformer.h" />
     <ClInclude Include="NvStopWatch.h" />
+    <ClInclude Include="SampleTexturePacker.h" />
+    <ClInclude Include="TexturePacker.h" />
     <ClInclude Include="PostProcessingBloomSetup.h" />
     <ClInclude Include="PostProcessingCombinePass.h" />
     <ClInclude Include="PostProcessingDownsample.h" />
@@ -241,6 +250,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\BloomSetupPS.frag" />
+    <None Include="assets\CommonPS.frag" />
+    <None Include="assets\CommonVS.vert" />
     <None Include="assets\DefaultCombinePS.frag" />
     <None Include="assets\DefaultScreenSpacePS.frag" />
     <None Include="assets\DefaultScreenSpaceVS.vert" />
@@ -251,7 +262,6 @@
     <None Include="assets\DynamicMotionblurES2.frag" />
     <None Include="assets\DynamicMotionblurES2.vert" />
     <None Include="assets\StaticSceneMotionBlur.frag" />
-    <None Include="CommonPS.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

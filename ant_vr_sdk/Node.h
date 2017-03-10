@@ -148,7 +148,7 @@ namespace jet
 			* @return the number of children maintained by this node.
 			* @throws IllegalArgumentException if child is null.
 			*/
-			size_t attachChild(Spatial* pChild) {
+			virtual size_t attachChild(Spatial* pChild) {
 				return attachChildAt(pChild, m_pChildren.size());
 			}
 			/**

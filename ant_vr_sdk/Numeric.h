@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include <string>
 #include <set>
 #include <vector>
@@ -124,6 +125,12 @@ namespace jet
 				}
 
 				return false;
+			}
+
+			template<typename T>
+			static float ratio(T a, T b)
+			{
+				return static_cast<float>(a) / static_cast<float>(b);
 			}
 
 		private:

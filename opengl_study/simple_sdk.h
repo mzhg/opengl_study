@@ -27,6 +27,11 @@ extern "C" void ogl_set_background_texture(int width, int height, int format, co
 extern "C" void ogl_set_rect_texture(int width, int height, int format, const char* pData);
 extern "C" void ogl_read_texels_from_renderbuffer();
 
+extern "C" void ogl_print_framebuffer();
+extern "C" void ogl_begin_record();
+extern "C" void ogl_end_record();
+extern "C" void ogl_set_rect_from_screen_record();
+
 extern "C" void ogl_set_background_texture_id(unsigned int id, bool left = true);
 extern "C" void ogl_set_rect_texture_id(unsigned int id);
 extern "C" void ogl_create_background_default_texture(int width, int height, bool left = true);

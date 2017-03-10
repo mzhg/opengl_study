@@ -2,6 +2,8 @@
 #include <glm.hpp>
 #include <gtc\quaternion.hpp>
 #include <gtc\matrix_transform.hpp>
+#include "geometry2d.h"
+
 namespace jet
 {
 	namespace util
@@ -94,6 +96,8 @@ namespace jet
 					m_bDirty = true;
 				}
 			}
+
+			static glm::mat4 ortho(uint32_t screenWidth, uint32_t screenHeight, Rectangle2ui rect);
 #if 0
 			void setRotateAxis(float x, float y, float z)
 			{

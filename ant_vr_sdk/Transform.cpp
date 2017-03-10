@@ -6,6 +6,18 @@ namespace jet
 {
 	namespace util
 	{
+		glm::mat4 Transform::ortho(uint32_t screenWidth, uint32_t screenHeight, Rectangle2ui rect)
+		{
+			glm::mat4 ortho_mat = glm::ortho(0.0f, static_cast<float>(screenWidth), 0.0f, static_cast<float>(screenHeight));
+			glm::mat4 rectMat = glm::mat4(1);
+
+			rectMat[0][0] = rect.Width * 0.5f;
+			rectMat[1][1] = rect.Height * 0.5f;
+			rectMat[3][0] = rect.X + rectMat[0][0];
+			rectMat[3][1] = rect.Y + rectMat[1][1];
+
+			return ortho_mat * rectMat;
+		}
 
 		void Transform::setFromMatrix(const glm::mat4& mat)
 		{

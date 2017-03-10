@@ -255,7 +255,7 @@ namespace jet
 								else if (_vtxIdx == 4) tex_index = 1;
 								else tex_index = 3;
 							}
-							for (int j = 0; j < Numeric::min(T, 2); j++)
+							for (int j = 0; j < T; j++)
 							{
 								*pVertexs++ = pTexcoords[tex_index][j];
 							}

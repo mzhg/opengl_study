@@ -45,7 +45,7 @@ namespace jet
 				return glm::dot(plane.f3Normal, point) - plane.fConstant;
 			}
 
-			static Side whichSide(const glm::tvec3<Type, glm::highp>& point)
+			static Side whichSide(const glm::tvec3<Type, glm::highp>& point, const Plane<Type>& plane)
 			{
 				Type zero = static_cast<Type>(0);
 				Type dis = pseudoDistance(point);

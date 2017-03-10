@@ -57,7 +57,7 @@ namespace jet
 			*/
 			virtual void onGeometryUnassociated(class Geometry * pGeom) = 0;
 
-			~GeometryGroupNode();
+			virtual ~GeometryGroupNode();
 		};
 	}
 }

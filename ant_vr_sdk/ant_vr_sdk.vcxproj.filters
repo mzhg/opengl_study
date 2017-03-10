@@ -50,9 +50,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
-    <Text Include="CommonVS.vert">
-      <Filter>ShaderResources</Filter>
-    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GLSLProgram.cpp">
@@ -192,6 +189,21 @@
     </ClCompile>
     <ClCompile Include="SceneManager.cpp">
       <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="BatchNode.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="TexturePacker.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="MaxRectsBinPack.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="TexturePackerGL.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="SampleTexturePacker.cpp">
+      <Filter>Samples</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -342,6 +354,18 @@
     <ClInclude Include="SceneManager.h">
       <Filter>Scene</Filter>
     </ClInclude>
+    <ClInclude Include="BatchNode.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="TexturePacker.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="MaxRectsBinPack.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="SampleTexturePacker.h">
+      <Filter>Samples</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\DefaultScreenSpacePS.frag">
@@ -377,7 +401,10 @@
     <None Include="assets\DynamicMotionblurES2.frag">
       <Filter>ShaderResources</Filter>
     </None>
-    <None Include="CommonPS.frag">
+    <None Include="assets\CommonPS.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\CommonVS.vert">
       <Filter>ShaderResources</Filter>
     </None>
   </ItemGroup>

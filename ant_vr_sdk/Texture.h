@@ -98,9 +98,7 @@ namespace jet
 			GLuint SampleCount;
 
 			Texture2DDesc() : Width(0), Height(0), MipLevels(1), ArraySize(1), Format(0), SampleCount(1){}
-			Texture2DDesc(GLint width, GLint height, GLuint format) :
-				Width(width), Height(height), Format(format), MipLevels(1), ArraySize(1), SampleCount(1){}
-			Texture2DDesc(GLint width, GLint height, GLuint format, GLuint mipLevels, GLuint arraySize, GLuint sampleCount):
+			Texture2DDesc(GLint width, GLint height, GLuint format, GLuint mipLevels = 1, GLuint arraySize = 1, GLuint sampleCount = 1):
 				Width(width), Height(height), Format(format), MipLevels(mipLevels), ArraySize(arraySize), SampleCount(sampleCount){}
 		}Texture2DDesc;
 

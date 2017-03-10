@@ -21,7 +21,7 @@ namespace jet
 		{
 #if defined(_DEBUG)
 			GLStates& state = GLStates::get();
-			assert(state.getBindingVAO() == m_VAO);
+			assert(state.getBindingVAO() == m_VAO && m_VAO != 0);
 #endif
 			if (pArray)
 			{
@@ -47,7 +47,11 @@ namespace jet
 					index++;
 				}
 
-				pArray->ElementBuffer->bind();
+				if (pArray->ElementBuffer)
+				{
+					pArray->ElementBuffer->bind();
+				}
+				
 			}
 		}
 #if 0

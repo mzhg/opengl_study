@@ -235,12 +235,7 @@ namespace jet
 			bool BlueWriteMask;
 			bool AlphaWriteMask;
 
-			ColorMask() :
-				RedWriteMask(true), GreenWriteMask(true),
-				BlueWriteMask(true), AlphaWriteMask(true)
-			{}
-
-			ColorMask(bool r, bool g, bool b, bool a) :
+			ColorMask(bool r = true, bool g = true, bool b = true, bool a = true) :
 				RedWriteMask(r), GreenWriteMask(g),
 				BlueWriteMask(b), AlphaWriteMask(a)
 			{}
@@ -479,6 +474,16 @@ namespace jet
 			GLuint Stride;
 			GLuint Divisor;
 			GLvoid* Pointer;
+
+			AttribDesc(bool enable,
+				GLuint index,
+				GLuint size,
+				DataType type,
+				bool normalized,
+				GLuint stride,
+				GLuint divisor,
+				GLvoid* pointer) :
+				Enable(enable), Index(index), Size(size), Type(type), Normalized(normalized), Stride(stride), Divisor(divisor), Pointer(pointer){}
 
 			AttribDesc() :
 				Enable(false),

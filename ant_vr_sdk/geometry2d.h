@@ -70,5 +70,13 @@ namespace jet
 
 			return out;
 		}
+
+		template<typename Type>
+		struct Size
+		{
+			Type Width, Height;
+		};
+
+		typedef Size<int32_t> Sizei;
 	}
 }

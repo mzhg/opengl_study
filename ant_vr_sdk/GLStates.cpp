@@ -405,60 +405,60 @@ namespace jet
 		{
 			{
 				GLint value;
-				glGetIntegerv(GL_POLYGON_MODE, &value);
+				CHECK_GL(glGetIntegerv(GL_POLYGON_MODE, &value));
 				m_RasterizerState.FillMode = ConvertGLenumToPolygonMode(value);
 			}
 
 			{
 				GLint value;
-				glGetIntegerv(GL_CULL_FACE_MODE, &value);
+				CHECK_GL(glGetIntegerv(GL_CULL_FACE_MODE, &value));
 				m_RasterizerState.CullMode = ConvertGLenumToFaceMode(value);
 			}
 
 			{
-				m_RasterizerState.CullFaceEnable = glIsEnabled(GL_CULL_FACE);
+				m_RasterizerState.CullFaceEnable = CHECK_GL(glIsEnabled(GL_CULL_FACE));
 			}
 
 			{
 				GLint value;
-				glGetIntegerv(GL_FRONT_FACE, &value);
+				CHECK_GL(glGetIntegerv(GL_FRONT_FACE, &value));
 				m_RasterizerState.FrontCounterClockwise = (value == GL_CW);
 			}
 
 			{
-				glGetDoublev(GL_DEPTH_RANGE, (GLdouble*)&m_RasterizerState.DepthRange);
+				CHECK_GL(glGetDoublev(GL_DEPTH_RANGE, (GLdouble*)&m_RasterizerState.DepthRange));
 			}
 
 			{
-				m_RasterizerState.DepthClampEnable = glIsEnabled(GL_DEPTH_CLAMP);
+				m_RasterizerState.DepthClampEnable = CHECK_GL(glIsEnabled(GL_DEPTH_CLAMP));
 			}
 
 			{
-				m_RasterizerState.Dither = glIsEnabled(GL_DITHER);
-				m_RasterizerState.SRGB = glIsEnabled(GL_FRAMEBUFFER_SRGB);
-				m_bPolygonSmoothStates[static_cast<int>(PolygonMode::FILL)] = glIsEnabled(GL_POLYGON_OFFSET_FILL);
-				m_bPolygonSmoothStates[static_cast<int>(PolygonMode::LINE)] = glIsEnabled(GL_POLYGON_OFFSET_LINE);
-				m_bPolygonSmoothStates[static_cast<int>(PolygonMode::POINT)] = glIsEnabled(GL_POLYGON_OFFSET_POINT);
+				m_RasterizerState.Dither = CHECK_GL(glIsEnabled(GL_DITHER));
+				m_RasterizerState.SRGB = CHECK_GL(glIsEnabled(GL_FRAMEBUFFER_SRGB));
+				m_bPolygonSmoothStates[static_cast<int>(PolygonMode::FILL)] = CHECK_GL(glIsEnabled(GL_POLYGON_OFFSET_FILL));
+				m_bPolygonSmoothStates[static_cast<int>(PolygonMode::LINE)] = CHECK_GL(glIsEnabled(GL_POLYGON_OFFSET_LINE));
+				m_bPolygonSmoothStates[static_cast<int>(PolygonMode::POINT)] = CHECK_GL(glIsEnabled(GL_POLYGON_OFFSET_POINT));
 				m_RasterizerState.PolygonOffsetEnable = m_bPolygonSmoothStates[static_cast<int>(m_RasterizerState.FillMode)];
-				m_RasterizerState.RasterizedDiscardEnable = glIsEnabled(GL_RASTERIZER_DISCARD);
-				m_RasterizerState.ProgramPointSizeEnable = glIsEnabled(GL_PROGRAM_POINT_SIZE);
-				m_RasterizerState.PrimitiveRestartEnable = glIsEnabled(GL_PRIMITIVE_RESTART);
+				m_RasterizerState.RasterizedDiscardEnable = CHECK_GL(glIsEnabled(GL_RASTERIZER_DISCARD));
+				m_RasterizerState.ProgramPointSizeEnable = CHECK_GL(glIsEnabled(GL_PROGRAM_POINT_SIZE));
+				m_RasterizerState.PrimitiveRestartEnable = CHECK_GL(glIsEnabled(GL_PRIMITIVE_RESTART));
 #if 0
 				for (int i = 0; i < 6; i++)
 				{
 					m_RasterizerState.ClipPlanes[i].ClipPlaneEnable = glIsEnabled(GL_CLIP_DISTANCE0);
 				}
 #endif			
-				glGetFloatv(GL_POLYGON_OFFSET_FACTOR, &m_RasterizerState.PolygonOffset.factor);
-				glGetFloatv(GL_POLYGON_OFFSET_UNITS,  &m_RasterizerState.PolygonOffset.units);
+				CHECK_GL(glGetFloatv(GL_POLYGON_OFFSET_FACTOR, &m_RasterizerState.PolygonOffset.factor));
+				CHECK_GL(glGetFloatv(GL_POLYGON_OFFSET_UNITS, &m_RasterizerState.PolygonOffset.units));
 
-				m_RasterizerState.LogicMode.LogicEnable = glIsEnabled(GL_COLOR_LOGIC_OP);
+				m_RasterizerState.LogicMode.LogicEnable = CHECK_GL(glIsEnabled(GL_COLOR_LOGIC_OP));
 				GLint value;
-				glGetIntegerv(GL_LOGIC_OP_MODE, &value);
+				CHECK_GL(glGetIntegerv(GL_LOGIC_OP_MODE, &value));
 				m_RasterizerState.LogicMode.LogicOp = ConvertGLenumToLogicFunc(value);
 
 				GLboolean colorWriteMask[4];
-				glGetBooleanv(GL_COLOR_WRITEMASK, colorWriteMask);
+				CHECK_GL(glGetBooleanv(GL_COLOR_WRITEMASK, colorWriteMask));
 				m_RasterizerState.ColorWriteMask.RedWriteMask = colorWriteMask[0] != 0;
 				m_RasterizerState.ColorWriteMask.GreenWriteMask = colorWriteMask[1] != 0;
 				m_RasterizerState.ColorWriteMask.BlueWriteMask = colorWriteMask[2] != 0;
@@ -466,12 +466,12 @@ namespace jet
 			}
 
 			{
-				m_RasterizerState.PointSprite.PointSpriteEnabled = glIsEnabled(GL_POINT_SPRITE);
-				m_RasterizerState.PointSprite.ProgramPointSizeEnabled = glIsEnabled(GL_PROGRAM_POINT_SIZE);
-				glGetFloatv(GL_POINT_FADE_THRESHOLD_SIZE, &m_RasterizerState.PointSprite.PointFadeThresholdSize);
+				m_RasterizerState.PointSprite.PointSpriteEnabled = CHECK_GL(glIsEnabled(GL_POINT_SPRITE));
+				m_RasterizerState.PointSprite.ProgramPointSizeEnabled = CHECK_GL(glIsEnabled(GL_PROGRAM_POINT_SIZE));
+				CHECK_GL(glGetFloatv(GL_POINT_FADE_THRESHOLD_SIZE, &m_RasterizerState.PointSprite.PointFadeThresholdSize));
 
 				GLint out;
-				glGetIntegerv(GL_POINT_SPRITE_COORD_ORIGIN, &out);
+				CHECK_GL(glGetIntegerv(GL_POINT_SPRITE_COORD_ORIGIN, &out));
 				m_RasterizerState.PointSprite.PointSpriteCoordOrigin = ConvertGLenumToSpriteCoordOrigin(out);
 			}
 		}
@@ -598,13 +598,12 @@ namespace jet
 				{
 					if (m_TextureStates[unit].textureID != texture)
 					{
+						m_TextureNames[m_TextureCount] = texture;
+						m_TextureStates[unit].target = target;
+						m_TextureStates[unit].textureID = texture;
+						m_TextureUnits[m_TextureCount] = unit;
 						m_TextureCount++;
 					}
-
-					m_TextureNames[m_TextureCount] = texture;
-					m_TextureStates[unit].target = target;
-					m_TextureStates[unit].textureID = texture;
-					m_TextureUnits[m_TextureCount] = unit;
 				}
 				else if (m_TextureStates[unit].textureID != texture)
 				{
@@ -634,7 +633,7 @@ namespace jet
 
 			if (ordered && glBindTextures)
 			{
-				glBindTextures(0, m_TextureCount, m_TextureNames);
+				CHECK_GL(glBindTextures(0, m_TextureCount, m_TextureNames));
 			}
 			else
 			{
@@ -642,7 +641,7 @@ namespace jet
 				{
 					for (unsigned int i = 0; i < m_TextureCount; i++)
 					{
-						glBindTextureUnit(m_TextureUnits[i], m_TextureStates[m_TextureUnits[i]].textureID);
+						CHECK_GL(glBindTextureUnit(m_TextureUnits[i], m_TextureStates[m_TextureUnits[i]].textureID));
 					}
 				}
 				else
@@ -650,7 +649,7 @@ namespace jet
 					for (unsigned int i = 0; i < m_TextureCount; i++)
 					{
 						setActiveTexture(m_TextureUnits[i]);
-						glBindTexture(m_TextureStates[m_TextureUnits[i]].target, m_TextureStates[m_TextureUnits[i]].textureID);
+						CHECK_GL(glBindTexture(m_TextureStates[m_TextureUnits[i]].target, m_TextureStates[m_TextureUnits[i]].textureID));
 					}
 				}
 			}
@@ -1398,7 +1397,7 @@ namespace jet
 			if (unit != m_ActiveTextureUnit)
 			{
 				m_ActiveTextureUnit = unit;
-				glActiveTexture(GL_TEXTURE0 + unit);
+				CHECK_GL(glActiveTexture(GL_TEXTURE0 + unit));
 			}
 		}
 		
@@ -1646,7 +1645,7 @@ namespace jet
 
 		void GLStates::restoreClearStencil()
 		{
-			glGetIntegerv(GL_STENCIL_CLEAR_VALUE, (GLint*)m_ClearStencil);
+			glGetIntegerv(GL_STENCIL_CLEAR_VALUE, (GLint*)&m_ClearStencil);
 		}
 
 		void GLStates::setLineWidth(GLfloat width)
@@ -1748,7 +1747,7 @@ namespace jet
 		
 		void GLStates::restoreSampler(GLuint unit)
 		{
-			glGetIntegeri_v(GL_SAMPLER_BINDING, unit, (GLint*)m_SamplerStates[unit]);
+			glGetIntegeri_v(GL_SAMPLER_BINDING, unit, (GLint*)&m_SamplerStates[unit]);
 		}
 
 		void GLStates::resetSampler(GLuint unit, bool force)
@@ -1793,6 +1792,9 @@ namespace jet
 
 			GLint maxViewports = getMaxViewports();
 			m_ViewportStates = new ViewportDesc[maxViewports];
+
+			restoreAll();
+			CHECK_GL_ERROR;
 		}
 
 		GLStates::~GLStates()

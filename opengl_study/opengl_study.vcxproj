@@ -157,6 +157,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="heightmap.cpp" />
+    <ClCompile Include="RectPackTest.cpp" />
     <ClCompile Include="simple_sdk.cpp" />
     <ClCompile Include="simple_sdk_common.cpp" />
     <ClCompile Include="simple_sdk_billbaord.cpp" />

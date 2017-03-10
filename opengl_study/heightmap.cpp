@@ -3,6 +3,7 @@
 #include "FileUtil.h"
 #include <glm.hpp>
 #include "simple_sdk.h"
+#include <SampleTexturePacker.h>
 
 struct Rect
 {
@@ -10,16 +11,14 @@ struct Rect
 	int right, top;
 };
 
-static bool g_test_sdk = true;
+static bool g_test_sdk = false;
+static GLSLProgram* m_ScreenProgram;
+static Texture2D*   m_TestTexture;
+
+extern void rect_pack_test();
 
 void HeightmapDemo::onCreate()
 {
-
-//	std::string filepath = jet::util::FileUtil::findFilePath("DrawSceneVS.vert");
-//	printf("testimg_1280x720.png full path: %s\n", filepath.c_str());
-
-//	m_Sample = new SampleTunnel();
-
 	struct MyStruct
 	{
 		bool b : 1;
@@ -42,7 +41,19 @@ void HeightmapDemo::onCreate()
 	};
 
 	printf("array size = %d.\n", Numeric::arraySize(array));
-	
+
+	struct MyStruct2
+	{
+		char name[128];
+	};
+
+	MyStruct2 first;
+	strcpy_s(first.name, "I am jet");
+
+	MyStruct2 second = first;
+	printf("second.name = %s.\n", second.name);
+	rect_pack_test();
+
 	if (g_test_sdk)
 	{
 		const char* search_path = "../ant_vr_sdk/";
@@ -52,8 +63,18 @@ void HeightmapDemo::onCreate()
 		int height;
 		jet::util::TextureUtil::loadTextureDataFromFile(texpath.c_str(), &texData, &width, &height);
 
+		m_TestTexture = new Texture2D;
+		Texture2DDesc desc(width, height, GL_RGBA8);
+		jet::util::TextureUtil::createTexture2D(&desc, &texData, m_TestTexture);
+
+		std::string vs_path = jet::util::FileUtil::findFilePath("DefaultScreenSpaceVS.vert", 1, &search_path);
+		std::string ps_path = jet::util::FileUtil::findFilePath("DefaultScreenSpacePS.frag", 1, &search_path);
+		assert(vs_path.length());
+		assert(ps_path.length());
+		m_ScreenProgram = GLSLProgram::createFromFiles(vs_path.c_str(), ps_path.c_str());
+
 		ogl_init();
-		ogl_set_rect_texture(width, height, texData.Format, (const char*)texData.pData[0]);
+//		ogl_set_rect_texture(width, height, texData.Format, (const char*)texData.pData[0]);
 //		ogl_set_rect_texture(width, height, texData.Format, (const char*)texData.pData);
 		ogl_set_rect_size((1280 - 600)/2, (720 - 200)/2, 600, 200);
 		ogl_create_background_default_texture(512, 512, false);
@@ -66,7 +87,7 @@ void HeightmapDemo::onCreate()
 		return;
 	}
 
-	m_Sample = new SampleColorTriangle();
+	m_Sample = new SampleTexturePacker();
 	m_Sample->Create();
 	m_Input = new InputAdapter();
 	setInputAdapter(m_Input);
@@ -118,6 +139,7 @@ void renderTriangle()
 
 void HeightmapDemo::viewportTest()
 {
+#if 0
 	glClearColor(1, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -151,6 +173,7 @@ void HeightmapDemo::viewportTest()
 	renderTriangle();
 
 	glViewport(viewport_[0], viewport_[1], viewport_[2], viewport_[3]);
+#endif
 }
 
 static glm::mat4 g_PreviouseMat;
@@ -162,6 +185,15 @@ void HeightmapDemo::onRender()
 	g_iFrameCount++;
 	if (g_test_sdk)
 	{
+		ogl_begin_record();
+
+		m_ScreenProgram->enable();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(m_TestTexture->getTarget(), m_TestTexture->getTexture());
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+		ogl_end_record();
+		ogl_set_rect_from_screen_record();
 		ogl_set_background_rotation(g_iFrameCount * 0.01f, 0.0f, 0.0f);
 //		ogl_read_texels_from_renderbuffer();
 
@@ -175,7 +207,8 @@ void HeightmapDemo::onRender()
 	}
 
 	
-	m_Sample->Render();
+	m_Sample->Render(false);
+	return;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glClearColor(0, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT);
