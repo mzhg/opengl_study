@@ -115,9 +115,36 @@ namespace jet
 			}
 
 			template<typename T>
-			static bool remove(std::vector<T>& array, const T& value)
+			static bool remove(std::vector<T>& array, const T value)
 			{
 				int index = indexOf(array, value);
+				if (index >= 0)
+				{
+					array.erase(array.begin() + index);
+					return true;
+				}
+
+				return false;
+			}
+
+			template<typename T>
+			static int indexOfRef(const std::vector<T>& array, const T& value)
+			{
+				for (size_t i = 0; i < array.size(); i++)
+				{
+					if (array[i] == value)
+					{
+						return static_cast<int>(i);
+					}
+				}
+
+				return -1;
+			}
+
+			template<typename T>
+			static bool removeRef(std::vector<T>& array, const T& value)
+			{
+				int index = indexOfRef(array, value);
 				if (index >= 0)
 				{
 					array.erase(array.begin() + index);

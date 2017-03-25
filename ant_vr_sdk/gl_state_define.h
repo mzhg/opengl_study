@@ -466,7 +466,7 @@ namespace jet
 
 		typedef	struct AttribDesc
 		{
-			bool Enable;
+//			bool Enable;
 			GLuint Index;
 			GLuint Size;
 			DataType Type;
@@ -475,25 +475,15 @@ namespace jet
 			GLuint Divisor;
 			GLvoid* Pointer;
 
-			AttribDesc(bool enable,
-				GLuint index,
-				GLuint size,
-				DataType type,
-				bool normalized,
-				GLuint stride,
-				GLuint divisor,
-				GLvoid* pointer) :
-				Enable(enable), Index(index), Size(size), Type(type), Normalized(normalized), Stride(stride), Divisor(divisor), Pointer(pointer){}
-
-			AttribDesc() :
-				Enable(false),
-				Index(0),
-				Size(4),
-				Type(DataType::FLOAT),
-				Normalized(false),
-				Stride(0),
-				Divisor(0),
-				Pointer(nullptr){}
+			AttribDesc(/*bool enable,*/
+				GLuint index = 0,
+				GLuint size = 4,
+				DataType type = DataType::FLOAT,
+				bool normalized = false,
+				GLuint stride = 0,
+				GLuint divisor = 0,
+				GLvoid* pointer = nullptr) :
+				/*Enable(enable),*/ Index(index), Size(size), Type(type), Normalized(normalized), Stride(stride), Divisor(divisor), Pointer(pointer){}
 		}AttribDesc;
 
 		enum class Primitives

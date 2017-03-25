@@ -26,8 +26,8 @@ namespace jet
 			}
 		}
 
-		PostProcessingBloomSetup::PostProcessingBloomSetup(uint32_t offset) : 
-			PPRenderPass(BLOOM_SETUP + offset)
+		PostProcessingBloomSetup::PostProcessingBloomSetup(uint32_t offset, bool useLight, uint32_t width, uint32_t height) :
+			PPRenderPass(BLOOM_SETUP + offset, width, height), UseLightParams(useLight)
 		{
 			set(1, 1);
 		}
@@ -44,7 +44,15 @@ namespace jet
 				context->setUniform1i("g_Texture", 0);
 				CHECK_GL_ERROR
 				{
-					context->setUniform2f("f2BloomThreshold", parameters.getBloomThreshold(), parameters.getExposureScale());
+					if (UseLightParams)
+					{
+						context->setUniform2f("f2BloomThreshold", parameters.getLumianceThreshold(), parameters.getLuminaceScaler());
+					}
+					else
+					{
+						context->setUniform2f("f2BloomThreshold", parameters.getBloomThreshold(), parameters.getExposureScale());
+					}
+					
 					CHECK_GL_ERROR
 					glActiveTexture(GL_TEXTURE0);
 					glBindTexture(inputTexture->getTarget(), inputTexture->getTexture());

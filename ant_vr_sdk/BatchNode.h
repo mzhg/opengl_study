@@ -1,5 +1,5 @@
 #pragma once
-#include "GeometryGroupNode.h"
+#include "Node.h"
 
 namespace jet
 {
@@ -21,7 +21,7 @@ namespace jet
 		* TODO more automagic (batch when needed in the updateLogicalState)
 		* @author Nehon
 		*/
-		class BatchNode : public GeometryGroupNode
+		class BatchNode : public Node
 		{
 		public:
 			BatchNode();

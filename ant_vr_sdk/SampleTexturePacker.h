@@ -22,7 +22,7 @@ namespace jet
 			// Render Loop...
 			void OnRender(float elpsedTime = 0.0) override;
 		private:
-			ArrayBufferGL* m_ScreenQuadBuffer;
+			ArrayBufferGL<BufferUsage::STATIC_DRAW, GL_MAP_WRITE_BIT>* m_ScreenQuadBuffer;
 			VertexArrayGL* m_ScreenQuadVAO;
 
 			GLSLProgram* m_FullScreenQuad;

@@ -99,6 +99,10 @@ half4 PS_Downsample(DownsampleVertexOutput IN,
 uniform vec2 g_TexelSize;
 uniform sampler2D g_Texture;
 
+#ifndef TEXEL_FACTOR
+#define TEXEL_FACTOR 1.0
+#endif
+
 // METHOD: 0, fastest; 1, normal, 2; combined_depth.
 void main()
 {
@@ -106,10 +110,10 @@ void main()
 	f4FragColor = texture(g_Texture, ScreenSpaceUV.xy);
 #elif METHOD == 1
 	vec2 texelLocation = ScreenSpaceUV.xy;
-	vec2 texelSampleLoc1 = texelLocation + vec2(-1, -1) * g_TexelSize;
-	vec2 texelSampleLoc2 = texelLocation + vec2(+1, -1) * g_TexelSize;
-	vec2 texelSampleLoc3 = texelLocation + vec2(-1, +1) * g_TexelSize;
-	vec2 texelSampleLoc4 = texelLocation + vec2(+1, +1) * g_TexelSize;
+	vec2 texelSampleLoc1 = texelLocation + vec2(-TEXEL_FACTOR, -TEXEL_FACTOR) * g_TexelSize;
+	vec2 texelSampleLoc2 = texelLocation + vec2(+TEXEL_FACTOR, -TEXEL_FACTOR) * g_TexelSize;
+	vec2 texelSampleLoc3 = texelLocation + vec2(-TEXEL_FACTOR, +TEXEL_FACTOR) * g_TexelSize;
+	vec2 texelSampleLoc4 = texelLocation + vec2(+TEXEL_FACTOR, +TEXEL_FACTOR) * g_TexelSize;
 
 	vec4 color1 = texture(g_Texture, texelSampleLoc1);
 	vec4 color2 = texture(g_Texture, texelSampleLoc2);
@@ -119,10 +123,10 @@ void main()
 	f4FragColor = (color1 + color2 + color3 + color4) * 0.25;
 #elif METHOD == 2
 	vec2 texelLocation = ScreenSpaceUV.xy;
-	vec2 texelSampleLoc1 = texelLocation + vec2(-1, -1) * g_TexelSize;
-	vec2 texelSampleLoc2 = texelLocation + vec2(+1, -1) * g_TexelSize;
-	vec2 texelSampleLoc3 = texelLocation + vec2(-1, +1) * g_TexelSize;
-	vec2 texelSampleLoc4 = texelLocation + vec2(+1, +1) * g_TexelSize;
+	vec2 texelSampleLoc1 = texelLocation + vec2(-TEXEL_FACTOR, -TEXEL_FACTOR) * g_TexelSize;
+	vec2 texelSampleLoc2 = texelLocation + vec2(+TEXEL_FACTOR, -TEXEL_FACTOR) * g_TexelSize;
+	vec2 texelSampleLoc3 = texelLocation + vec2(-TEXEL_FACTOR, +TEXEL_FACTOR) * g_TexelSize;
+	vec2 texelSampleLoc4 = texelLocation + vec2(+TEXEL_FACTOR, +TEXEL_FACTOR) * g_TexelSize;
 
 	vec4 color1 = texture(g_Texture, texelSampleLoc1);
 	vec4 color2 = texture(g_Texture, texelSampleLoc2);

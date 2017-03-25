@@ -12,6 +12,7 @@
 #include <gtc\quaternion.hpp>
 #include <gtc\matrix_transform.hpp>
 
+#pragma warning(disable:4244)
 namespace jet
 {
 	namespace util
@@ -19,7 +20,7 @@ namespace jet
 #define null nullptr
 
 		static GLSLProgram* g_TextureProgram = null;
-		static ArrayBufferGL* g_ScreenRectBuffer = null;
+		static ArrayBufferGL<BufferUsage::STATIC_DRAW, GL_MAP_READ_BIT|GL_MAP_WRITE_BIT>* g_ScreenRectBuffer = null;
 		static VertexArrayGL* g_ScreenRectVAO = null;
 		static glm::vec2 g_Viewport;
 
@@ -58,7 +59,7 @@ namespace jet
 			assert(texLoc >= 0);
 			glProgramUniform1i(g_TextureProgram->getProgram(), texLoc, 0);
 
-			g_ScreenRectBuffer = new ArrayBufferGL;
+			g_ScreenRectBuffer = new ArrayBufferGL<BufferUsage::STATIC_DRAW, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT>;
 			g_ScreenRectBuffer->bind();
 
 			Vertex data[] =
@@ -69,7 +70,7 @@ namespace jet
 				{ { +1.0f, +1.0f }, { 1.0f, 1.0f } },    // RT
 			};  //Triangle_Strip
 
-			g_ScreenRectBuffer->load(sizeof(data), (GLubyte*)data);
+			g_ScreenRectBuffer->init(sizeof(data), (GLubyte*)data);
 			g_ScreenRectBuffer->unbind();
 
 			g_ScreenRectVAO = new VertexArrayGL();

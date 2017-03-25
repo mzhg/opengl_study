@@ -65,6 +65,7 @@ namespace jet
 
 		enum class MeshAttrib
 		{
+			NONE,
 			POSITION2,
 			POSITION3,
 			POSITION4,
@@ -80,7 +81,8 @@ namespace jet
 
 			P4NT2,
 			P4N,
-			P4NT3
+			P4NT3,
+			COUNT
 		};
 
 		class Shape3D
@@ -96,6 +98,8 @@ namespace jet
 			*/
 			enum class Mode 
 			{
+				// Undefined primitive type.
+				UNKOWN,
 				/**
 				* A primitive is a single point in space. The size of the points
 				* can be specified with {@link Mesh#setPointSize(float) }.
@@ -159,7 +163,8 @@ namespace jet
 				* Used for Tesselation only. Requires to set the number of vertices
 				* for each patch (default is 3 for triangle tesselation)
 				*/
-				PATCH
+				PATCH,
+				COUNT
 			};
 
 			Shape3D(Mode mode = Mode::TRIANGLES);

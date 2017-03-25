@@ -4,6 +4,17 @@ namespace jet
 {
 	namespace util
 	{
+		enum class AttribType
+		{
+			POSITION,
+			NORMAL,
+			TEXCOORD,
+			COLOR,
+			TANGENT,
+			ELEMENT_INDICES,
+			COUNT
+		};
+
 		class Material
 		{
 		public:

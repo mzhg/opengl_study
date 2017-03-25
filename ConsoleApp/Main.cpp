@@ -3,6 +3,8 @@
 #include <string>
 #include <io.h>
 #include <direct.h>
+#include <map>
+#include <unordered_map>
 
 struct  Vec3
 {
@@ -112,5 +114,31 @@ int main()
 
 	char* a123b = "this is a test";
 	puts(TEST_MACRO(123));
+
+	int* i0 = new int(1);
+	int* i1 = new int(-1);
+	int* i2 = new int(23);
+	int* i3 = new int(97);
+	int* i4 = new int(101);
+
+	std::unordered_map<void*, int> pointer_map;
+	pointer_map.insert(std::pair<void*, int>(i0, *i0));
+	pointer_map.insert(std::pair<void*, int>(i1, *i1));
+	pointer_map.insert(std::pair<void*, int>(i2, *i2));
+	pointer_map.insert(std::pair<void*, int>(i3, *i3));
+	pointer_map.insert(std::pair<void*, int>(i4, 10086));
+
+	std::cout << "sizeof(void*)=" << sizeof(void*) << std::endl;
+	std::cout << "i0=" << pointer_map[i0] << std::endl;
+	std::cout << "i1=" << pointer_map[i1] << std::endl;
+	std::cout << "i2=" << pointer_map[i2] << std::endl;
+	std::cout << "i3=" << pointer_map[i3] << std::endl;
+	std::cout << "i4=" << pointer_map[i4] << std::endl;
+
+	for (auto it : pointer_map)
+	{
+		delete it.first;
+	}
+
 	return 0;
 }

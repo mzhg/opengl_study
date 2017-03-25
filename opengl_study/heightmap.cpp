@@ -54,6 +54,8 @@ void HeightmapDemo::onCreate()
 	printf("second.name = %s.\n", second.name);
 	rect_pack_test();
 
+
+//	PostProcessing::RenderPass rrr;
 	if (g_test_sdk)
 	{
 		const char* search_path = "../ant_vr_sdk/";

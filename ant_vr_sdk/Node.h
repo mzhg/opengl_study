@@ -25,16 +25,7 @@ namespace jet
 			* @param name the name of the scene element. This is required for
 			* identification and comparison purposes.
 			*/
-			Node(const std::string& name) : Spatial(name)
-			{
-				// For backwards compatibility, only clear the "requires
-				// update" flag if we are not a subclass of Node.
-				// This prevents subclass from silently failing to receive
-				// updates when they upgrade.
-				
-				const char* pName = typeid(*this).name();
-				setRequiresUpdates(strcmp(pName, "Node") != 0);
-			}
+			Node(const std::string& name);
 
 			/**
 			*
@@ -45,64 +36,9 @@ namespace jet
 			*/
 			int getQuantity() const { return m_pChildren.size(); }
 
-			void updateLogicalState(float tpf) override
-			{
-				Spatial::updateLogicalState(tpf);
+			void updateLogicalState(float tpf) override;
 
-				// Only perform updates on children if we are the
-				// root and then only peform updates on children we
-				// know to require updates.
-				// So if this isn't the root, abort.
-				if (m_pParent != nullptr) {
-					return;
-				}
-
-				for (Spatial* s : getUpdateList()) {
-					s->updateLogicalState(tpf);
-				}
-			}
-
-			void updateGeometricState() override
-			{
-				if (m_iRefreshFlags == 0) 
-				{
-					// This branch has no geometric state that requires updates.
-					return;
-				}
-				if ((m_iRefreshFlags & RF_LIGHTLIST) != 0)
-				{
-					updateWorldLightList();
-				}
-				if ((m_iRefreshFlags & RF_TRANSFORM) != 0)
-				{
-					// combine with parent transforms- same for all spatial
-					// subclasses.
-					updateWorldTransforms();
-				}
-				if ((m_iRefreshFlags & RF_MATPARAM_OVERRIDE) != 0) 
-				{
-					updateMatParamOverrides();
-				}
-
-				m_iRefreshFlags &= ~RF_CHILD_LIGHTLIST;
-				if (!m_pChildren.empty()) 
-				{
-					// the important part- make sure child geometric state is refreshed
-					// first before updating own world bound. This saves
-					// a round-trip later on.
-					// NOTE 9/19/09
-					// Although it does save a round trip,
-					for (Spatial* pChild : m_pChildren) {
-						pChild->updateGeometricState();
-					}
-				}
-
-				if ((m_iRefreshFlags & RF_BOUND) != 0){
-					updateWorldBound();
-				}
-
-				assert(m_iRefreshFlags == 0);
-			}
+			void updateGeometricState() override;
 
 			/**
 			* <code>getTriangleCount</code> returns the number of triangles contained
@@ -111,30 +47,15 @@ namespace jet
 			* @return the triangle count of this branch.
 			*/
 			
-			int getTriangleCount() override{
-				int count = 0;
-				for (int i = 0; i < m_pChildren.size(); i++) 
-				{
-					count += m_pChildren[i]->getTriangleCount();
-				}
+			int getTriangleCount() override;
 
-				return count;
-			}
 			/**
 			* <code>getVertexCount</code> returns the number of vertices contained
 			* in all sub-branches of this node that contain geometry.
 			*
 			* @return the vertex count of this branch.
 			*/
-			 int getVertexCount() override{
-				int count = 0;
-				for (int i = 0; i < m_pChildren.size(); i++) 
-				{
-					count += m_pChildren[i]->getVertexCount();
-				}
-
-				return count;
-			}
+			int getVertexCount() override;
 
 			/**
 			* <code>attachChild</code> attaches a child to this node. This node
@@ -148,7 +69,8 @@ namespace jet
 			* @return the number of children maintained by this node.
 			* @throws IllegalArgumentException if child is null.
 			*/
-			virtual size_t attachChild(Spatial* pChild) {
+			virtual size_t attachChild(Spatial* pChild) 
+			{
 				return attachChildAt(pChild, m_pChildren.size());
 			}
 			/**
@@ -164,37 +86,7 @@ namespace jet
 			* @return the number of children maintained by this node.
 			* @throws NullPointerException if child is null.
 			*/
-			size_t attachChildAt(Spatial* pChild, int index)
-			{
-//				if (child == null)
-//					throw new NullPointerException();
-				assert(pChild);
-
-				if (pChild->getParent() != this && pChild != this)
-				{
-					if (pChild->getParent() != nullptr) 
-					{
-						pChild->getParent()->detachChild(pChild);
-					}
-					pChild->setParent(this);
-//					m_pChildren.add(index, pChild);
-					m_pChildren.insert(m_pChildren.begin() + index, pChild);
-					// XXX: Not entirely correct? Forces bound update up the
-					// tree stemming from the attached child. Also forces
-					// transform update down the tree-
-					pChild->setTransformRefresh();
-					pChild->setLightListRefresh();
-					pChild->setMatParamOverrideRefresh();
-#if 0
-					if (logger.isLoggable(Level.FINE)) {
-						logger.log(Level.FINE, "Child ({0}) attached to this node ({1})",
-							new Object[]{child.getName(), getName()});
-					}
-#endif
-					invalidateUpdateList();
-				}
-				return m_pChildren.size();
-			}
+			size_t attachChildAt(Spatial* pChild, int index);
 
 			/**
 			* <code>detachChild</code> removes a given child from the node's list.
@@ -204,23 +96,7 @@ namespace jet
 			*            the child to remove.
 			* @return the index the child was at. -1 if the child was not in the list.
 			*/
-			int detachChild(Spatial* pChild) {
-//				if (pChild == null)
-//					throw new NullPointerException();
-				assert(pChild);
-
-				if (pChild->getParent() == this) 
-				{
-					int index = Numeric::indexOf(m_pChildren, pChild);
-					if (index != -1) 
-					{
-						detachChildAt(index);
-					}
-					return index;
-				}
-
-				return -1;
-			}
+			int detachChild(Spatial* pChild);
 
 			/**
 			* <code>detachChild</code> removes a given child from the node's list.
@@ -231,22 +107,7 @@ namespace jet
 			*            the child to remove.
 			* @return the index the child was at. -1 if the child was not in the list.
 			*/
-			int detachChildNamed(std::string& childName) 
-			{
-//				if (childName == null)
-//					throw new NullPointerException();
-
-
-				for (int x = 0, max = m_pChildren.size(); x < max; x++) {
-					Spatial* pChild = m_pChildren[x];
-					if (childName == pChild->getName())
-					{
-						detachChildAt(x);
-						return x;
-					}
-				}
-				return -1;
-			}
+			int detachChildNamed(std::string& childName);
 
 			/**
 			*
@@ -257,46 +118,14 @@ namespace jet
 			*            the index of the child to be removed.
 			* @return the child at the supplied index.
 			*/
-			Spatial* detachChildAt(int index) 
-			{
-				Spatial* pChild = m_pChildren[index];
-				m_pChildren.erase(m_pChildren.begin() + index);
-				if (pChild != nullptr)
-				{
-					pChild->setParent(nullptr);
-//					logger.log(Level.FINE, "{0}: Child removed.", this.toString());
-
-					// since a child with a bound was detached;
-					// our own bound will probably change.
-					setBoundRefresh();
-
-					// our world transform no longer influences the child.
-					// XXX: Not neccessary? Since child will have transform updated
-					// when attached anyway.
-					pChild->setTransformRefresh();
-					// lights are also inherited from parent
-					pChild->setLightListRefresh();
-					pChild->setMatParamOverrideRefresh();
-
-					invalidateUpdateList();
-				}
-				return pChild;
-			}
+			Spatial* detachChildAt(int index);
 
 			/**
 			*
 			* <code>detachAllChildren</code> removes all children attached to this
 			* node.
 			*/
-			void detachAllChildren() {
-				// Note: this could be a bit more efficient if it delegated
-				// to a private method that avoided setBoundRefresh(), etc.
-				// for every child and instead did one in here at the end.
-				for (int i = m_pChildren.size() - 1; i >= 0; i--) {
-					detachChildAt(i);
-				}
-//				logger.log(Level.FINE, "{0}: All children removed.", this.toString());
-			}
+			void detachAllChildren();
 
 			/**
 			* <code>getChildIndex</code> returns the index of the given spatial
@@ -315,16 +144,7 @@ namespace jet
 			* @param index1 The index of the first child to swap
 			* @param index2 The index of the second child to swap
 			*/
-			void swapChildren(int index1, int index2) 
-			{
-#if 0
-				Spatial c2 = children.get(index2);
-				Spatial c1 = children.remove(index1);
-				children.add(index1, c2);
-				children.remove(index2);
-				children.add(index2, c1);
-#endif
-			}
+			void swapChildren(int index1, int index2);
 
 			/**
 			*
@@ -346,26 +166,7 @@ namespace jet
 			*            the name of the child to retrieve. If null, we'll return null.
 			* @return the child if found, or null.
 			*/
-			Spatial* getChild(const std::string& name) 
-			{
-				for (Spatial* pChild : m_pChildren) 
-				{
-					if (name == pChild->getName()) 
-					{
-						return pChild;
-					}
-					
-					Node* pNode = static_cast<Node*>(pChild);
-					if (pNode) {
-						Spatial* out = pNode->getChild(name);
-						if (out != nullptr) 
-						{
-							return out;
-						}
-					}
-				}
-				return nullptr;
-			}
+			Spatial* getChild(const std::string& name);
 			/**
 			* determines if the provided Spatial is contained in the children list of
 			* this node.
@@ -374,22 +175,7 @@ namespace jet
 			*            the child object to look for.
 			* @return true if the object is contained, false otherwise.
 			*/
-			bool hasChild(Spatial* spat) 
-			{
-//				if (m_pChildren.contains(spat))
-				if (Numeric::indexOf(m_pChildren, spat) >= 0)
-					return true;
-
-				for (Spatial* pChild : m_pChildren) {
-					Node* pNode = static_cast<Node*>(pChild);
-					if (pNode && pNode->hasChild(spat)) 
-					{
-						return true;
-					}
-				}
-
-				return false;
-			}
+			bool hasChild(Spatial* spat);
 
 			/**
 			* Returns all children to this node. Note that modifying that given
@@ -399,21 +185,9 @@ namespace jet
 			*/
 			std::vector<Spatial*>& getChildren() { return m_pChildren; }
 
+			void setMaterial(MaterialPtr mat) override;
 
-			void setMaterial(MaterialPtr mat) override
-			{
-				for (int i = 0; i < m_pChildren.size(); i++){
-					m_pChildren[i]->setMaterial(mat);
-				}
-			}
-
-			void setLodLevel(int lod) override{
-				Spatial::setLodLevel(lod);
-				for (Spatial* pChild : m_pChildren) 
-				{
-					pChild->setLodLevel(lod);
-				}
-			}
+			void setLodLevel(int lod) override;
 
 #if 0
 			int collideWith(Collidable other, CollisionResults results){
@@ -459,21 +233,9 @@ namespace jet
 				return total;
 			}
 #endif
-			void setModelBound(BoundingVolumePtr modelBound) override
-			{
-				for (Spatial* pChild : m_pChildren)
-				{
-					pChild->setModelBound(modelBound.get() != nullptr ? BoundingVolumePtr(modelBound->clone()) : nullptr);
-				}
-			}
-
-			virtual void updateModelBound() override
-			{
-				for (Spatial* pChild : m_pChildren)
-				{
-					pChild->updateModelBound();
-				}
-			}
+			void setModelBound(BoundingVolumePtr modelBound) override;
+			virtual void updateModelBound() override;
+			virtual bool isBatchNode() const { return false; }
 
 #if 0
 			void depthFirstTraversal(SceneGraphVisitor visitor, DFSMode mode) {
@@ -499,113 +261,18 @@ namespace jet
 			}
 #endif
 
-			
-			void setTransformRefresh() override
-			{
-				Spatial::setTransformRefresh();
+			void setSpatialManager(class SpatialManager* pManager);
+			void setTransformRefresh() override;
+			void setLightListRefresh() override;
+			void setMatParamOverrideRefresh() override;
 
-				for (Spatial* pChild : m_pChildren)  // TODO
-				{
-					if ((pChild->m_iRefreshFlags & RF_TRANSFORM) != 0)
-						continue;
+			void updateWorldBound() override;
 
-					pChild->setTransformRefresh();
-				}
-			}
-
-			
-			void setLightListRefresh() override
-			{
-				Spatial::setLightListRefresh();
-				for (Spatial* pChild : m_pChildren){
-					if ((pChild->m_iRefreshFlags & RF_LIGHTLIST) != 0)
-						continue;
-
-					pChild->setLightListRefresh();
-				}
-			}
-
-		
-			void setMatParamOverrideRefresh()
-			{
-				Spatial::setMatParamOverrideRefresh();
-				for (Spatial* pChild : m_pChildren) 
-				{
-					if ((pChild->m_iRefreshFlags & RF_MATPARAM_OVERRIDE) != 0)
-					{
-						continue;
-					}
-
-					pChild->setMatParamOverrideRefresh();
-				}
-			}
-
-			void updateWorldBound()
-			{
-				Spatial::updateWorldBound();
-#if 0
-				// for a node, the world bound is a combination of all it's children
-				// bounds
-				BoundingVolume* pResultBound = nullptr;
-				for (Spatial* pChild : m_pChildren) 
-				{
-					// child bound is assumed to be updated
-					assert(pChild->m_iRefreshFlags & RF_BOUND) == 0;
-					if (pResultBound)
-					{
-						// merge current world bound with child world bound
-						pResultBound->mergeLocal(pChild->getWorldBound());
-					}
-					else 
-					{
-						// set world bound to first non-null child world bound
-						if (pChild->getWorldBound())
-						{
-							resultBound = child.getWorldBound().clone(this.worldBound);
-						}
-					}
-				}
-				this.worldBound = resultBound;
-#endif
-			}
-
-			void setParent(Node* parent) override
-			{
-				if (this->m_pParent == nullptr && parent != nullptr) 
-				{
-					// We were a root before and now we aren't... make sure if
-					// we had an updateList then we clear it completely to
-					// avoid holding the dead array.
-//					updateList = null;
-					m_pUpdateList.clear();
-					m_bUpdateListValid = false;
-				}
-				Spatial::setParent(parent);
-			}
+			void setParent(Node* parent) override;
 
 		private:
 
-			void addUpdateChildren(std::vector<Spatial*> results)
-			{
-				for (Spatial* pChild : m_pChildren) 
-				{
-					if (pChild->requiresUpdates()) 
-					{
-						results.push_back(pChild);
-					}
-					/*
-					if (child instanceof Node) {
-						((Node)child).addUpdateChildren(results);
-					}
-					*/
-
-					Node* pNode = dynamic_cast<Node*>(pChild);
-					if (pNode)
-					{
-						pNode->addUpdateChildren(results);
-					}
-				}
-			}
+			void addUpdateChildren(std::vector<Spatial*> results);
 
 			/**
 			*  Called to invalidate the root node's update list.  This is
@@ -613,29 +280,8 @@ namespace jet
 			*  when a control is added/removed from a Spatial in a way
 			*  that would change state.
 			*/
-			void invalidateUpdateList() 
-			{
-				m_bUpdateListValid = false;
-				if (m_pParent) 
-				{
-					m_pParent->invalidateUpdateList();
-				}
-			}
-
-			std::vector<Spatial*>& getUpdateList()
-			{
-				if (m_bUpdateListValid) 
-				{
-					return m_pUpdateList;
-				}
-
-				m_pUpdateList.clear();
-
-				// Build the list
-				addUpdateChildren(m_pUpdateList);
-				m_bUpdateListValid = true;
-				return m_pUpdateList;
-			}
+			void invalidateUpdateList();
+			std::vector<Spatial*>& getUpdateList();
 			
 		protected:
 			// This node's children.
@@ -657,6 +303,7 @@ namespace jet
 			bool m_bUpdateListValid = false;
 
 			class SceneManager* m_pSceneManager;
+			class SpatialManager* m_pSpatialManager;
 		};
 	}
 }

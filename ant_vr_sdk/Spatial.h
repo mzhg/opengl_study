@@ -432,7 +432,8 @@ namespace jet
 			* @see Spatial#addControl(com.jme3.scene.control.Control)
 			* @see Spatial#removeControl(java.lang.Class)
 			*/
-			int getNumControls() {
+			int getNumControls() 
+			{
 				return m_pControls.size();
 			}
 

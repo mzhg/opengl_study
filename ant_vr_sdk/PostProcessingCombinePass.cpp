@@ -5,8 +5,8 @@ namespace jet
 {
 	namespace util
 	{
-		PostProcessingCombinePass::PostProcessingCombinePass(uint32_t offset) :
-			PPRenderPass(COMBINE + offset)
+		PostProcessingCombinePass::PostProcessingCombinePass(uint32_t offset, uint32_t width, uint32_t height) :
+			PPRenderPass(COMBINE + offset, width, height)
 		{
 			set(2, 1);
 		}

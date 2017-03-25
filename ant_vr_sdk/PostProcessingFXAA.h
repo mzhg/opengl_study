@@ -7,7 +7,7 @@ namespace jet
 		class PostProcessingFXAA : public PPRenderPass
 		{
 		public:
-			PostProcessingFXAA(uint32_t quality) :PPRenderPass(PP_FXAA), m_Quality(quality){ set(1, 1);}
+			PostProcessingFXAA(uint32_t quality, uint32_t width = 0, uint32_t height = 0) :PPRenderPass(PP_FXAA, width, height), m_Quality(quality){ set(1, 1); }
 			virtual ~PostProcessingFXAA() {}
 
 			virtual void process(PPRenderContext* context, const PostProcessingParameters& parameters);
@@ -18,6 +18,12 @@ namespace jet
 			{
 				Texture2D* input = getInput(0);
 				out = input->getDesc();
+
+				if (Width && Height)
+				{
+					out.Width = Width;
+					out.Height = Height;
+				}
 			}
 
 			static void shutDown();

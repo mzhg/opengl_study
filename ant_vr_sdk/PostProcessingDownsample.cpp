@@ -35,15 +35,15 @@ namespace jet
 		}
 #else
 
-		static PPDownsamplePS* g_DwonsamplePS[static_cast<int>(DownsampleMethod::COUNT)] = {NULL};
+		static PPDownsamplePS* g_DwonsamplePS[static_cast<int>(DownsampleMethod::COUNT)][static_cast<int>(DownsampleTyple::COUNT)] = { NULL };
 		
-		PPDownsamplePS* getDownsamplePS(DownsampleMethod method)
+		PPDownsamplePS* getDownsamplePS(DownsampleMethod method, uint32_t sampleCount)
 		{
 			int index = static_cast<int>(method);
-			PPDownsamplePS* result = g_DwonsamplePS[index];
+			PPDownsamplePS* result = g_DwonsamplePS[index][sampleCount];
 			if (result == NULL)
 			{
-				g_DwonsamplePS[index] = result = new PPDownsamplePS(method);
+				g_DwonsamplePS[index][sampleCount] = result = new PPDownsamplePS(method, sampleCount);
 			}
 
 			return result;
@@ -53,26 +53,28 @@ namespace jet
 		{
 			for (int i = 0; i < static_cast<int>(DownsampleMethod::COUNT); i++)
 			{
-				if (g_DwonsamplePS[i])
+				for (int j = 0; j < static_cast<int>(DownsampleTyple::COUNT); j++)
 				{
-					delete g_DwonsamplePS[i];
-					g_DwonsamplePS[i] = NULL;
+					if (g_DwonsamplePS[i][j])
+					{
+						delete g_DwonsamplePS[i][j];
+						g_DwonsamplePS[i][j] = NULL;
+					}
 				}
 			}
 		}
 #endif
 
-		PostProcessingDownsample::PostProcessingDownsample(DownsampleMethod method, uint32_t offset):
-			PPRenderPass(DOWNSAMPLE + offset), Method(method){
+		PostProcessingDownsample::PostProcessingDownsample(DownsampleMethod method, uint32_t sampleCount, uint32_t offset, uint32_t width, uint32_t height) :
+			PPRenderPass(DOWNSAMPLE + offset, width, height), Method(method), SampleCount(sampleCount){
 			set(1, 1);
 		}
-
 
 		void PostProcessingDownsample::process(PPRenderContext* context, const PostProcessingParameters& parameters)
 		{
 			Texture2D* inputTexture = getInput(0);
 			RenderTarget* outputTexture = getOutputTexture(0);
-			PPDownsamplePS* pShaderPixels = getDownsamplePS(Method);
+			PPDownsamplePS* pShaderPixels = getDownsamplePS(Method, SampleCount);
 
 			context->begin();
 			{

@@ -30,6 +30,9 @@ namespace jet
 		enum class PostProcessingEffect
 		{
 			BLOOM,
+			LENS_FLARE,
+			LIGHT_STREAKER,
+			HDR,
 			FXAA,
 			STATIC_MOTION_BLUR,
 			COUNT
@@ -47,6 +50,9 @@ namespace jet
 			void addFXAA(uint32_t quality);
 
 			void addStaticMotionBlur(glm::mat4 previouseViewProj, glm::mat4 viewProjInverse);
+			void addLensFlare(Texture2D* pFlareTexture = nullptr);
+			void addLightStreaker(float lumThreshold = 0.97f, int startGenLevel = 0);
+			void addHDR(bool, float explosure = 1.4f, float gamma = 1.0f / 1.8f);
 
 			void performancePostProcessing(const FrameAttribs& frameAttribs);
 
@@ -54,6 +60,8 @@ namespace jet
 
 		private:
 			PostProcessing(PostProcessing&) = delete;
+			PostProcessing& operator=(PostProcessing&) = delete;
+
 			void prepare(const FrameAttribs& frameAttribs);
 			void checkEffectBits()
 			{
@@ -67,15 +75,28 @@ namespace jet
 			}
 
 			bool isBloomEnabled() const { return m_bEffectBits[static_cast<int>(PostProcessingEffect::BLOOM)]; }
+			bool isLensFlareEnabed() const { return m_bEffectBits[static_cast<int>(PostProcessingEffect::LENS_FLARE)]; }
+			bool isLightStreakerEnabed() const { return m_bEffectBits[static_cast<int>(PostProcessingEffect::LIGHT_STREAKER)]; }
+			bool isHDREnabed() const { return m_bEffectBits[static_cast<int>(PostProcessingEffect::HDR)]; }
 			bool isFXAAEnabled()  const { return m_bEffectBits[static_cast<int>(PostProcessingEffect::FXAA)]; }
 			bool isStaticMotionBlurEnabled() const { return m_bEffectBits[static_cast<int>(PostProcessingEffect::STATIC_MOTION_BLUR)]; }
 
-			class PostProcessGaussBlur* createGaussionBlurPass();
-			class PostProcessingBloomSetup* createBloomSetupPass();
-			class PostProcessingCombinePass* createCombinePass();
-			class PostProcessingDownsample* createDownsamplePass(DownsampleMethod method);
-			class PostProcessingFXAA* createFXAAPass(uint32_t quality);
+			typedef std::shared_ptr<PPRenderPass> RenderPass;
+			RenderPass addBloomPass(RenderPass inputColor);
+			RenderPass addLightEffectPass(RenderPass inputColor, uint32_t inputWidth, uint32_t inputHeight, RenderPass& eyeAdaption);
+
+			class PostProcessingCalculateLumiance* createCalculateLumiancePass();
+			class PostProcessGaussBlur* createGaussionBlurPass(uint32_t width = 0, uint32_t height = 0);
+			class PostProcessingBloomSetup* createBloomSetupPass(bool useLight = false, uint32_t width = 0, uint32_t height = 0);
+			class PostProcessingCombinePass* createCombinePass(uint32_t width = 0, uint32_t height = 0);
+			class PostProcessingDownsample* createDownsamplePass(DownsampleMethod method, uint32_t sampleCount = 1u, uint32_t width = 0, uint32_t height = 0);
+			class PostProcessingFXAA* createFXAAPass(uint32_t quality, uint32_t width = 0, uint32_t height = 0);
 			class PostProcessingStaticMotionBlur* createStaticMotionBlurPass(uint32_t inputCount);
+
+			class PostProcessingGhostImageSetup* createGhostImageSetupPass(uint32_t width = 0, uint32_t height = 0);
+			class PostProcessingGlareCompose*    createGlareComposePass(glm::vec4 mixCoeff, uint32_t width = 0, uint32_t height = 0);
+			class PostProcessingLightStreaker*   createLightStreakerPass(uint32_t width = 0, uint32_t height = 0);
+			class PostProcessingTonemap*         createTonemapPass(GLuint width = 0, GLuint height = 0);
 
 			void reset()
 			{
@@ -83,6 +104,14 @@ namespace jet
 				m_iGaussionBlurPassCount = 0;
 				m_iBloomSetupPassCount = 0;
 				m_iCombinePassCount = 0;
+				m_iGhostImageCount = 0;
+				m_iGlareComposeCount = 0;
+				m_iLightStreakerCount = 0;
+
+				m_bFXAAEnabled = false;
+				m_bStaticMotionEnabled = false;
+				m_bEyeAdapterEnabled = false;
+				m_bTonemapEnabled = false;
 			}
 
 			void addGaussBlur(int kernal);
@@ -110,10 +139,18 @@ namespace jet
 			bool m_bEffectBits[static_cast<int>(PostProcessingEffect::COUNT)];
 			PPRenderContext* m_RenderContext;
 
-			uint32_t m_iDownsamplePassCount;
-			uint32_t m_iGaussionBlurPassCount;
-			uint32_t m_iBloomSetupPassCount;
-			uint32_t m_iCombinePassCount;
+			uint8_t m_iDownsamplePassCount;
+			uint8_t m_iGaussionBlurPassCount;
+			uint8_t m_iBloomSetupPassCount;
+			uint8_t m_iCombinePassCount;
+			uint8_t m_iGhostImageCount;
+			uint8_t m_iGlareComposeCount;
+			uint8_t m_iLightStreakerCount;
+			
+			bool    m_bFXAAEnabled;
+			bool    m_bStaticMotionEnabled;
+			bool    m_bEyeAdapterEnabled;
+			bool    m_bTonemapEnabled;
 		};
 	}
 }

@@ -11,7 +11,7 @@ namespace jet
 			GLCapabilities(std::set<std::string>& ext, bool fc);
 
 		public:
-			static GLCapabilities* get();
+			static const GLCapabilities* get();
 
 			static void release();
 

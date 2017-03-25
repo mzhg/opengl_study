@@ -246,6 +246,14 @@ namespace jet
 			}
 		}
 
+		void PPRenderContext::bindTexture(GLuint unit, TextureGL* pTex)
+		{
+			glActiveTexture(GL_TEXTURE0 + unit);
+			GLenum target = pTex ? pTex->getTarget() : 0;
+			GLuint textureID = pTex ? pTex->getTexture() : 0;
+			glBindTexture(target, textureID);
+		}
+
 		void PPRenderContext::clearColorTarget(uint32_t location, const GLfloat clearColors[4])
 		{
 			assert(m_InBeginBlock);
@@ -390,8 +398,9 @@ namespace jet
 			}
 		}
 
-		void PPRenderContext::performancePostProcessing()
+		void PPRenderContext::performancePostProcessing(const PPRectangle& screenSize)
 		{
+			m_ScreenSize = screenSize;
 			for (auto it = m_RenderPassList.begin(); it != m_RenderPassList.end(); it++)
 			{
 				(*it)->reset();

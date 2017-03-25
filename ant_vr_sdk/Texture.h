@@ -99,7 +99,7 @@ namespace jet
 
 			Texture2DDesc() : Width(0), Height(0), MipLevels(1), ArraySize(1), Format(0), SampleCount(1){}
 			Texture2DDesc(GLint width, GLint height, GLuint format, GLuint mipLevels = 1, GLuint arraySize = 1, GLuint sampleCount = 1):
-				Width(width), Height(height), Format(format), MipLevels(mipLevels), ArraySize(arraySize), SampleCount(sampleCount){}
+				Width(width), Height(height), Format(format), MipLevels(mipLevels), ArraySize(arraySize), SampleCount(sampleCount){} 
 		}Texture2DDesc;
 
 		typedef struct Texture3DDesc
@@ -204,7 +204,7 @@ namespace jet
 
 		private:
 			TextureData(TextureData&) = delete;
-			TextureData operator=(TextureData&) = delete;
+			TextureData& operator=(TextureData&) = delete;
 		}TextureData;
 
 		extern bool operator < (const Texture2DDesc& a, const Texture2DDesc& b);

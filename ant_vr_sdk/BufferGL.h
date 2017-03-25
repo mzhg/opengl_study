@@ -2,44 +2,205 @@
 
 #include "GLUtil.h"
 #include "GLStates.h"
+#include "Buffer.h"
+
 namespace jet
 {
 	namespace util
 	{
-		enum class MappingBits
+
+		class BufferGPU : public Buffer, public Disposeable
 		{
-			READ = 1,
-			WRITE = 2,
-			READ_WRITE = READ | WRITE,
+		public:
+			BufferGPU() : m_Buffer(0), m_MappedPointer(nullptr), m_MappedOffset(0), m_MappedSize(0){}
+			virtual ~BufferGPU() { dispose(); }
+
+			virtual bool init(uint32_t size, const uint8_t* pData = nullptr) = 0;
+			virtual bool update(uint32_t offset, uint32_t size, const uint8_t* pData) override;
+			virtual uint8_t* map(uint32_t offset, uint32_t length, MappingBits bits = MappingBits::READ_WRITE) override;
+			virtual void unmap() override;
+
+			void dispose() override;
+
+			virtual void memoryCpy(uint32_t dst_offset, uint32_t src_offset, uint32_t size) override;
+
+			virtual void bind();
+			virtual void unbind();
+			virtual BufferTarget getTarget() const = 0;
+		protected:
+			virtual GLenum getGLTarget() const = 0;
+
+		protected:
+			// The OpenGL buffer object ID
+			GLuint m_Buffer;
+			uint8_t* m_MappedPointer;
+			uint32_t m_MappedOffset;
+			uint32_t m_MappedSize;
 		};
 
-		template<BufferTarget Target>
-		class BufferGL : public Disposeable
+		class BufferGPUSubRange : public BufferGPU
+		{
+		public:
+			BufferGPUSubRange(BufferGPU* pBuffer, uint32_t offset);
+			bool init(uint32_t size, const uint8_t* pData = nullptr) override;
+			bool update(uint32_t offset, uint32_t size, const uint8_t* pData) override;
+			uint8_t* map(uint32_t offset, uint32_t length, MappingBits bits = MappingBits::READ_WRITE) override;
+
+			void unmap() override;
+
+			void memoryCpy(uint32_t dst_offset, uint32_t src_offset, uint32_t size) override;
+
+			void setOffset(uint32_t uiNewOffset) { m_BuffSubRange.setOffset(uiNewOffset); }
+			uint32_t getDynamicOffset() override { return m_BuffSubRange.getDynamicOffset(); }
+
+			void bind() override;
+			void unbind() override;
+			BufferTarget getTarget() const override;
+		protected:
+			GLenum getGLTarget() const override;
+
+		protected:
+			BufferSubRange m_BuffSubRange;
+			BufferGPU* m_pBuffer;
+		};
+
+		class BufferGPUSharedPool : public BufferGPU
+		{
+		public:
+			BufferGPUSharedPool(BufferCreator* pBufCreator, uint32_t capacity = 0) : m_Pool(createPool(pBufCreator, capacity)){
+				m_pProxyBuffer = dynamic_cast<BufferGPU*>(pBufCreator->create());
+				assert(m_pProxyBuffer);
+			}
+			BufferGPUSharedPool(BufferGPU* pBuf) : m_Pool(createPool(pBuf)), m_pProxyBuffer(pBuf){ assert(m_pProxyBuffer); }
+
+			virtual bool init(uint32_t size, const uint8_t* pData = nullptr) override;
+			virtual bool update(uint32_t offset, uint32_t size, const uint8_t* pData) override;
+			virtual uint8_t* map(uint32_t offset, uint32_t length, MappingBits bits = MappingBits::READ_WRITE) override;
+			virtual void unmap() override;
+			virtual void memoryCpy(uint32_t dst_offset, uint32_t src_offset, uint32_t size) override;
+
+			virtual void bind();
+			virtual void unbind();
+			BufferTarget getTarget() const override;
+
+			virtual ~BufferGPUSharedPool()
+			{
+				if (m_Pool)
+				{
+					delete m_Pool;
+				}
+			}
+		protected:
+			GLenum getGLTarget() const override;
+
+			virtual BufferSharedPool* createPool(BufferCreator* pBufCreator, uint32_t) const;
+			virtual BufferSharedPool* createPool(BufferGPU* pBuf) const;
+
+		protected:
+			BufferSharedPool* m_Pool;
+			BufferGPU*        m_pProxyBuffer;
+		};
+
+		class BufferGPUSharedUniformPool : public BufferGPUSharedPool
+		{
+		public:
+
+			virtual ~BufferGPUSharedUniformPool()
+			{
+				BufferGPUSharedPool::~BufferGPUSharedPool();
+			}
+
+			BufferGPUSharedUniformPool(BufferCreator* pBufCreator);
+			BufferGPUSharedUniformPool(BufferGPU* pBuf);
+
+			/// Initializes the large, shared VBO wrapper and sets its size
+			/// \param dataSize Size, in bytes, of each sub-range that will be
+			///                 contained withing the buffer object
+			/// \param numSubRanges Number of sub-ranges that will be contained 
+			///                     within the shared VBO
+			/// \param numFrames Number of frames worth of data contained in the VBO, which will
+			///                  act as a ring buffer, using the next set of sub-ranges for each frame
+			/// \param bPersistent Flag to indicate whether the VBO should be persistently mapped
+			/// \return True if the buffer was initialized, false if an error occurred
+			bool init(uint32_t dataSize, uint32_t numSubRanges, uint32_t numFrames);
+
+			/// Sets the current number of sub-ranges to contain in the shared VBO
+			/// \param numSubRanges Number of sub-ranges that will be held within the VBO
+			/// \note Must not be called between calls to BeginUpdate()/EndUpdate().
+			void setNumSubRanges(uint32_t numSubRanges);
+
+			/// Sets the size of each sub-range contained in the shared VBO
+			/// \param subRangeSize Size, in bytes, of each sub-range that will be held within the VBO
+			/// \note Must not be called between calls to BeginUpdate()/EndUpdate().
+			void setSubRangeSize(uint32_t subRangeSize);
+
+			/// Sets the number of frames worth of data contained in the shared VBO
+			/// \param numFrames number of frames worth of data that will be held within the VBO
+			/// \note Must not be called between calls to BeginUpdate()/EndUpdate().
+			void setNumFrames(uint32_t numFrames);
+
+			/// Returns the pointer to the area within the active buffer in 
+			/// the shared VBO that corresponds to the given sub-range
+			/// \param subRangeIndex Index of the sub-range for which to return a pointer
+			/// \return Pointer to the current writeable range of the vertex buffer
+			uint8_t* map(uint32_t subRangeIndex, uint32_t subIndex);
+
+			/// Returns the offset into the shared VBO of the sub-range with the 
+			/// provided index
+			/// \param subRangeIndex Index of the sub-range for which to retrieve the offset
+			/// \return Offset, in bytes, from the start of the vertex buffer at which the
+			///         sub-range with the given index begins.
+			uint32_t getDynamicOffset(int subRangeIndex, uint32_t subIndex);
+
+		protected:
+			BufferSharedPool* createPool(BufferCreator* pBufCreator, uint32_t) const override;
+			BufferSharedPool* createPool(BufferGPU* pBuf) const override;
+
+		private:
+			bool initBuffers();
+
+		private:
+			BufferSharedUniformPool* m_SharedUniformPool;
+		};
+
+		class BufferGPUSharedNonUniformPool : public BufferGPUSharedPool
+		{
+		public:
+			BufferGPUSharedNonUniformPool(BufferCreator* pBufCreator, uint32_t);
+			BufferGPUSharedNonUniformPool(BufferGPU* pBuf);
+			virtual ~BufferGPUSharedNonUniformPool()
+			{
+				BufferGPUSharedPool::~BufferGPUSharedPool();
+			}
+
+			BufferBean add(uint32_t size, const uint8_t* pData);
+			bool update(BufferBean bean, uint32_t offset, uint32_t size, const uint8_t* pData);
+			void remove(BufferBean bean);
+			uint32_t getOffset(BufferBean bean) const;
+			uint8_t* map(BufferBean bean, MappingBits bits = MappingBits::READ_WRITE);
+			bool isDirty(BufferBean bean) const;
+		protected:
+			BufferSharedPool* createPool(BufferCreator* pBufCreator, uint32_t) const override;
+			BufferSharedPool* createPool(BufferGPU* pBuf) const override;
+
+		private:
+			BufferSharedNonUniformPool* m_SharedNonUniformPool;
+		};
+
+		template<BufferTarget Target, BufferUsage Usage, GLenum MapBits>
+		class BufferGL : public BufferGPU
 		{
 #define __TARGET ConvertBufferTargetToGLenum(Target)
+#define __USAGE  ConvertBufferUsageToGLenum(Usage)
+#define __PERSISTENT (MapBits & GL_MAP_PERSISTENT_BIT)
 		public:
-			BufferGL() :
-			m_Buffer(0),
-			m_Size(0)
-#if defined(_DEBUG)
-			,
-			m_Mapped(false)
-#endif
-			{}
+			BufferGL() : BufferGPU(){}
 
-			void bind()
-			{
-				if (!m_Buffer)
-				{
-					glGenBuffers(1, &m_Buffer);
-				}
-
-				GLStates::get().bindBuffer(m_Buffer, Target);
-			}
-			void load(GLsizei size, const GLubyte* pData = nullptr, BufferUsage usage = BufferUsage::STATIC_DRAW)
+//			void load(GLsizei size, const GLubyte* pData = nullptr, BufferUsage usage = BufferUsage::STATIC_DRAW)
+			virtual bool init(uint32_t size, const uint8_t* pData = nullptr) override
 			{
 				assert(size);
-				m_Useage = usage;
+				bind();
 #if defined(_DEBUG)
 				GLStates& state = GLStates::get();
 				if (state.getBindingBuffer(Target) != m_Buffer)
@@ -48,128 +209,122 @@ namespace jet
 					assert(false);
 				}
 #endif
-				CHECK_GL(glBufferData(__TARGET, size, pData, ConvertBufferUsageToGLenum(usage)));
+				CHECK_GL(glBufferData(__TARGET, size, pData, __USAGE));
+				m_uiDataSize = size;
+				return true;
 			}
 
-			void update(GLintptr offset, GLsizei size, const GLubyte* pData)
+			uint8_t* map(uint32_t offset, uint32_t length, MappingBits bits = MappingBits::READ_WRITE) override
 			{
-				assert(size);
+#if __PERSISTENT
+				if(m_MappedPointer == nullptr)
+				{
+					CHECK_GL(m_MappedPointer = glMapBufferRange(__TARGET, 0, m_uiDataSize, bits));
+					if (m_MappedPointer)
+					{
+						m_MappedOffset = 0;
+						m_MappedSize = m_uiDataSize;
+						return m_MappedPointer + offset;
+					}
+				}
+#else
+				if (m_MappedPointer && m_MappedOffset == offset && m_MappedSize == length)
+				{
+					return m_MappedPointer;
+				}
+				else if (m_MappedPointer)
+				{
+					unmap();
+				}
+
+				bind();
 #if defined(_DEBUG)
 				GLStates& state = GLStates::get();
-				if (state.getBindingBuffer(Target) != m_Buffer)
+				if (state.getBindingBuffer(getTarget()) != m_Buffer)
 				{
 					printf("No buffer binding.\n");
 					assert(false);
 				}
 #endif
-				CHECK_GL(glBufferSubData(__TARGET, offset, size, pData));
-			}
+				CHECK_GL(GLvoid* p = glMapBufferRange(getGLTarget(), offset, length, MapBits));
 
-			template<typename T>
-			T* map(GLintptr offset, GLsizei length, MappingBits bits = MappingBits::READ_WRITE)
-			{
-				GLbitfield bits;
-
-				switch (bits)
-				{
-				case jet::util::READ:
-					bits = GL_MAP_READ_BIT;
-					break;
-				case jet::util::WRITE:
-					bits = GL_MAP_WRITE_BIT;
-					break;
-				case jet::util::READ_WRITE:
-					bits = (GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
-					break;
-				default:
-					assert(false);
-					break;
-				}
-#if defined(_DEBUG)
-				GLStates& state = GLStates::get();
-				if (state.getBindingBuffer(Target) != m_Buffer)
-				{
-					printf("No buffer binding.\n");
-					assert(false);
-				}
-
-				m_Mapped = true;
+				m_MappedPointer = reinterpret_cast<uint8_t*>(p);
+				m_MappedOffset = offset;
+				m_MappedSize = length;
+				return m_MappedPointer;
 #endif
-				GLvoid* p = glMapBufferRange(__TARGET, offset, length, bits);
-				CHECK_GL_ERROR;
-				assert(p);
-				return dynamic_cast<T*>(p);
 			}
 
-			void unmap(){ 
-#if defined(_DEBUG)
-				GLStates& state = GLStates::get();
-				if (state.getBindingBuffer(Target) != m_Buffer)
-				{
-					printf("No buffer binding.\n");
-					assert(false);
-				}
-
-				assert(m_Mapped);
-				m_Mapped = false;
+			void unmap() override
+			{
+#if __PERSISTENT
+				// Nothing need to do.
+#else
+				BufferGPU::unmap();
 #endif
-				glUnmapBuffer(__TARGET); 
 			}
 
-			void unbind()
+			BufferTarget getTarget() const override
 			{
-				GLStates& state = GLStates::get();
-#if defined(_DEBUG)
-				if (state.getBindingBuffer(Target) != m_Buffer)
-				{
-					printf("No buffer binding.\n");
-				}
-#endif
-				state.resetBuffer(Target);
+				return Target;
 			}
-			void dispose()
+
+			GLenum getGLTarget() const override
 			{
-				SAFE_RELEASE_BUFFER(m_Buffer);
+				return __TARGET;
 			}
 
-			virtual ~BufferGL()
-			{
-				dispose();
-			}
-
-			GLuint getSize() const 
-			{
-				return m_Size;
-			}
-
-			BufferTarget getTarget() const
-			{
-				return Target
-			}
-
-			BufferUsage getUsage() const { return m_Useage; }
-		private:
-			GLuint m_Buffer;
-			GLuint m_Size;
-			BufferUsage m_Useage;
-
-#if defined(_DEBUG)
-			bool  m_Mapped;
-#endif
+			BufferUsage getUsage() const { return Usage; }
 
 //			static const GLenum __TARGET = 0; // ConvertBufferTargetToGLenum(Target);
 #undef __TARGET
+#undef __USAGE
+#undef __PERSISTENT
+
+			private:
+//				const bool m_bPersistent;
+		};
+
+		template<BufferTarget Target, GLenum StorageBits, GLenum MapBits>
+		class BufferGLStorage : public BufferGL<Target, BufferUsage::STATIC_DRAW, MapBits>
+		{
+		public:
+			bool init(uint32_t size, const uint8_t* pData = nullptr) override
+			{
+				assert(size);
+				bind();
+#if defined(_DEBUG)
+				GLStates& state = GLStates::get();
+				if (state.getBindingBuffer(Target) != m_Buffer)
+				{
+					printf("No buffer binding.\n");
+					assert(false);
+				}
+#endif
+				CHECK_GL(glBufferStorage(getGLTarget(), size, pData, flags));
+				m_uiDataSize = size;
+
+				return true;
+			}
 		};
 
 		
-		typedef BufferGL<BufferTarget::ARRAY> ArrayBufferGL;
-		typedef BufferGL<BufferTarget::ELEMENT> ElementBufferGL;
-		typedef BufferGL<BufferTarget::UNIFORM> UniformBufferGL;
+		template<BufferUsage Usage, GLenum MapBits>
+		class ArrayBufferGL : public BufferGL < BufferTarget::ARRAY, Usage, MapBits > {};
+
+		template<BufferUsage Usage, GLenum MapBits>
+		class ElementBufferGL : public BufferGL < BufferTarget::ELEMENT, Usage, MapBits > {};
+
+		template<BufferUsage Usage, GLenum MapBits>
+		class UniformBufferGL : public BufferGL < BufferTarget::UNIFORM, Usage, MapBits > {};
+		
+//		typedef BufferGL<BufferTarget::ELEMENT> ElementBufferGL;
+//		typedef BufferGL<BufferTarget::UNIFORM> UniformBufferGL;
 
 		typedef struct BufferData
 		{
-			ArrayBufferGL* ArrayBuffer;
-			ElementBufferGL* ElementBuffer;
+			BufferGPU* ArrayBuffer;
+			BufferGPU* ElementBuffer;
 			AttribDesc* AttribDescs;
 			unsigned AttribCount;
 
@@ -180,7 +335,7 @@ namespace jet
 				ElementBuffer(nullptr)
 			{}
 
-			BufferData(ArrayBufferGL* pArray, unsigned count, AttribDesc* pDesc, ElementBufferGL* pElement) :
+			BufferData(BufferGPU* pArray, unsigned count, AttribDesc* pDesc, BufferGPU* pElement) :
 				ArrayBuffer(pArray), AttribDescs(pDesc), AttribCount(count), ElementBuffer(pElement){}
 
 		}BufferData;
@@ -208,6 +363,7 @@ namespace jet
 			BufferData m_BufferData;
 		};
 
+#if 0
 		typedef struct BufferBean
 		{
 		public:
@@ -599,6 +755,7 @@ namespace jet
 			uint32_t m_uiEmptyRegionCount;
 			uint32_t m_uiConsumedSize;
 		};
+#endif
 	}
 }
 

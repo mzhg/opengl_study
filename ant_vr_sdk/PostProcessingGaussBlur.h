@@ -25,19 +25,25 @@ namespace jet
 		class PostProcessGaussBlur : public PPRenderPass
 		{
 		public:
-			PostProcessGaussBlur(uint32_t index = 0) : PPRenderPass(GAUSS_BLUR + index)
+			PostProcessGaussBlur(uint32_t index = 0, uint32_t width = 0, uint32_t height = 0) : PPRenderPass(GAUSS_BLUR + index, width, height)
 			{
 				set(1, 1);
 			}
 
-			virtual void process(PPRenderContext* context, const PostProcessingParameters& parameters);
+			void process(PPRenderContext* context, const PostProcessingParameters& parameters) override;
 
 			virtual void drawQuad(){}
 
-			virtual void computeOutDesc(int index, Texture2DDesc& out)
+			void computeOutDesc(int index, Texture2DDesc& out) override
 			{
 				Texture2D* input = getInput(0);
 				out = input->getDesc();
+
+				if (Width && Height)
+				{
+					out.Width = Width;
+					out.Height = Height;
+				}
 			}
 
 			~PostProcessGaussBlur();

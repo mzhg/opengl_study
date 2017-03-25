@@ -141,12 +141,16 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BatchBuffer.cpp" />
     <ClCompile Include="BatchNode.cpp" />
     <ClCompile Include="BoundingVolume.cpp" />
+    <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="BufferGL.cpp" />
+    <ClCompile Include="BufferPooled.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="ColorModulation.cpp" />
     <ClCompile Include="Geometry.cpp" />
-    <ClCompile Include="GeometryGroupNode.cpp" />
+    <ClCompile Include="GeometryAttribBuffer.cpp" />
     <ClCompile Include="glstate_convertion.cpp" />
     <ClCompile Include="FileUtil.cpp" />
     <ClCompile Include="FramebufferGL.cpp" />
@@ -161,10 +165,16 @@
     <ClCompile Include="MaxRectsBinPack.cpp" />
     <ClCompile Include="MeshManager.cpp" />
     <ClCompile Include="Node.cpp" />
+    <ClCompile Include="SpatialManager.cpp" />
     <ClCompile Include="Numeric.cpp" />
     <ClCompile Include="NvAssetLoaderWin.cpp" />
     <ClCompile Include="NvInputTransformer.cpp" />
     <ClCompile Include="NvWin32StopWatch.cpp" />
+    <ClCompile Include="PostProcessingCalculateLumiance.cpp" />
+    <ClCompile Include="PostProcessingGhostImageSetup.cpp" />
+    <ClCompile Include="PostProcessingGlareCompose.cpp" />
+    <ClCompile Include="PostProcessingLightStreaker.cpp" />
+    <ClCompile Include="PostProcessingTonemap.cpp" />
     <ClCompile Include="SampleTexturePacker.cpp" />
     <ClCompile Include="TexturePacker.cpp" />
     <ClCompile Include="PostProcessingBloomSetup.cpp" />
@@ -195,10 +205,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AssetLoader.h" />
+    <ClInclude Include="BatchBuffer.h" />
     <ClInclude Include="BatchNode.h" />
     <ClInclude Include="BoundingVolume.h" />
+    <ClInclude Include="Buffer.h" />
     <ClInclude Include="BufferGL.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="ColorModulation.h" />
     <ClInclude Include="Disposeable.h" />
     <ClInclude Include="FileUtil.h" />
     <ClInclude Include="FramebufferGL.h" />
@@ -206,7 +219,7 @@
     <ClInclude Include="Geometry.h" />
     <ClInclude Include="geometry2d.h" />
     <ClInclude Include="geometry3d.h" />
-    <ClInclude Include="GeometryGroupNode.h" />
+    <ClInclude Include="GeometryAttribBuffer.h" />
     <ClInclude Include="GLSLProgram.h" />
     <ClInclude Include="GLStates.h" />
     <ClInclude Include="GLUtil.h" />
@@ -217,9 +230,15 @@
     <ClInclude Include="MaxRectsBinPack.h" />
     <ClInclude Include="MeshManager.h" />
     <ClInclude Include="Node.h" />
+    <ClInclude Include="SpatialManager.h" />
     <ClInclude Include="Numeric.h" />
     <ClInclude Include="NvInputTransformer.h" />
     <ClInclude Include="NvStopWatch.h" />
+    <ClInclude Include="PostProcessingCalculateLumiance.h" />
+    <ClInclude Include="PostProcessingGhostImageSetup.h" />
+    <ClInclude Include="PostProcessingGlareCompose.h" />
+    <ClInclude Include="PostProcessingLightStreaker.h" />
+    <ClInclude Include="PostProcessingTonemap.h" />
     <ClInclude Include="SampleTexturePacker.h" />
     <ClInclude Include="TexturePacker.h" />
     <ClInclude Include="PostProcessingBloomSetup.h" />
@@ -249,19 +268,32 @@
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\Java\miniLibs\shader_library\src\jet\util\opengl\shader\libs\postprocessing\cs_calculateAdaptedLum.glcs" />
     <None Include="assets\BloomSetupPS.frag" />
+    <None Include="assets\CalculateAdaptedLum.frag" />
+    <None Include="assets\CalculateLuminance.frag" />
     <None Include="assets\CommonPS.frag" />
     <None Include="assets\CommonVS.vert" />
+    <None Include="assets\cs_calculateLuminance.glcs" />
     <None Include="assets\DefaultCombinePS.frag" />
     <None Include="assets\DefaultScreenSpacePS.frag" />
     <None Include="assets\DefaultScreenSpaceVS.vert" />
     <None Include="assets\DownsamplePS.frag" />
     <None Include="assets\fullscreenFXAA.frag" />
     <None Include="assets\fullscreenFXAA.vert" />
+    <None Include="assets\GhostSetupPS.frag" />
+    <None Include="assets\GhostSetupVS.vert" />
+    <None Include="assets\GlareCompose.frag" />
     <None Include="assets\GuassBlurPS_Template.frag" />
     <None Include="assets\DynamicMotionblurES2.frag" />
     <None Include="assets\DynamicMotionblurES2.vert" />
+    <None Include="assets\StarSteakerCompose.frag" />
+    <None Include="assets\StarStreakerPS.frag" />
+    <None Include="assets\StarStreakerVS.vert">
+      <FileType>Document</FileType>
+    </None>
     <None Include="assets\StaticSceneMotionBlur.frag" />
+    <None Include="assets\Tonemap.frag" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

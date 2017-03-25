@@ -405,12 +405,12 @@ namespace jet
 					{
 						if (!m_pArrayBuffer)
 						{
-							m_pArrayBuffer = new ArrayBufferGL;
+							m_pArrayBuffer = new ArrayBufferGL<BufferUsage::STATIC_DRAW, GL_MAP_WRITE_BIT>;
 						}
 
 						m_pArrayBuffer->bind();
 						// Allocate capacity
-						m_pArrayBuffer->load(Numeric::min(uiArrayTotalBytes * 2u, MAX_BUFFER_MOMERY), nullptr, BufferUsage::STATIC_DRAW);
+						m_pArrayBuffer->init(Numeric::min(uiArrayTotalBytes * 2u, MAX_BUFFER_MOMERY), nullptr);
 
 						// Fill the old data
 						for (int i = 0; i < iRemovedFirst; i++)
@@ -481,12 +481,12 @@ namespace jet
 					{
 						if (!m_pElementBuffer)
 						{
-							m_pElementBuffer = new ElementBufferGL;
+							m_pElementBuffer = new ElementBufferGL<BufferUsage::STATIC_DRAW, GL_MAP_WRITE_BIT>;
 						}
 
 						m_pElementBuffer->bind();
 						// Allocate capacity
-						m_pElementBuffer->load(Numeric::min(uiElementTotalBytes * 2u, MAX_BUFFER_MOMERY), nullptr, BufferUsage::STATIC_DRAW);
+						m_pElementBuffer->init(Numeric::min(uiElementTotalBytes * 2u, MAX_BUFFER_MOMERY), nullptr);
 
 						std::vector<unsigned int> intArray;
 						// Fill the old data
@@ -662,8 +662,8 @@ namespace jet
 
 		private:
 			VertexArrayGL* m_pVertexArray;
-			ArrayBufferGL* m_pArrayBuffer;
-			ElementBufferGL* m_pElementBuffer;
+			ArrayBufferGL<BufferUsage::STATIC_DRAW, GL_MAP_WRITE_BIT>* m_pArrayBuffer;
+			ElementBufferGL<BufferUsage::STATIC_DRAW, GL_MAP_WRITE_BIT>* m_pElementBuffer;
 
 			DataType m_ElementType;
 

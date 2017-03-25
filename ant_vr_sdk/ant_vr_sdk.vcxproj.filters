@@ -166,9 +166,6 @@
     <ClCompile Include="Geometry.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
-    <ClCompile Include="GeometryGroupNode.cpp">
-      <Filter>Scene</Filter>
-    </ClCompile>
     <ClCompile Include="LegacyApplication.cpp">
       <Filter>app</Filter>
     </ClCompile>
@@ -204,6 +201,39 @@
     </ClCompile>
     <ClCompile Include="SampleTexturePacker.cpp">
       <Filter>Samples</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessingCalculateLumiance.cpp">
+      <Filter>PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessingLightStreaker.cpp">
+      <Filter>PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="ColorModulation.cpp">
+      <Filter>PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessingGhostImageSetup.cpp">
+      <Filter>PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessingGlareCompose.cpp">
+      <Filter>PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="PostProcessingTonemap.cpp">
+      <Filter>PostProcessing</Filter>
+    </ClCompile>
+    <ClCompile Include="SpatialManager.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Buffer.cpp">
+      <Filter>Renderer\Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="BufferPooled.cpp">
+      <Filter>Renderer\Buffer</Filter>
+    </ClCompile>
+    <ClCompile Include="BatchBuffer.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryAttribBuffer.cpp">
+      <Filter>Scene</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -330,9 +360,6 @@
     <ClInclude Include="Geometry.h">
       <Filter>Scene</Filter>
     </ClInclude>
-    <ClInclude Include="GeometryGroupNode.h">
-      <Filter>Scene</Filter>
-    </ClInclude>
     <ClInclude Include="LegacyApplication.h">
       <Filter>app</Filter>
     </ClInclude>
@@ -365,6 +392,36 @@
     </ClInclude>
     <ClInclude Include="SampleTexturePacker.h">
       <Filter>Samples</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcessingCalculateLumiance.h">
+      <Filter>PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcessingLightStreaker.h">
+      <Filter>PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="ColorModulation.h">
+      <Filter>PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcessingGhostImageSetup.h">
+      <Filter>PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcessingGlareCompose.h">
+      <Filter>PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="PostProcessingTonemap.h">
+      <Filter>PostProcessing</Filter>
+    </ClInclude>
+    <ClInclude Include="SpatialManager.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Buffer.h">
+      <Filter>Renderer\Buffer</Filter>
+    </ClInclude>
+    <ClInclude Include="BatchBuffer.h">
+      <Filter>Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryAttribBuffer.h">
+      <Filter>Scene</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -407,5 +464,36 @@
     <None Include="assets\CommonVS.vert">
       <Filter>ShaderResources</Filter>
     </None>
+    <None Include="assets\cs_calculateLuminance.glcs">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="..\..\..\Java\miniLibs\shader_library\src\jet\util\opengl\shader\libs\postprocessing\cs_calculateAdaptedLum.glcs">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\CalculateLuminance.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\CalculateAdaptedLum.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\StarStreakerPS.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\StarSteakerCompose.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\GhostSetupVS.vert">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\GhostSetupPS.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\GlareCompose.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\Tonemap.frag">
+      <Filter>ShaderResources</Filter>
+    </None>
+    <None Include="assets\StarStreakerVS.vert" />
   </ItemGroup>
 </Project>

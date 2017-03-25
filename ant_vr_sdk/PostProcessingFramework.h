@@ -12,6 +12,7 @@
 #include "AssetLoader.h"
 #include "GLUtil.h"
 #include <glm.hpp>
+#include "GLStates.h"
 
 namespace jet
 {
@@ -77,6 +78,12 @@ namespace jet
 #define PP_FXAA      1000        
 #define PP_STATIC_MOTION_BLUR   1001
 #define PP_DYNAMIC_MOTION_BLUR  1002
+#define PP_TONEMAP				1003
+
+#define CALCULATE_LUMIANCE    1100
+#define PP_LIGHT_STREAKER     1200
+#define PP_GHOST_IMAGE_SETUP  1300
+#define PP_GLARE_COMPOSE      1400
 #endif
 
 		struct InputDesc
@@ -100,6 +107,16 @@ namespace jet
 			NORMAL,
 			COMBINED_DEPTH,
 			COUNT
+		};
+
+		enum class DownsampleTyple
+		{
+			X2 = 1,
+			X4 = 2,
+			X8 = 4,
+			X16 = 8,
+			X32 = 16,
+			COUNT = 5
 		};
 
 		struct PPRectangle
@@ -127,6 +144,12 @@ namespace jet
 			}
 		};
 
+		enum class GlareType
+		{
+			CAMERA,
+			FILMIC
+		};
+
 		class PostProcessingParameters
 		{
 		public:
@@ -139,6 +162,15 @@ namespace jet
 			inline float getBloomIntensity() const { return BloomIntensity; }
 			inline const glm::mat4& getPreviouseViewProjection() const { return PreviouseViewProjection; }
 			inline const glm::mat4& getViewProjectionInverse() const { return ViewProjectionInverse; }
+
+			inline float getLumianceThreshold() const { return LumianceThreshold; }
+			inline float getLuminaceScaler()    const { return LumianceScaler; }
+
+			inline float getHDRExplosure()  const { return Explosure; }
+			inline float getHDRBlendAmount() const { return BlendAmount; }
+			inline float getHDRGamma()  const { return Gamma; }
+
+			inline GlareType getLightStreakerStyle() const { return LightStreaker; }
 		private:
 
 			int GaussBlur_Kernal;
@@ -152,6 +184,20 @@ namespace jet
 
 			glm::mat4 PreviouseViewProjection;
 			glm::mat4 ViewProjectionInverse;
+
+			// Lens flare
+			Texture2D* pLensFlareTexture;
+			float LumianceThreshold;
+			float LumianceScaler;
+			
+			// Light Streaker.
+			GlareType LightStreaker;
+
+			// HDR
+			float AutoExposure;
+			float Explosure;
+			float BlendAmount;
+			float Gamma;
 		};
 
 		class DefaultScreenQuadVertexShader : public VertexShader
@@ -167,7 +213,8 @@ namespace jet
 		class PPRenderPass
 		{
 		public:
-			PPRenderPass(PassName name)
+			PPRenderPass(PassName name, uint32_t width = 0, uint32_t height = 0):
+				Width(width), Height(height)
 			{
 				memset(&m_PassDesc, 0, sizeof(PPRenderPassDesc));
 				m_PassDesc.Name = name;
@@ -294,6 +341,10 @@ namespace jet
 
 			Texture2D* m_PassInputs[8];
 			std::unique_ptr<RenderTarget> m_PassOutputs[8];
+
+		public:
+			const uint32_t Width;
+			const uint32_t Height;
 		};
 
 		class PPRenderPassInput : public PPRenderPass
@@ -306,7 +357,7 @@ namespace jet
 				set(0, 0);
 			}
 
-			virtual void process(PPRenderContext* context, const PostProcessingParameters& parameters) override {/* Nothing need to do here. */ }
+			void process(PPRenderContext* context, const PostProcessingParameters& parameters) override {/* Nothing need to do here. */ }
 
 			Texture2D* getOutput(int idx) override
 			{
@@ -348,6 +399,15 @@ namespace jet
 				m_Program->setRenderShader(pVertexShader, pPixelShader);
 			}
 
+			void setCSShader(ComputeShader* pComputeShader)
+			{
+//				assert(m_InBeginBlock); TODO do not need block bingding.
+				m_Program->setComputeShader(pComputeShader);
+			}
+
+			void bindTexture(GLuint unit, TextureGL* pTex);
+
+			void setUniform4fv(const char* name, int count, const GLfloat* data) { m_Program->setUniform4fv(name, count, data); }
 			void setUniform4f(const char* name, float x, float y, float z, float w) { m_Program->setUniform4f(name, x, y,z,w); }
 			void setUniform2f(const char* name, float x, float y) {m_Program->setUniform2f(name, x,y);}
 			void setUniform1i(const char* name, int x)			  {m_Program->setUniform1i(name, x);}
@@ -400,9 +460,11 @@ namespace jet
 				}
 			}
 
-			void performancePostProcessing();
+			void performancePostProcessing(const PPRectangle& screenSize);
 
 			void shutDown();
+
+			const PPRectangle& getScreenSize() const { return m_ScreenSize; }
 
 		private:
 			void resolveDependencies(std::vector<PPRenderPass*>& currentDependencyPasses)
@@ -440,6 +502,8 @@ namespace jet
 			bool m_IsSupportVertexArray;
 			GLuint m_VertexArray;
 			GLuint m_VertexBuffer;
+
+			PPRectangle m_ScreenSize;
 
 			class PostProcessingParameters* m_Parameters;
 		};

@@ -69,6 +69,8 @@ namespace jet
 
 					printf("Load %s sucessfully, Size = [%d, %d]\n", filename, pTex->getWidth(), pTex->getHeight());
 				}
+
+				printf("\n\\\\\\\Load test image done!.\n");
 			}
 
 			{// Create program.
@@ -97,7 +99,7 @@ namespace jet
 					glm::vec2 texcoord;
 				};
 
-				m_ScreenQuadBuffer = new ArrayBufferGL;
+				m_ScreenQuadBuffer = new ArrayBufferGL<BufferUsage::STATIC_DRAW, GL_MAP_WRITE_BIT>;
 				m_ScreenQuadBuffer->bind();
 
 				Vertex data[] =
@@ -108,7 +110,7 @@ namespace jet
 					{ { +1.0f, +1.0f }, { 1.0f, 1.0f } },    // RT
 				};  //Triangle_Strip
 
-				m_ScreenQuadBuffer->load(sizeof(Vertex) * 4, (GLubyte*)data);
+				m_ScreenQuadBuffer->init(sizeof(Vertex) * 4, (GLubyte*)data);
 				m_ScreenQuadBuffer->unbind();
 
 				m_ScreenQuadVAO = new VertexArrayGL();
@@ -185,6 +187,7 @@ namespace jet
 			m_FullScreenQuad->enable(); CHECK_GL_ERROR;
 			m_ScreenQuadVAO->bind(); CHECK_GL_ERROR;
 			const TextureGL* pTexs[] = { m_TextureAltas->getTexture() };
+//			const TextureGL* pTexs[] = { m_TestTextureList["2.jpg"] };
 			states.bindTextures(1, pTexs); CHECK_GL_ERROR;
 
 			float width_ratio = Numeric::ratio(pTexs[0]->getWidth(), Width);

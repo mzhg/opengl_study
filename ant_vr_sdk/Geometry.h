@@ -1,7 +1,7 @@
 #pragma once
 #include "Spatial.h"
 #include "Shape3D.h"
-#include "GeometryGroupNode.h"
+#include "Node.h"
 
 namespace jet
 {
@@ -64,24 +64,7 @@ namespace jet
 			*
 			* @param lod The lod level to set
 			*/
-			void setLodLevel(int lod) 
-			{
-#if 0
-				if (m_pMesh->getNumLodLevels() == 0) {
-					throw new IllegalStateException("LOD levels are not set on this mesh");
-				}
-
-				if (lod < 0 || lod >= mesh.getNumLodLevels()) {
-					throw new IllegalArgumentException("LOD level is out of range: " + lod);
-				}
-#endif
-
-				m_iLodLevel = lod;
-
-				if (isGrouped()) {
-					m_pGroupNode->onMeshChange(this);
-				}
-			}
+			void setLodLevel(int lod);
 
 			/**
 			* Returns the LOD level set with {@link #setLodLevel(int) }.
@@ -114,22 +97,7 @@ namespace jet
 			* @param mesh the mesh to use for this geometry
 			*
 			*/
-			void setMesh(ShapePtr pMesh)
-			{
-#if 0
-				if (mesh == null) {
-					throw new IllegalArgumentException();
-				}
-#endif
-				assert(pMesh.get());
-				
-				m_pMesh = pMesh;
-				setBoundRefresh();
-
-				if (isGrouped()) {
-					m_pGroupNode->onMeshChange(this);
-				}
-			}
+			void setMesh(ShapePtr pMesh);
 
 			/**
 			* Returns the mesh to use for this geometry
@@ -145,14 +113,7 @@ namespace jet
 			*
 			* @param material the material to use for this geometry
 			*/
-			void setMaterial(MaterialPtr pMaterial) override
-			{
-				m_pMaterial = pMaterial;
-
-				if (isGrouped()) {
-					m_pGroupNode->onMaterialChange(this);
-				}
-			}
+			void setMaterial(MaterialPtr pMaterial) override;
 
 			/**
 			* Returns the material that is used for this geometry.
@@ -172,7 +133,8 @@ namespace jet
 			* Updates the bounding volume of the mesh. Should be called when the
 			* mesh has been modified.
 			*/
-			void updateModelBound() {
+			void updateModelBound() 
+			{
 //				m_pMesh->updateBound();  TODO
 				setBoundRefresh();
 			}
@@ -184,74 +146,21 @@ namespace jet
 			*
 			* @see Spatial#updateWorldBound()
 			*/
-			void updateWorldBound() override
-			{
-				Spatial::updateWorldBound();
-#if 0
-				if (m_pMesh == nullptr) {
-					throw new NullPointerException("Geometry: " + getName() + " has null mesh");
-				}
-#endif
-				assert(m_pMesh.get());
-				m_pMesh->getBound(m_pWorldBound.get());
+			void updateWorldBound() override;
 
-#if 0
-				if (mesh.getBound() != null) 
-				{
-					if (m_bIgnoreTransform) {
-						// we do not transform the model bound by the world transform,
-						// just use the model bound as-is
-						worldBound = mesh.getBound().clone(worldBound);
-					}
-					else {
-						worldBound = mesh.getBound().transform(worldTransform, worldBound);
-					}
-				}
-#endif
+			void updateWorldTransforms() override;
 
-				if (!m_bIgnoreTransform)
-				{
-					m_pWorldBound->transform(m_WorldTransform.getCombinedMatrix());
-				}
-			}
-
-			void updateWorldTransforms() override
-			{
-				Spatial::updateWorldTransforms();
-				computeWorldMatrix();
-
-				if (isGrouped()) {
-					m_pGroupNode->onTransformChange(this);
-				}
-
-				// geometry requires lights to be sorted
-				m_pWorldLights->sort(true);
-			}
-
-			void updateWorldLightList() override
-			{
-				Spatial::updateWorldLightList();
-				// geometry requires lights to be sorted
-				m_pWorldLights->sort(true);
-			}
+			void updateWorldLightList() override;
 
 			/**
-			* Associate this <code>Geometry</code> with a {@link GeometryGroupNode}.
+			* Associate this <code>Geometry</code> with a {@link SpatialManager}.
 			*
-			* Should only be called by the parent {@link GeometryGroupNode}.
+			* Should only be called by the parent {@link Node}.
 			*
 			* @param node Which {@link GeometryGroupNode} to associate with.
 			* @param startIndex The starting index of this geometry in the group.
 			*/
-			void associateWithGroupNode(GeometryGroupNode* pNode, int iStartIndex) 
-			{
-				if (isGrouped()) {
-					unassociateFromGroupNode();
-				}
-
-				m_pGroupNode = pNode;
-				m_iStartIndex = iStartIndex;
-			}
+			void associateWithSpatialManager(class SpatialManager* pNode, int iStartIndex);
 
 			/**
 			* Removes the {@link GeometryGroupNode} association from this
@@ -259,30 +168,9 @@ namespace jet
 			*
 			* Should only be called by the parent {@link GeometryGroupNode}.
 			*/
-		    void unassociateFromGroupNode() 
-			{
-				if (m_pGroupNode != nullptr) 
-				{
-					// Once the geometry is removed
-					// from the parent, the group node needs to be updated.
-					m_pGroupNode->onGeometryUnassociated(this);
-					m_pGroupNode = nullptr;
+			void unassociateFromGroupNode();
 
-					// change the default to -1 to make error detection easier
-					m_iStartIndex = -1;
-				}
-			}
-
-			void setParent(Node* pParent) override 
-			{
-				Spatial::setParent(pParent);
-
-				// If the geometry is managed by group node we need to unassociate.
-				if (pParent == nullptr && isGrouped()) 
-				{
-					unassociateFromGroupNode();
-				}
-			}
+			void setParent(Node* pParent) override;
 
 
 			/**
@@ -300,24 +188,7 @@ namespace jet
 			* Recomputes the matrix returned by {@link Geometry#getWorldMatrix() }.
 			* This will require a localized transform update for this geometry.
 			*/
-			void computeWorldMatrix() 
-			{
-				// Force a local update of the geometry's transform
-				checkDoTransformUpdate();
-#if 0
-				// Compute the cached world matrix
-				cachedWorldMat.loadIdentity();
-				cachedWorldMat.setRotationQuaternion(worldTransform.getRotation());
-				cachedWorldMat.setTranslation(worldTransform.getTranslation());
-
-				TempVars vars = TempVars.get();
-				Matrix4f scaleMat = vars.tempMat4;
-				scaleMat.loadIdentity();
-				scaleMat.scale(worldTransform.getScale());
-				cachedWorldMat.multLocal(scaleMat);
-				vars.release();
-#endif
-			}
+			void computeWorldMatrix();
 
 			/**
 			* A {@link Matrix4f matrix} that transforms the {@link Geometry#getMesh() mesh}
@@ -400,7 +271,7 @@ namespace jet
 			MaterialPtr  m_pMaterial;
 
 			bool     m_bIgnoreTransform;
-			GeometryGroupNode* m_pGroupNode;
+			class SpatialManager* m_pGroupNode;
 			int      m_iStartIndex;
 
 

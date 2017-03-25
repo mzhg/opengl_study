@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include "Util.h"
+#include "GLStates.h"
 
 namespace jet
 {
@@ -170,12 +171,12 @@ namespace jet
 
 		void GLSLProgram::enable()
 		{
-			glUseProgram(m_Program);
+			GLStates::get().bindProgram(m_Program);
 		}
 
 		void GLSLProgram::disable()
 		{
-			glUseProgram(0);
+			GLStates::get().resetProgram();
 		}
 
 		void GLSLProgram::dispose()
@@ -815,6 +816,29 @@ namespace jet
 				_setUniformMatrix4(m_pCS, name, count, transpose, pMats);
 			}
 
+			template<GLenum Target>
+			static void _setUniform4fv(ShaderProgram<Target>* pShader, const char* name, uint32_t count, const float* data)
+			{
+				if (pShader != NULL)
+				{
+					GLint location = _getUniformLocation(pShader->getProgram(), name, true);
+					if (location >= 0)
+					{
+						glProgramUniform4fv(pShader->getProgram(), location, count, data);
+					}
+				}
+			}
+
+			void setUniform4fv(const char* name, int count, const GLfloat* data) override
+			{
+				_setUniform4fv(m_pVS, name, count, data);
+				_setUniform4fv(m_pPS, name, count, data);
+				_setUniform4fv(m_pTC, name, count, data);
+				_setUniform4fv(m_pTE, name, count, data);
+				_setUniform4fv(m_pGS, name, count, data);
+				_setUniform4fv(m_pCS, name, count, data);
+			}
+
 			~GPUProgramPipeline()
 			{
 				dispose();
@@ -1002,6 +1026,15 @@ namespace jet
 				if (location >= 0)
 				{
 					glUniformMatrix4fv(location, count, transpose, pMats);
+				}
+			}
+
+			void setUniform4fv(const char* name, int count, const GLfloat* data) override
+			{
+				GLint location = _getUniformLocation(m_Program, name, false);
+				if (location >= 0)
+				{
+					glUniform4fv(location, count, data);
 				}
 			}
 

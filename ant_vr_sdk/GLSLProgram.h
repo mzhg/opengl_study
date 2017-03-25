@@ -355,6 +355,7 @@ namespace jet
 			virtual void setUniform2f(const char* name, float x, float y){};
 			virtual void setUniform1i(const char* name, int v){}
 			virtual void setUniform4f(const char* name, float x, float y, float z, float w){}
+			virtual void setUniform4fv(const char* name, int count, const GLfloat* data){}
 			virtual void setUniformMatrix4(const char* name, uint32_t count, bool transpose, const float* pMats){}
 
 			// Noto: Only worked for the non-sperate shader program.

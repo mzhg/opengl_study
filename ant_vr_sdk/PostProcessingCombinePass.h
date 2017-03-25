@@ -8,7 +8,7 @@ namespace jet
 		class PostProcessingCombinePass : public PPRenderPass
 		{
 		public:
-			PostProcessingCombinePass(uint32_t offset = 0);
+			PostProcessingCombinePass(uint32_t offset = 0, uint32_t width = 0, uint32_t height = 0);
 			~PostProcessingCombinePass();
 
 			virtual void process(PPRenderContext* context, const PostProcessingParameters& parameters);
@@ -22,6 +22,12 @@ namespace jet
 				out = input0->getDesc();
 				out.Width = Numeric::max(out.Width, input1->getWidth());
 				out.Height = Numeric::max(out.Height, input1->getHeight());
+
+				if (Width && Height)
+				{
+					out.Width = Width;
+					out.Height = Height;
+				}
 			}
 
 			static void shutDown();

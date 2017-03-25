@@ -6,6 +6,7 @@
 
 #include <sstream>
 #include <map>
+#include <unordered_map>
 #include <vector>
 
 namespace jet
@@ -46,15 +47,15 @@ namespace jet
 
 			struct BatchedMeshBuffer
 			{
-				BufferBatching* pArrayBuffer;
-				BufferBatching* pElementBuffer;
+	//			BufferBatching* pArrayBuffer;
+	//			BufferBatching* pElementBuffer;
 			};
 
 			struct MeshBufferGL
 			{
-				BufferBatching* pArrayBuffer;
+	//			BufferBatching* pArrayBuffer;
 				BufferBean ArrayBean;
-				BufferBatching* pElementBuffer;
+	//			BufferBatching* pElementBuffer;
 				BufferBean ElementBean;
 			};
 
@@ -82,7 +83,7 @@ namespace jet
 				std::vector<BufferBean> ElementBeans;
 				BatchedMeshBuffer  MeshBuffer;            // 
 
-				BufferBatching*  pOverrideElementBuffer;  //combined + elements
+	//			BufferBatching*  pOverrideElementBuffer;  //combined + elements
 			};
 
 			typedef std::shared_ptr<BatchedMesh> BatchedMeshPtr;

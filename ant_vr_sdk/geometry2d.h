@@ -39,6 +39,7 @@ namespace jet
 		template<typename Type>
 		struct Range
 		{
+			Range(Type min = (Type)0, Type max = (Type)1) : Min(min), Max(max){}
 			Type Min, Max;
 
 			Type length() const { return Max - Min; }
@@ -59,6 +60,49 @@ namespace jet
 		bool operator != (const Range<Type>& a, const Range<Type>& b)
 		{
 			return a.Min != b.Min || a.Max != b.Max;
+		}
+
+		template<typename Type>
+		Range<Type> operator + (const Range<Type>& a, Type b)
+		{
+			Range<Type> result;
+			result.Min = a.Min + b;
+			result.Max = a.Max + b;
+			return result;
+		}
+
+		template<typename Type>
+		Range<Type> operator + (Type b, const Range<Type>& a)
+		{
+			Range<Type> result;
+			result.Min = a.Min + b;
+			result.Max = a.Max + b;
+			return result;
+		}
+
+		template<typename Type>
+		Range<Type> operator - (const Range<Type>& a, Type b)
+		{
+			Range<Type> result;
+			result.Min = a.Min - b;
+			result.Max = a.Max - b;
+			return result;
+		}
+
+		template<typename Type>
+		Range<Type>& operator += (Range<Type>& a, Type b)
+		{
+			a.Min = a.Min + b;
+			a.Max = a.Max + b;
+			return a;
+		}
+
+		template<typename Type>
+		Range<Type>& operator -= (Range<Type>& a, Type b)
+		{
+			a.Min = a.Min - b;
+			a.Max = a.Max - b;
+			return a;
 		}
 
 		template<typename Type>
