@@ -34,7 +34,7 @@ namespace jet
 			*
 			* @return the number of children this node maintains.
 			*/
-			int getQuantity() const { return m_pChildren.size(); }
+			uint32_t getQuantity() const { return (uint32_t)m_pChildren.size(); }
 
 			void updateLogicalState(float tpf) override;
 
@@ -302,7 +302,7 @@ namespace jet
 			*/
 			bool m_bUpdateListValid = false;
 
-			class SceneManager* m_pSceneManager;
+//			class SceneManager* m_pSceneManager;
 			class SpatialManager* m_pSpatialManager;
 		};
 	}

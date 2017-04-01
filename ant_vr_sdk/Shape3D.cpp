@@ -1,4 +1,5 @@
 #include "Shape3D.h"
+#include "Material.h"
 
 namespace jet
 {
@@ -67,6 +68,49 @@ namespace jet
 			return pModeNames[static_cast<int>(mode)];
 		}
 
+		GLenum Shape3D::convertModeToGLenum(Mode mode)
+		{
+			switch (mode)
+			{
+			case jet::util::Shape3D::Mode::UNKOWN:
+				return 0;
+				break;
+			case jet::util::Shape3D::Mode::POINTS:
+				return GL_POINTS;
+				break;
+			case jet::util::Shape3D::Mode::LINES:
+				return GL_LINES;
+				break;
+			case jet::util::Shape3D::Mode::LINE_STRIP:
+				return GL_LINE_STRIP;
+				break;
+			case jet::util::Shape3D::Mode::LINE_LOOP:
+				return GL_LINE_LOOP;
+				break;
+			case jet::util::Shape3D::Mode::TRIANGLES:
+				return GL_TRIANGLES;
+				break;
+			case jet::util::Shape3D::Mode::TRIANGLE_STRIP:
+				return GL_TRIANGLE_STRIP;
+				break;
+			case jet::util::Shape3D::Mode::TRIANGLE_FAN:
+				return GL_TRIANGLE_FAN;
+				break;
+			case jet::util::Shape3D::Mode::TRIANGLE_STRIP_RESTART:
+			case jet::util::Shape3D::Mode::TRIANGLE_FAN_RESTART:
+			case jet::util::Shape3D::Mode::HYBRID:
+				return 0;
+			case jet::util::Shape3D::Mode::PATCH:
+				// doesn't support so far
+				return 0;
+				break;
+			case jet::util::Shape3D::Mode::COUNT:
+			default:
+				return 0;
+				break;
+			}
+		}
+
 		static const float CUBE_POSITIONS[] =
 		{
 			// strip form
@@ -129,6 +173,24 @@ namespace jet
 		{
 			length = _countof(BOX_MODES);
 			return BOX_MODES;
+		}
+
+		const MeshAttrib* Box::getSupportAttribs(uint32_t& length) const
+		{
+			static MeshAttrib g_BoxSupportMeshAttribs[] =
+			{
+				MeshAttrib::POSITION3,
+				MeshAttrib::NORMAL,
+				MeshAttrib::TEXCOORD2,
+			};
+
+			length = _countof(g_BoxSupportMeshAttribs);
+			return g_BoxSupportMeshAttribs;
+		}
+
+		const MeshAttrib Box::getSupportCombinedAttrib() const
+		{
+			return MeshAttrib::P3NT2;
 		}
 
 		template<int P, int N, int T>
@@ -275,7 +337,7 @@ namespace jet
 			return out;
 		}
 
-		static MeteDataPtr getBoxIndices(Shape3D::Mode mode, bool indexed)
+		static MeteDataPtr getBoxIndices(Shape3D::Mode mode)
 		{
 			MeteDataPtr out = MeteDataPtr(new MeteData);
 			const glm::vec2* pSources = (glm::vec2*)CUBE_TEXCOORD;
@@ -356,7 +418,7 @@ namespace jet
 			case jet::util::MeshAttrib::TEXCOORD3:
 				break;
 			case jet::util::MeshAttrib::INDICES:
-				return getBoxIndices(m_Mode, indexed);
+				return getBoxIndices(m_Mode);
 				break;
 			case jet::util::MeshAttrib::P3NT2:
 				return getBoxVertex<3, 3, 2>(m_Mode, indexed);
@@ -387,8 +449,8 @@ namespace jet
 		{
 			switch (m_Mode)
 			{
-			case jet::util::Shape3D::Mode::POINTS:  
-			case jet::util::Shape3D::Mode::LINES:   return _countof(CUBE_POSITIONS) / 3;
+			case jet::util::Shape3D::Mode::POINTS:  return 8;
+			case jet::util::Shape3D::Mode::LINES:   return indexed ? 8 : _countof(CUBE_INDICES_LINES);
 			case jet::util::Shape3D::Mode::TRIANGLES: return indexed ? 24 : 36;
 			case jet::util::Shape3D::Mode::LINE_STRIP:
 			case jet::util::Shape3D::Mode::LINE_LOOP:
@@ -403,17 +465,177 @@ namespace jet
 			}
 		}
 
+		int Box::getIndiceCount() const
+		{
+			switch (m_Mode)
+			{
+			case jet::util::Shape3D::Mode::POINTS:  return 8;
+			case jet::util::Shape3D::Mode::LINES:   return _countof(CUBE_INDICES_LINES);
+			case jet::util::Shape3D::Mode::TRIANGLES: return _countof(CUBE_INDICES_TRIANGLES);
+			case jet::util::Shape3D::Mode::LINE_STRIP:
+			case jet::util::Shape3D::Mode::LINE_LOOP:
+			case jet::util::Shape3D::Mode::TRIANGLE_STRIP:
+			case jet::util::Shape3D::Mode::TRIANGLE_FAN:
+			case jet::util::Shape3D::Mode::TRIANGLE_STRIP_RESTART:
+			case jet::util::Shape3D::Mode::TRIANGLE_FAN_RESTART:
+			case jet::util::Shape3D::Mode::HYBRID:
+			case jet::util::Shape3D::Mode::PATCH:
+			default:
+				return 0;
+			}
+		}
+
+#if 0
 		int Box::getTriangleCount(bool indexed) const
 		{
 			return  12;
 		}
-
+#endif
 		void Box::getBound(BoundingVolume* pBound) const
 		{
 			const glm::vec3* pSources = (glm::vec3*)CUBE_POSITIONS;
 			for (int i = 0; i < 8; i++)
 			{
 				// TODO
+			}
+		}
+
+		extern "C" uint32_t ParseMeshAttrib(MeshAttrib attrib, std::vector<AttribDesc>& descs)
+		{
+			switch (attrib)
+			{
+			case jet::util::MeshAttrib::NONE: return 0;
+			case jet::util::MeshAttrib::POSITION2:
+			{
+				AttribDesc desc = { static_cast<uint32_t>(AttribLocationDef::POSITION), 2 };
+				descs.push_back(desc);
+				return 1;
+			}
+				break;
+			case jet::util::MeshAttrib::POSITION3:
+			{
+				AttribDesc desc = { static_cast<uint32_t>(AttribLocationDef::POSITION), 3 };
+				descs.push_back(desc);
+				return 1;
+			}
+				break;
+			case jet::util::MeshAttrib::POSITION4:
+			{
+				AttribDesc desc = { static_cast<uint32_t>(AttribLocationDef::POSITION), 4 };
+				descs.push_back(desc);
+				return 1;
+			}
+				break;
+			case jet::util::MeshAttrib::NORMAL:
+			{
+				AttribDesc desc = { static_cast<uint32_t>(AttribLocationDef::NORMAL), 3 };
+				descs.push_back(desc);
+				return 1;
+			}
+				break;
+			case jet::util::MeshAttrib::TEXCOORD2:
+			{
+				AttribDesc desc = { static_cast<uint32_t>(AttribLocationDef::TEXCOORD), 2 };
+				descs.push_back(desc);
+				return 1;
+			}
+				break;
+			case jet::util::MeshAttrib::TEXCOORD3:
+			{
+				AttribDesc desc = { static_cast<uint32_t>(AttribLocationDef::TEXCOORD), 3 };
+				descs.push_back(desc);
+				return 1;
+			}
+				break;
+			case jet::util::MeshAttrib::INDICES:
+				return 0;
+				break;
+			case jet::util::MeshAttrib::P2T2:
+			{
+				AttribDesc pos_desc = { static_cast<uint32_t>(AttribLocationDef::POSITION), 2, DataType::FLOAT, false, 4 * sizeof(float), };
+				descs.push_back(pos_desc);
+
+				AttribDesc tex_desc = { static_cast<uint32_t>(AttribLocationDef::TEXCOORD), 2, DataType::FLOAT, false, 4 * sizeof(float), 0, reinterpret_cast<GLvoid*>(2 * sizeof(float)) };
+				descs.push_back(tex_desc);
+				return 2;
+			}
+				break;
+			case jet::util::MeshAttrib::P3NT2:
+			{
+				AttribDesc pos_desc = { static_cast<uint32_t>(AttribLocationDef::POSITION), 3, DataType::FLOAT, false, 8 * sizeof(float), };
+				descs.push_back(pos_desc);
+
+				AttribDesc nor_desc = { static_cast<uint32_t>(AttribLocationDef::NORMAL), 3, DataType::FLOAT, false, 8 * sizeof(float), 0, reinterpret_cast<GLvoid*>(3 * sizeof(float)) };
+				descs.push_back(nor_desc);
+
+				AttribDesc tex_desc = { static_cast<uint32_t>(AttribLocationDef::TEXCOORD), 2, DataType::FLOAT, false, 8 * sizeof(float), 0, reinterpret_cast<GLvoid*>(6 * sizeof(float)) };
+				descs.push_back(tex_desc);
+				return 3;
+			}
+				break;
+			case jet::util::MeshAttrib::P3N:
+			{
+				AttribDesc pos_desc = { static_cast<uint32_t>(AttribLocationDef::POSITION), 3, DataType::FLOAT, false, 6 * sizeof(float), };
+				descs.push_back(pos_desc);
+
+				AttribDesc nor_desc = { static_cast<uint32_t>(AttribLocationDef::NORMAL), 3, DataType::FLOAT, false, 6 * sizeof(float), 0, reinterpret_cast<GLvoid*>(3 * sizeof(float)) };
+				descs.push_back(nor_desc);
+				return 2;
+			}
+				break;
+			case jet::util::MeshAttrib::P3NT3:
+			{
+				AttribDesc pos_desc = { static_cast<uint32_t>(AttribLocationDef::POSITION), 3, DataType::FLOAT, false, 9 * sizeof(float), };
+				descs.push_back(pos_desc);
+
+				AttribDesc nor_desc = { static_cast<uint32_t>(AttribLocationDef::NORMAL), 3, DataType::FLOAT, false, 9 * sizeof(float), 0, reinterpret_cast<GLvoid*>(3 * sizeof(float)) };
+				descs.push_back(nor_desc);
+
+				AttribDesc tex_desc = { static_cast<uint32_t>(AttribLocationDef::TEXCOORD), 3, DataType::FLOAT, false, 9 * sizeof(float), 0, reinterpret_cast<GLvoid*>(6 * sizeof(float)) };
+				descs.push_back(tex_desc);
+				return 3;
+			}
+				break;
+			case jet::util::MeshAttrib::P4NT2:
+			{
+				AttribDesc pos_desc = { static_cast<uint32_t>(AttribLocationDef::POSITION), 4, DataType::FLOAT, false, 9 * sizeof(float), };
+				descs.push_back(pos_desc);
+
+				AttribDesc nor_desc = { static_cast<uint32_t>(AttribLocationDef::NORMAL), 3, DataType::FLOAT, false, 9 * sizeof(float), 0, reinterpret_cast<GLvoid*>(4 * sizeof(float)) };
+				descs.push_back(nor_desc);
+
+				AttribDesc tex_desc = { static_cast<uint32_t>(AttribLocationDef::TEXCOORD), 2, DataType::FLOAT, false, 9 * sizeof(float), 0, reinterpret_cast<GLvoid*>(7 * sizeof(float)) };
+				descs.push_back(tex_desc);
+				return 3;
+			}
+				break;
+			case jet::util::MeshAttrib::P4N:
+			{
+				AttribDesc pos_desc = { static_cast<uint32_t>(AttribLocationDef::POSITION), 4, DataType::FLOAT, false, 7 * sizeof(float), };
+				descs.push_back(pos_desc);
+
+				AttribDesc nor_desc = { static_cast<uint32_t>(AttribLocationDef::NORMAL), 3, DataType::FLOAT, false, 7 * sizeof(float), 0, reinterpret_cast<GLvoid*>(4 * sizeof(float)) };
+				descs.push_back(nor_desc);
+				return 2;
+			}
+				break;
+			case jet::util::MeshAttrib::P4NT3:
+			{
+				AttribDesc pos_desc = { static_cast<uint32_t>(AttribLocationDef::POSITION), 4, DataType::FLOAT, false, 10 * sizeof(float), };
+				descs.push_back(pos_desc);
+
+				AttribDesc nor_desc = { static_cast<uint32_t>(AttribLocationDef::NORMAL), 3, DataType::FLOAT, false, 10 * sizeof(float), 0, reinterpret_cast<GLvoid*>(4 * sizeof(float)) };
+				descs.push_back(nor_desc);
+
+				AttribDesc tex_desc = { static_cast<uint32_t>(AttribLocationDef::TEXCOORD), 3, DataType::FLOAT, false, 10 * sizeof(float), 0, reinterpret_cast<GLvoid*>(7 * sizeof(float)) };
+				descs.push_back(tex_desc);
+				return 3;
+			}
+				break;
+			case jet::util::MeshAttrib::COUNT:
+			default:
+				return 0;
+				break;
 			}
 		}
 	}

@@ -153,19 +153,22 @@ namespace jet
 #endif
 			if (pArray)
 			{
-				pArray->ArrayBuffer->bind();
-				unsigned index = 0;
-				AttribDesc* pDesc = pArray->AttribDescs;
-				while (index < pArray->AttribCount)
+				for (uint32_t i = 0; i < pArray->ArrayBufferCount; i++)
 				{
-					const AttribDesc& desc = pArray->AttribDescs[index];
-					glEnableVertexAttribArray(desc.Index);
-					glVertexAttribPointer(desc.Index, desc.Size, ConvertDataTypeToGLenum(desc.Type), desc.Normalized, desc.Stride, desc.Pointer);
-					if (glVertexAttribDivisor)
+					pArray->ArrayBuffers[i]->bind();
+					unsigned index = 0;
+					GeometryAttribDesc* pDesc = pArray->ArrayBufferDescs;
+					while (index < pArray->ArrayBufferDescs[i].AttribCount)
 					{
-						glVertexAttribDivisor(desc.Index, desc.Divisor);
+						const AttribDesc& desc = pArray->ArrayBufferDescs[i].AttribDescs[index];
+						glEnableVertexAttribArray(desc.Index);
+						glVertexAttribPointer(desc.Index, desc.Size, ConvertDataTypeToGLenum(desc.Type), desc.Normalized, desc.Stride, desc.Pointer);
+						if (glVertexAttribDivisor)
+						{
+							glVertexAttribDivisor(desc.Index, desc.Divisor);
+						}
+						index++;
 					}
-					index++;
 				}
 
 				if (pArray->ElementBuffer)
@@ -226,12 +229,12 @@ namespace jet
 
 		bool BufferGPUSharedPool::init(uint32_t size, const uint8_t* pData)
 		{
-			m_Pool->init(size, pData);
+			return m_Pool->init(size, pData);
 		}
 
 		bool BufferGPUSharedPool::update(uint32_t offset, uint32_t size, const uint8_t* pData)
 		{
-			m_Pool->update(offset, size, pData);
+			return m_Pool->update(offset, size, pData);
 		}
 
 		uint8_t* BufferGPUSharedPool::map(uint32_t offset, uint32_t length, MappingBits bits)

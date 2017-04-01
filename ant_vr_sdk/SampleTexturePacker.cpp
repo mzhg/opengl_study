@@ -117,14 +117,15 @@ namespace jet
 				m_ScreenQuadVAO->bind();
 
 				BufferData bufferData;
-				bufferData.ArrayBuffer = m_ScreenQuadBuffer;
-				bufferData.AttribCount = 2;
+				bufferData.ArrayBufferCount = 1;
+				bufferData.ArrayBuffers = (BufferGPU**)(&m_ScreenQuadBuffer);
 				AttribDesc attribDesc[] =
 				{
-					{ true, 0, 2, DataType::FLOAT, false, sizeof(Vertex), 0, 0 },
-					{ true, 2, 2, DataType::FLOAT, false, sizeof(Vertex), 0, (GLvoid*)sizeof(glm::vec2) },
+					{ 0, 2, DataType::FLOAT, false, sizeof(Vertex), 0, 0 },
+					{ 2, 2, DataType::FLOAT, false, sizeof(Vertex), 0, (GLvoid*)sizeof(glm::vec2) },
 				};
-				bufferData.AttribDescs = attribDesc;
+				GeometryAttribDesc desc = { 2, attribDesc };
+				bufferData.ArrayBufferDescs = &desc;
 				bufferData.ElementBuffer = nullptr;
 
 				m_ScreenQuadVAO->load(&bufferData);

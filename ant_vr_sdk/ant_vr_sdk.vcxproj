@@ -165,6 +165,7 @@
     <ClCompile Include="MaxRectsBinPack.cpp" />
     <ClCompile Include="MeshManager.cpp" />
     <ClCompile Include="Node.cpp" />
+    <ClCompile Include="SingleBatchBuffer.cpp" />
     <ClCompile Include="SpatialManager.cpp" />
     <ClCompile Include="Numeric.cpp" />
     <ClCompile Include="NvAssetLoaderWin.cpp" />
@@ -196,7 +197,6 @@
     <ClCompile Include="Shape3D.cpp" />
     <ClCompile Include="SimpleScene.cpp" />
     <ClCompile Include="Spatial.cpp" />
-    <ClCompile Include="Stage.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TexturePackerGL.cpp" />
     <ClCompile Include="TextureUtil.cpp" />
@@ -260,7 +260,6 @@
     <ClInclude Include="Shape3D.h" />
     <ClInclude Include="SimpleScene.h" />
     <ClInclude Include="Spatial.h" />
-    <ClInclude Include="Stage.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="TextureUtil.h" />
     <ClInclude Include="Transform.h" />

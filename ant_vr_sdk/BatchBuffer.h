@@ -10,46 +10,7 @@ namespace jet
 {
 	namespace util
 	{
-		struct GeometryInstanceData
-		{
-
-		};
-
-		struct GeometryMemoryBuffer
-		{
-			std::unordered_map<ShapeKey, BufferBean> GeometryInfos;
-			BufferSharedNonUniformPool* pBufferPool;
-
-			GeometryMemoryBuffer() :pBufferPool(nullptr){}
-
-			~GeometryMemoryBuffer()
-			{
-				if (pBufferPool)
-				{
-					delete pBufferPool;
-				}
-			}
-		};
-
-		class GeometryAssembly
-		{
-		public:
-			virtual bool contain(Geometry*) const = 0;
-			virtual void render() = 0;
-
-			void addBuffer(uint32_t offset, BufferSharedNonUniformPool* pBufferPool);
-			void clear() { m_BufferPoolList.clear(); }
-
-		private:
-			struct BufferPool
-			{
-				uint32_t offset;
-				BufferSharedNonUniformPool* pBufferPool;
-			};
-
-			std::vector<BufferPool> m_BufferPoolList;
-		};
-
+		
 		class BatchBuffer
 		{
 		public:
@@ -63,13 +24,20 @@ namespace jet
 				MULTI_DRAW
 			};
 
-			static BatchBuffer* create(BatchType type = MULTI_DRAW);
+			BatchBuffer(SpatialManager* pManager) : m_SpatialManager(pManager)
+			{
+				assert(pManager);
+			}
+
+			static BatchBuffer* create(SpatialManager* pManager, BatchType type = MULTI_DRAW);
 
 			virtual bool addGeometry(Geometry*) = 0;
 			virtual bool removeGeometry(Geometry*) = 0;
 
 			virtual size_t getGeometryAssemblyCount() const = 0;
 			virtual GeometryAssembly* getGeometryAssembly(uint32_t index) = 0;
+			// Find the geometry attribute data by the specified Geometry.
+			virtual GeometryAssembly* getGeometryAttribData(Geometry*) = 0; 
 
 			/**
 			* Called by {@link Geometry geom} to specify that its world transform
@@ -121,7 +89,9 @@ namespace jet
 			virtual void update(/*arguments */) = 0;
 
 
-		private:
+		protected:
+
+			SpatialManager* m_SpatialManager;
 #if 0
 			std::unordered_map<Geometry*, GeometryInstanceData*> m_InstanceMap;
 			GeometryMemoryBuffer* m_pGeometryMemoryBuffer;

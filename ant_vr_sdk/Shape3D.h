@@ -85,6 +85,8 @@ namespace jet
 			COUNT
 		};
 
+		extern "C" uint32_t ParseMeshAttrib(MeshAttrib attrib, std::vector<AttribDesc>& desc);
+
 		class Shape3D
 		{
 		public:
@@ -174,14 +176,25 @@ namespace jet
 			Mode getMode() const    { return m_Mode; }
 
 			virtual const Mode* getSupportedModes(int& length)const = 0;
+			virtual const MeshAttrib* getSupportAttribs(uint32_t& length) const = 0;
+			virtual const MeshAttrib getSupportCombinedAttrib() const = 0;
 			virtual MeteDataPtr getVertexData(MeshAttrib attrib, bool indexed = true) const = 0;
-			const std::string& getUniqueName() const { return m_strName; }
+			virtual const std::string& getUniqueName() const { return m_strName; }
 			virtual int getNumLodLevels() const { return 1; }
+
+			// Return the vertex count about the specified primitives of the shape , when indexed is false, return the count of the fully expand vertexs.
 			virtual int getVertexCount(bool indexed = true) const = 0;
-			virtual int getTriangleCount(bool indexed = true) const = 0;
+			// To avoid confuse to the getVertexCount(bool) method, provide a new method for the getting the number of the indices.
+			virtual int getIndiceCount() const = 0;
+			// Get the data type of the indices, default to return UINT16.
+			virtual DataType getIndiceType() const { return DataType::UINT16; }
+			
+//			virtual int getTriangleCount(bool indexed = true) const = 0;
+//			virtual int getLineCount(bool indexed = true) const = 0;
 			virtual void getBound(BoundingVolume* pBound) const = 0;
 
 			static const char* getModeName(Mode mode);
+			static GLenum convertModeToGLenum(Mode mode);
 
 		protected:
 			virtual const char* getShapeName() const = 0;
@@ -200,17 +213,49 @@ namespace jet
 		public:
 			Box(Mode mode = Mode::TRIANGLES) : Shape3D(mode){ createShapeName(); }
 
-			const Mode* getSupportedModes(int& length) const;
-			MeteDataPtr getVertexData(MeshAttrib attrib, bool indexed = true) const;
-			const std::string& getUniqueName() const;
-			int getVertexCount(bool indexed = true) const;
-			int getTriangleCount(bool indexed = true) const;
-			void getBound(BoundingVolume* pBound) const;
+			const Mode* getSupportedModes(int& length) const override;
+			MeteDataPtr getVertexData(MeshAttrib attrib, bool indexed = true) const override;
+			const MeshAttrib* getSupportAttribs(uint32_t& length) const override;
+			const MeshAttrib getSupportCombinedAttrib() const override;
+//			const std::string& getUniqueName() const override;
+			int getVertexCount(bool indexed = true) const override;
+			int getIndiceCount() const override;
+//			int getTriangleCount(bool indexed = true) const override;
+			void getBound(BoundingVolume* pBound) const override;
 		protected:
-			const char* getShapeName() const;
+			const char* getShapeName() const override;
 		};
+
+		typedef struct ShapeKey
+		{
+			std::string Name;
+			bool Indexed;
+
+			ShapeKey(const std::string& name, bool indexed = true) :
+				Name(name), Indexed(indexed){}
+
+			bool operator == (const ShapeKey& o) const
+			{
+				return Name == o.Name && Indexed == o.Indexed;
+			}
+		}ShapeKey;
 
 //		typedef std::shared_ptr<Box> BoxPtr;
 	}
+}
+
+namespace std
+{
+	template<> struct hash<jet::util::ShapeKey>
+	{
+		typedef jet::util::ShapeKey argument_type;
+		typedef std::size_t result_type;
+		result_type operator()(argument_type const& s) const
+		{
+			result_type const h1(std::hash<bool>{}(s.Indexed));
+			result_type const h2(std::hash<std::string>{}(s.Name));
+			return h1 ^ (h2 << 1); // or use boost::hash_combine (see Discussion)
+		}
+	};
 }
 

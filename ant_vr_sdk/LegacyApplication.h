@@ -2,6 +2,8 @@
 #include "Node.h"
 #include "SampleApp.h"
 #include "GLSLProgram.h"
+#include "SpatialManager.h"
+#include "Scene.h"
 
 namespace jet
 {
@@ -30,7 +32,9 @@ namespace jet
 			void renderNode(Node* pNode);
 
 		protected:
+			SpatialManager m_SpatialManager;
 			Node* m_pRoot;
+			Scene* m_pScene;
 
 			GLSLProgram* m_pProgram;
 			GLuint m_ArrayBuffer;

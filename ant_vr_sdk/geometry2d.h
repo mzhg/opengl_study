@@ -43,6 +43,11 @@ namespace jet
 			Type Min, Max;
 
 			Type length() const { return Max - Min; }
+
+			bool operator==(const Range<Type>& b) const
+			{
+				return Min == b.Min && Max == b.Max;
+			}
 		};
 
 		typedef Range<int32_t> Rangei;

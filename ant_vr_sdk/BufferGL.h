@@ -246,7 +246,16 @@ namespace jet
 					assert(false);
 				}
 #endif
+#define MAP_BITS MapBits
+#if MAP_BITS
 				CHECK_GL(GLvoid* p = glMapBufferRange(getGLTarget(), offset, length, MapBits));
+#else
+				CHECK_GL(GLvoid* p = glMapBuffer(getGLTarget(), GL_READ_WRITE));
+				offset = 0;
+				length = m_uiDataSize;
+#endif
+
+#undef MAP_BITS
 
 				m_MappedPointer = reinterpret_cast<uint8_t*>(p);
 				m_MappedOffset = offset;
@@ -301,7 +310,7 @@ namespace jet
 					assert(false);
 				}
 #endif
-				CHECK_GL(glBufferStorage(getGLTarget(), size, pData, flags));
+				CHECK_GL(glBufferStorage(getGLTarget(), size, pData, StorageBits));
 				m_uiDataSize = size;
 
 				return true;
@@ -323,20 +332,19 @@ namespace jet
 
 		typedef struct BufferData
 		{
-			BufferGPU* ArrayBuffer;
+			uint32_t ArrayBufferCount;
+			BufferGPU** ArrayBuffers;
+			GeometryAttribDesc* ArrayBufferDescs;
+
 			BufferGPU* ElementBuffer;
-			AttribDesc* AttribDescs;
-			unsigned AttribCount;
 
-			BufferData() :
-				ArrayBuffer(nullptr),
-				AttribDescs(nullptr),
-				AttribCount(0),
-				ElementBuffer(nullptr)
+			BufferData(uint32_t arrayBufferCount = 0,
+						BufferGPU** pArrayBuffers = nullptr,
+						GeometryAttribDesc* pArrayBufferDescs = nullptr,
+						BufferGPU* pElementBuffer = nullptr) :
+						ArrayBufferCount(arrayBufferCount), ArrayBuffers(pArrayBuffers), 
+						ArrayBufferDescs(pArrayBufferDescs), ElementBuffer(pElementBuffer)
 			{}
-
-			BufferData(BufferGPU* pArray, unsigned count, AttribDesc* pDesc, BufferGPU* pElement) :
-				ArrayBuffer(pArray), AttribDescs(pDesc), AttribCount(count), ElementBuffer(pElement){}
 
 		}BufferData;
 

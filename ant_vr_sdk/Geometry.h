@@ -82,6 +82,7 @@ namespace jet
 			*/
 			int getVertexCount() { return m_pMesh->getVertexCount();}
 
+#if 0
 			/**
 			* Returns this geometry's mesh triangle count.
 			*
@@ -90,7 +91,7 @@ namespace jet
 			* @see Mesh#getTriangleCount()
 			*/
 			int getTriangleCount() { return m_pMesh->getTriangleCount();}
-
+#endif
 			/**
 			* Sets the mesh to use for this geometry when rendering.
 			*

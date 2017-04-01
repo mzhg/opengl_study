@@ -77,16 +77,18 @@ namespace jet
 			g_ScreenRectVAO->bind();
 
 			BufferData bufferData;
-			bufferData.ArrayBuffer = g_ScreenRectBuffer;
-			bufferData.AttribCount = 2;
+			bufferData.ArrayBufferCount = 1;
+			BufferGPU* arrayBuffers[] = { g_ScreenRectBuffer };
+			bufferData.ArrayBuffers = arrayBuffers;
 			AttribDesc attribDesc[] =
 			{
-				{ true, 0, 2, DataType::FLOAT, false, sizeof(Vertex), 0, 0},
-				{ true, 2, 2, DataType::FLOAT, false, sizeof(Vertex), 0, (GLvoid*)sizeof(glm::vec2)},
+				{ 0, 2, DataType::FLOAT, false, sizeof(Vertex), 0, 0},
+				{ 2, 2, DataType::FLOAT, false, sizeof(Vertex), 0, (GLvoid*)sizeof(glm::vec2)},
 			};
-			bufferData.AttribDescs = attribDesc;
-			bufferData.ElementBuffer = null;
 
+			GeometryAttribDesc arraybufferDescs = { 2, attribDesc };
+			bufferData.ArrayBufferDescs = &arraybufferDescs;
+			bufferData.ElementBuffer = null;
 			g_ScreenRectVAO->load(&bufferData);
 		}
 

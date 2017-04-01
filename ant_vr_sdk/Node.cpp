@@ -1,4 +1,6 @@
 #include "Node.h"
+#include "Geometry.h"
+#include "SpatialManager.h"
 
 namespace jet
 {
@@ -158,6 +160,17 @@ namespace jet
 						new Object[]{child.getName(), getName()});
 				}
 #endif
+				if (m_pSpatialManager)
+				{
+					m_pSpatialManager->addSpatial(pChild);
+
+					Node* pNode = dynamic_cast<Node*>(pChild);
+					if (pNode)
+					{
+						pNode->m_pSpatialManager = m_pSpatialManager;
+					}
+				}
+
 				invalidateUpdateList();
 			}
 			return m_pChildren.size();
@@ -246,6 +259,11 @@ namespace jet
 				pChild->setLightListRefresh();
 				pChild->setMatParamOverrideRefresh();
 
+				if (m_pSpatialManager)
+				{
+					m_pSpatialManager->removeSpatial(pChild);
+				}
+
 				invalidateUpdateList();
 			}
 			return pChild;
@@ -266,17 +284,6 @@ namespace jet
 			}
 			//				logger.log(Level.FINE, "{0}: All children removed.", this.toString());
 		}
-
-		/**
-		* <code>getChildIndex</code> returns the index of the given spatial
-		* in this node's list of children.
-		* @param sp
-		*          The spatial to look up
-		* @return
-		*          The index of the spatial in the node's children, or -1
-		*          if the spatial is not attached to this node
-		*/
-		int Node::getChildIndex(Spatial* sp) { return Numeric::indexOf(m_pChildren, sp); }
 
 		/**
 		* More efficient than e.g detaching and attaching as no updates are needed.

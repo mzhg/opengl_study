@@ -52,6 +52,7 @@ namespace jet
 
 		LegacyApplication::LegacyApplication()
 		{
+			m_pScene = new Scene();
 			m_pRoot = new Node("Root");
 		}
 
@@ -64,7 +65,7 @@ namespace jet
 		{
 			AppWrapper app(this);
 			app.getConfig().IsOpenGLESContext = false;
-			jet::util::BaseApp::Run(&app, "Triangles");
+			jet::util::BaseApp::Run(&app, "LegacyApplication");
 
 //			app.~AppWrapper();
 		}

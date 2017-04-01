@@ -4,48 +4,99 @@
 #include "gl_state_define.h"
 #include "Geometry.h"
 #include "BufferGL.h"
-#include "BatchBuffer.h"
+#include "RenderQueue.h"
 
 #include <sstream>
 #include <map>
 #include <unordered_map>
 #include <vector>
 
+#if 0
+struct jet::util::ShapeKey;
+
+
+
+#endif
+
 namespace jet
 {
 	namespace util
 	{
 
+		class BatchBuffer;
 		struct GeometryMemoryData
 		{
 			// Attrib Type: Mode Type: Indexed
-			MeteDataPtr MemoryData[static_cast<int>(AttribType::COUNT)];
-			MeshAttrib Attrib[static_cast<int>(AttribType::COUNT)];
-		
-			Shape3D::Mode Mode;
+			MeteDataPtr MemoryData;
+			MeshAttrib Attrib;
 
-			GeometryMemoryData(Shape3D::Mode mode = Shape3D::Mode::TRIANGLES) :
-				Mode(mode) 
-			{
-				memset(Attrib, 0, sizeof(Attrib));
-			}
+			GeometryMemoryData(MeteDataPtr memoryData = MeteDataPtr(), MeshAttrib attrib = MeshAttrib::NONE) :
+				MemoryData(memoryData), Attrib(attrib){}
 		};
 
-		struct ShapeKey
+		typedef struct BufferPool
 		{
-			std::string Name;
-			bool Indexed;
+			AttribDesc Desc;
+			BufferGPU* pBuffer;
+		}BufferPool;
 
-			ShapeKey(const std::string& name, bool indexed = true) :
-				Name(name), Indexed(indexed){}
+		typedef struct GeometryBufferData
+		{
+			uint32_t Count;
+			BufferPool* pBufferPools;
+		}GeometryBufferData;
 
-			bool operator == (const ShapeKey& o) const
+		typedef struct GeometryInstanceData
+		{
+			GeometryBufferData GeometryBuffer;
+			GeometryBufferData InstanceBuffer;
+		}GeometryInstanceData;
+
+		typedef struct GeometryMemoryBuffer
+		{
+			//			std::unordered_map<ShapeKey, BufferBean> GeometryInfos;
+			BufferSharedNonUniformPool* pBufferPool;
+
+			std::unordered_map<ShapeKey, GeometryBufferData> GeometryInfos;
+
+			GeometryMemoryBuffer() :pBufferPool(nullptr){}
+
+			~GeometryMemoryBuffer()
 			{
-				return Name == o.Name && Indexed == o.Indexed;
+				if (pBufferPool)
+				{
+					delete pBufferPool;
+				}
 			}
-		};
+		}GeometryMemoryBuffer;
 
-		extern size_t hash_value(const ShapeKey&);
+		class GeometryAssembly
+		{
+		public:
+			virtual bool contain(Geometry*) const = 0;
+			// Bind the geometries buffer data
+			virtual void bind() = 0;
+			// Unbind the buffer data
+			virtual void unbind() = 0;
+			// Invoking the opengl draw command.
+			virtual void draw() = 0;
+
+			virtual bool isEmpty() = 0;
+
+#if 0
+			void addBuffer(uint32_t offset, BufferSharedNonUniformPool* pBufferPool);
+			void clear() { m_BufferPoolList.clear(); }
+
+		private:
+			struct BufferPool
+			{
+
+				BufferSharedNonUniformPool* pBufferPool;
+			};
+
+			std::vector<BufferPool> m_BufferPoolList;
+#endif
+		};
 
 		class SpatialManager
 		{
@@ -54,7 +105,10 @@ namespace jet
 			~SpatialManager();
 
 
-			static const GeometryMemoryData& getGeometryMemoryData(const ShapeKey& key);
+			static const GeometryMemoryData& getGeometryMemoryData(const Shape3D* pShape, MeshAttrib attrib, bool indexed = true);
+
+			// Find the geometry attribute data by the specified Geometry.
+			virtual GeometryAssembly* getGeometryAttribData(Geometry*);
 
 			void addSpatial(Spatial* pGeom);
 			void removeSpatial(Spatial* pGeom);
@@ -106,6 +160,11 @@ namespace jet
 			*/
 			void onGeometryUnassociated(Geometry * pGeom);
 
+			RenderQueue& getRenderQueue(){ return m_RenderQueue; }
+
+	//		friend class RenderQueue;
+			static void releaseGeometryMomeries();
+
 		private:
 			enum class SpatialType
 			{
@@ -121,9 +180,14 @@ namespace jet
 
 			};
 
-			std::unordered_map<Geometry*, BatchBuffer*> m_BatchBuffers;
-			std::unordered_map<ShapeKey, GeometryMemoryData> m_GeometryMemoryData;
+			// contain the spares geometries.
+			std::unordered_map<Geometry*, BatchBuffer*> m_NonbatchedBuffers;
+			// contain the batched nodes.
+			std::unordered_map<void*, BatchBuffer*> m_BatchedBuffers;
+				 
 			std::unordered_map<void*, bool> m_NodeMap;
+
+			RenderQueue m_RenderQueue;
 		};
 	}
 }

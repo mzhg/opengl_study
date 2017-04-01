@@ -20,7 +20,7 @@ namespace jet
 				}
 				else
 				{
-					return new BufferGL<Target, BufferUsage::STATIC_DRAW, mappingBits>
+					return new BufferGL < Target, BufferUsage::STATIC_DRAW, mappingBits > ;
 				}
 			}
 			
@@ -34,7 +34,7 @@ namespace jet
 		static BufferCreatorImpl<BufferTarget::ELEMENT> g_ElementBufferGLCreator;
 		static const uint32_t INIT_BUFFER_CAPACITY = 128 * 1024; // 128k
 
-		GeometryAttribBuffer::GeometryAttribBuffer(bool hasIndices, uint32_t count, AttribDesc* attribs) :m_bHaveIndices(hasIndices)
+		GeometryAttribBuffer::GeometryAttribBuffer(bool hasIndices, uint32_t count, GeometryBufferDesc* attribs) :m_bHaveIndices(hasIndices)
 		{
 			if (count)
 			{
@@ -65,9 +65,14 @@ namespace jet
 			{
 				delete m_ElementBufferPool;
 			}
+
+			for (size_t i = 0; i < m_AllocatedData.size(); i++)
+			{
+				free(m_AllocatedData[i]);
+			}
 		}
 
-		bool GeometryAttribBuffer::addAttribDesc(const AttribDesc& attrib)
+		bool GeometryAttribBuffer::addAttribDesc(const GeometryBufferDesc& attrib)
 		{
 			if (m_bHaveIndices)
 			{
@@ -75,6 +80,7 @@ namespace jet
 			}
 			else
 			{
+#if 0
 				if (attrib.Index >= GLStates::getMaxVertexAttribs())
 				{
 					return false;
@@ -87,12 +93,13 @@ namespace jet
 						return false;
 					}
 				}
+#endif
 				m_AttribDescs.push_back(attrib);
 				m_AttribBuffersPool.push_back(new BufferGPUSharedNonUniformPool(&g_ArrayBufferGLCreator, INIT_BUFFER_CAPACITY));
 				return true;
 			}
 		}
-		bool GeometryAttribBuffer::removeAttribDesc(const AttribDesc& attrib)
+		bool GeometryAttribBuffer::removeAttribDesc(const GeometryBufferDesc& attrib)
 		{
 			return Numeric::removeRef(m_AttribDescs, attrib);
 		}
@@ -138,21 +145,30 @@ namespace jet
 					return false;
 				}
 
-				GeometryAttribOffset offset;
-				offset.AttribOffset = new uint32_t[data.AttribCount];
-				offset.AttribBeans = new BufferBean[data.AttribCount];
+				GeometryBufferOffset offset;
+				offset.BufferCount = static_cast<uint32_t>(m_AttribDescs.size());
+				offset.BufferOffsets = allocate<GeometryAttribOffset>(offset.BufferCount * sizeof(GeometryAttribOffset));
+				offset.BufferBeans = allocate<BufferBean>(offset.BufferCount * sizeof(BufferBean));
 				for (uint32_t i = 0; i < data.AttribCount; i++)
 				{
 					if (data.AttribSize[i])
 					{
 						BufferBean bean = m_AttribBuffersPool[i]->add(data.AttribSize[i], data.AttribData[i]);
-						offset.AttribOffset[i] = m_AttribBuffersPool[i]->getOffset(bean);
-						offset.AttribBeans[i] = bean;
+						offset.BufferBeans[i] = bean;
+						uint32_t base_offset = m_AttribBuffersPool[i]->getOffset(bean);
+
+						const GeometryBufferDesc& bufferDesc = m_AttribDescs[i];
+						offset.BufferOffsets[i].AttribCount = bufferDesc.BufferDescs[i].AttribCount;
+						offset.BufferOffsets[i].AttribOffset = allocate<uint32_t>(bufferDesc.BufferDescs[i].AttribCount * sizeof(uint32_t));
+						for (uint32_t j = 0; j < bufferDesc.BufferDescs[i].AttribCount; j++)
+						{
+							offset.BufferOffsets[i].AttribOffset[j] = base_offset + reinterpret_cast<uint32_t>(bufferDesc.BufferDescs[i].AttribDescs[j].Pointer);
+						}
 					}
 					else
 					{
-						offset.AttribOffset[i] = INVALID_OFFSET;
-						offset.AttribBeans[i] = nullptr;
+						offset.BufferOffsets[i] = {0, nullptr};
+						offset.BufferBeans[i] = nullptr;
 					}
 				}
 				
@@ -171,7 +187,7 @@ namespace jet
 
 				m_unusedKeys.erase(m_unusedKeys.begin() + slot);
 				
-				auto value = std::pair<int32_t, GeometryAttribOffset>(key, offset);
+				auto value = std::pair<int32_t, GeometryBufferOffset>(key, offset);
 				m_AttribOffsets.insert(value);
 			}
 		}
@@ -191,10 +207,10 @@ namespace jet
 				}
 				else
 				{
-					const GeometryAttribOffset& offset = it->second;
-					for (uint32_t i = 0; i < offset.AttribCount; i++)
+					const GeometryBufferOffset& offset = it->second;
+					for (uint32_t i = 0; i < offset.BufferCount; i++)
 					{
-						m_AttribBuffersPool[i]->remove(offset.AttribBeans[i]);
+						m_AttribBuffersPool[i]->remove(offset.BufferBeans[i]);
 					}
 
 					if (offset.ElementBean)
@@ -213,9 +229,9 @@ namespace jet
 			m_bHaveIndices = flag;
 		}
 
-		static GeometryAttribOffset g_InvalidOffset = GeometryAttribOffset();
+		static GeometryBufferOffset g_InvalidOffset = GeometryBufferOffset();
 
-		const GeometryAttribOffset& GeometryAttribBuffer::getAttribOffset(int32_t key) const
+		const GeometryBufferOffset& GeometryAttribBuffer::getBufferOffset(int32_t key) const
 		{
 			auto it = m_AttribOffsets.find(key);
 			if (it == m_AttribOffsets.end())

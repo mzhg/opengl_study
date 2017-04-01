@@ -108,6 +108,13 @@ namespace jet
 		public:
 			RenderQueue();
 			~RenderQueue();
+
+		protected:
+			std::vector<GeometryAssembly*> m_CastShadowObjs;
+			std::vector<GeometryAssembly*> m_OpaqueObjsWithDepth;
+			std::vector<GeometryAssembly*> m_OpaqueObjsWithoutDepth;
+			std::vector<GeometryAssembly*> m_TranslucentObjsWithDepth;
+			std::vector<GeometryAssembly*> m_TranslucentObjsWithoutDepth;
 		};
 	}
 }

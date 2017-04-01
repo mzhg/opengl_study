@@ -484,7 +484,102 @@ namespace jet
 				GLuint divisor = 0,
 				GLvoid* pointer = nullptr) :
 				/*Enable(enable),*/ Index(index), Size(size), Type(type), Normalized(normalized), Stride(stride), Divisor(divisor), Pointer(pointer){}
+
+			bool operator== (const AttribDesc& b) const
+			{
+				return Divisor == b.Divisor &&
+					Index == b.Index && Normalized == b.Normalized &&
+					Pointer == b.Pointer && Size == b.Size &&
+					Stride == b.Stride && Type == b.Type;
+			}
+
+			bool operator!= (const AttribDesc& b) const
+			{
+				return Divisor != b.Divisor ||
+					Index != b.Index || Normalized != b.Normalized ||
+					Pointer != b.Pointer || Size != b.Size ||
+					Stride != b.Stride || Type != b.Type;
+			}
 		}AttribDesc;
+
+		typedef struct GeometryAttribDesc
+		{
+			uint32_t AttribCount;
+			AttribDesc* AttribDescs;
+
+			bool operator == (const GeometryAttribDesc& o) const
+			{
+				if (AttribCount != o.AttribCount)
+				{
+					return false;
+				}
+
+				for (uint32_t i = 0; i < AttribCount; i++)
+				{
+					if (AttribDescs[i] != o.AttribDescs[i])
+					{
+						return false;
+					}
+				}
+
+				return true;
+			}
+
+			bool operator != (const GeometryAttribDesc& o) const
+			{
+				if (AttribCount != o.AttribCount)
+				{
+					return true;
+				}
+
+				for (uint32_t i = 0; i < AttribCount; i++)
+				{
+					if (AttribDescs[i] != o.AttribDescs[i])
+					{
+						return true;
+					}
+				}
+
+				return false;
+			}
+
+		}GeometryAttribDesc;
+
+		typedef struct GeometryBufferDesc
+		{
+			uint32_t BufferCount;
+			GeometryAttribDesc* BufferDescs;
+
+			bool operator == (const GeometryBufferDesc& o) const
+			{
+				if (BufferCount != o.BufferCount)
+				{
+					return false;
+				}
+
+				for (uint32_t i = 0; i < BufferCount; i++)
+				{
+					if (BufferDescs[i] != o.BufferDescs[i])
+					{
+						return false;
+					}
+				}
+
+				return true;
+			}
+		}GeometryBufferDesc;
+
+		typedef struct GeometryAttribData
+		{
+			uint32_t AttribCount;
+			uint32_t* AttribSize;
+			uint8_t** AttribData;
+			DataType ElementDataType;
+			uint32_t ElementSize;
+			uint8_t* ElementData;
+		}GeometryAttribData;
+
+//		extern bool operator == (const AttribDesc& a, const AttribDesc& b);
 
 		enum class Primitives
 		{

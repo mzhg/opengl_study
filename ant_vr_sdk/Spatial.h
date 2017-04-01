@@ -432,9 +432,9 @@ namespace jet
 			* @see Spatial#addControl(com.jme3.scene.control.Control)
 			* @see Spatial#removeControl(java.lang.Class)
 			*/
-			int getNumControls() 
+			uint32_t getNumControls() 
 			{
-				return m_pControls.size();
+				return (uint32_t)m_pControls.size();
 			}
 
 			/**
@@ -834,7 +834,7 @@ namespace jet
 			/**
 			* @return The sum of all triangles under this Spatial.
 			*/
-			virtual int getTriangleCount() = 0;
+			virtual int getTriangleCount() { return 0; };
 
 			/**
 			* <code>getWorldBound</code> retrieves the world bound at this node

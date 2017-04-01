@@ -132,6 +132,7 @@ namespace jet
 			{
 				for (size_t i = 0; i < array.size(); i++)
 				{
+//					const T& left = array[i];
 					if (array[i] == value)
 					{
 						return static_cast<int>(i);

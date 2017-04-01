@@ -178,9 +178,6 @@
     <ClCompile Include="MeshManager.cpp">
       <Filter>app</Filter>
     </ClCompile>
-    <ClCompile Include="Stage.cpp">
-      <Filter>app</Filter>
-    </ClCompile>
     <ClCompile Include="Scene.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
@@ -233,6 +230,9 @@
       <Filter>Scene</Filter>
     </ClCompile>
     <ClCompile Include="GeometryAttribBuffer.cpp">
+      <Filter>Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="SingleBatchBuffer.cpp">
       <Filter>Scene</Filter>
     </ClCompile>
   </ItemGroup>
@@ -372,9 +372,6 @@
     <ClInclude Include="MeshManager.h">
       <Filter>app</Filter>
     </ClInclude>
-    <ClInclude Include="Stage.h">
-      <Filter>app</Filter>
-    </ClInclude>
     <ClInclude Include="Scene.h">
       <Filter>Scene</Filter>
     </ClInclude>
@@ -494,6 +491,8 @@
     <None Include="assets\Tonemap.frag">
       <Filter>ShaderResources</Filter>
     </None>
-    <None Include="assets\StarStreakerVS.vert" />
+    <None Include="assets\StarStreakerVS.vert">
+      <Filter>ShaderResources</Filter>
+    </None>
   </ItemGroup>
 </Project>
